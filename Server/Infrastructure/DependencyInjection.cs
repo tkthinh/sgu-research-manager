@@ -1,8 +1,8 @@
 ﻿using Application.Departments;
 using Domain.Entities;
 using Domain.Interfaces;
+using Infrastructure.Caching;
 using Infrastructure.Data;
-using Infrastructure.Data.Repositories;
 using Infrastructure.Data.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +18,11 @@ namespace Infrastructure
             options.UseSqlServer(
                configuration.GetConnectionString("DefaultConnection"),
                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+
+         services.AddStackExchangeRedisCache(options =>
+         {
+            options.Configuration = configuration.GetConnectionString("Redis");
+         });
 
          // dang ky uow
          services.AddScoped<IUnitOfWork, UnitOfWork>();
