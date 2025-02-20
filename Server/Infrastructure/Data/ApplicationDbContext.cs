@@ -13,6 +13,7 @@ namespace Infrastructure.Data
       public DbSet<WorkLevel> WorkLevels { get; set; }
       public DbSet<Field> Fields { get; set; }
       public DbSet<AcademicRank> AcademicRanks { get; set; }
+      public DbSet<OfficerRank> OfficerRanks { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {

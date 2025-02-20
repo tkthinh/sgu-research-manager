@@ -1,6 +1,7 @@
 ﻿using Application.AcademicRanks;
 using Application.Departments;
 using Application.Fields;
+using Application.OfficerRanks;
 using Application.WorkLevels;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -36,6 +37,8 @@ namespace Infrastructure
             services.AddScoped<IWorkLevelService, WorkLevelService>();
             services.AddScoped<IFieldService, FieldService>();
             services.AddScoped<IAcademicRankService, AcademicRankService>();
+            services.AddScoped<IOfficerRankService, OfficerRankService>();
+
 
 
             // Đăng ký các mapper
@@ -43,6 +46,8 @@ namespace Infrastructure
             services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
             services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
             services.AddScoped<IGenericMapper<AcademicRankDto, AcademicRank>, AcademicRankMapper>();
+            services.AddScoped<IGenericMapper<OfficerRankDto, OfficerRank>, OfficerRankMapper>();
+
 
 
             return services;
