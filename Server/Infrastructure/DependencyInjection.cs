@@ -1,4 +1,5 @@
 ﻿using Application.Departments;
+using Application.Fields;
 using Application.WorkLevels;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -10,33 +11,36 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure
 {
-   public static class DependencyInjection
-   {
-      public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
-      {
-         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(
-               configuration.GetConnectionString("DefaultConnection"),
-               b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+    public static class DependencyInjection
+    {
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        {
+            // Cấu hình Entity Framework Core với SQL Server
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(
+                    configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
-         services.AddStackExchangeRedisCache(options =>
-         {
-            options.Configuration = configuration.GetConnectionString("Redis");
-         });
+            // Cấu hình Redis Cache
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration.GetConnectionString("Redis");
+            });
 
-         // dang ky uow
-         services.AddScoped<IUnitOfWork, UnitOfWork>();
+            // Đăng ký UnitOfWork
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-         //dang ky services
-         services.AddScoped<IDepartmentService, DepartmentService>();
-         services.AddScoped<IWorkLevelService, WorkLevelService>();
+            // Đăng ký các service
+            services.AddScoped<IDepartmentService, DepartmentService>();
+            services.AddScoped<IWorkLevelService, WorkLevelService>();
+            services.AddScoped<IFieldService, FieldService>();
 
-         //dang ky mapper
-         services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
-         services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
-
+            // Đăng ký các mapper
+            services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
+            services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
+            services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
 
             return services;
-      }
-   }
+        }
+    }
 }
