@@ -1,7 +1,7 @@
 ﻿using Application.Departments;
+using Application.WorkLevels;
 using Domain.Entities;
 using Domain.Interfaces;
-using Infrastructure.Caching;
 using Infrastructure.Data;
 using Infrastructure.Data.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -29,12 +29,14 @@ namespace Infrastructure
 
          //dang ky services
          services.AddScoped<IDepartmentService, DepartmentService>();
+         services.AddScoped<IWorkLevelService, WorkLevelService>();
 
          //dang ky mapper
          services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
+         services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
 
 
-         return services;
+            return services;
       }
    }
 }
