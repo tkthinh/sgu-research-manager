@@ -1,7 +1,7 @@
 ﻿using Application.Departments;
+using Application.Purposes;
 using Domain.Entities;
 using Domain.Interfaces;
-using Infrastructure.Caching;
 using Infrastructure.Data;
 using Infrastructure.Data.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -29,9 +29,11 @@ namespace Infrastructure
 
          //dang ky services
          services.AddScoped<IDepartmentService, DepartmentService>();
+         services.AddScoped<IPurposeService, PurposeService>();
 
          //dang ky mapper
          services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
+         services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
 
 
          return services;

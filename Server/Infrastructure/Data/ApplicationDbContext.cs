@@ -10,6 +10,7 @@ namespace Infrastructure.Data
       }
 
       public DbSet<Department> Departments { get; set; }
+      public DbSet<Purpose> Purposes { get; set; }
 
       public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
