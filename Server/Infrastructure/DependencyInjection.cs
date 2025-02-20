@@ -3,6 +3,7 @@ using Application.Departments;
 using Application.Fields;
 using Application.OfficerRanks;
 using Application.WorkLevels;
+using Application.WorkStatuses;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Data;
@@ -38,6 +39,8 @@ namespace Infrastructure
             services.AddScoped<IFieldService, FieldService>();
             services.AddScoped<IAcademicRankService, AcademicRankService>();
             services.AddScoped<IOfficerRankService, OfficerRankService>();
+            services.AddScoped<IWorkStatusService, WorkStatusService>();
+
 
 
 
@@ -47,6 +50,7 @@ namespace Infrastructure
             services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
             services.AddScoped<IGenericMapper<AcademicRankDto, AcademicRank>, AcademicRankMapper>();
             services.AddScoped<IGenericMapper<OfficerRankDto, OfficerRank>, OfficerRankMapper>();
+            services.AddScoped<IGenericMapper<WorkStatusDto, WorkStatus>, WorkStatusMapper>();
 
 
 
