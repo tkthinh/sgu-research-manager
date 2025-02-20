@@ -1,4 +1,5 @@
-﻿using Application.Departments;
+﻿using Application.AcademicRanks;
+using Application.Departments;
 using Application.Fields;
 using Application.WorkLevels;
 using Domain.Entities;
@@ -34,11 +35,15 @@ namespace Infrastructure
             services.AddScoped<IDepartmentService, DepartmentService>();
             services.AddScoped<IWorkLevelService, WorkLevelService>();
             services.AddScoped<IFieldService, FieldService>();
+            services.AddScoped<IAcademicRankService, AcademicRankService>();
+
 
             // Đăng ký các mapper
             services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
             services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
             services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
+            services.AddScoped<IGenericMapper<AcademicRankDto, AcademicRank>, AcademicRankMapper>();
+
 
             return services;
         }
