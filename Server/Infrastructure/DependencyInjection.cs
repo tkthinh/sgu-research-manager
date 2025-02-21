@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Infrastructure.Identity;
+using Application.WorkTypes;
 
 namespace Infrastructure
 {
@@ -85,6 +86,7 @@ namespace Infrastructure
          services.AddScoped<IAcademicRankService, AcademicRankService>();
          services.AddScoped<IOfficerRankService, OfficerRankService>();
          services.AddScoped<IWorkStatusService, WorkStatusService>();
+         services.AddScoped<IWorkTypeService, WorkTypeService>();
 
 
          // Đăng ký các mapper
@@ -95,6 +97,7 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<AcademicRankDto, AcademicRank>, AcademicRankMapper>();
          services.AddScoped<IGenericMapper<OfficerRankDto, OfficerRank>, OfficerRankMapper>();
          services.AddScoped<IGenericMapper<WorkStatusDto, WorkStatus>, WorkStatusMapper>();
+         services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
 
          return services;
       }

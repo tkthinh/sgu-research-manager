@@ -18,6 +18,7 @@ namespace Infrastructure.Data
       public DbSet<AcademicRank> AcademicRanks { get; set; }
       public DbSet<OfficerRank> OfficerRanks { get; set; }
       public DbSet<WorkStatus> WorkStatuses { get; set; }
+      public DbSet<WorkType> WorkTypes { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
