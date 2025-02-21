@@ -11,8 +11,13 @@ namespace Infrastructure.Data
 
       public DbSet<Department> Departments { get; set; }
       public DbSet<Purpose> Purposes { get; set; }
+      public DbSet<WorkLevel> WorkLevels { get; set; }
+      public DbSet<Field> Fields { get; set; }
+      public DbSet<AcademicRank> AcademicRanks { get; set; }
+      public DbSet<OfficerRank> OfficerRanks { get; set; }
+      public DbSet<WorkStatus> WorkStatuses { get; set; }
 
-      public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
          foreach (var entry in ChangeTracker.Entries<BaseEntity>())
          {

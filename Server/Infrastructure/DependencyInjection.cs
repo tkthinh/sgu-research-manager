@@ -1,5 +1,10 @@
-﻿using Application.Departments;
+using Application.AcademicRanks;
+using Application.Departments;
+using Application.Fields;
+using Application.OfficerRanks;
 using Application.Purposes;
+using Application.WorkLevels;
+using Application.WorkStatuses;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Data;
@@ -14,24 +19,27 @@ using System.Text;
 
 namespace Infrastructure
 {
-   public static class DependencyInjection
-   {
-      public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
-      {
-         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(
-               configuration.GetConnectionString("DefaultConnection"),
-               b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+    public static class DependencyInjection
+    {
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        {
+            // Cấu hình Entity Framework Core với SQL Server
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(
+                    configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+
 
          services.AddDbContext<AuthDbContext>(options =>
             options.UseSqlServer(
                configuration.GetConnectionString("DefaultConnection"),
                b => b.MigrationsAssembly(typeof(AuthDbContext).Assembly.FullName)));
 
-         services.AddStackExchangeRedisCache(options =>
-         {
-            options.Configuration = configuration.GetConnectionString("Redis");
-         });
+            // Cấu hình Redis Cache
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration.GetConnectionString("Redis");
+            });
 
          // dang ky identity
          services.AddIdentityCore<IdentityUser>()
@@ -56,19 +64,30 @@ namespace Infrastructure
                };
             });
 
-         // dang ky uow
+         // Đăng ký UnitOfWork
          services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-         //dang ky services
+         
+         // Đăng ký các service
          services.AddScoped<IDepartmentService, DepartmentService>();
          services.AddScoped<IPurposeService, PurposeService>();
+         services.AddScoped<IWorkLevelService, WorkLevelService>();
+         services.AddScoped<IFieldService, FieldService>();
+         services.AddScoped<IAcademicRankService, AcademicRankService>();
+         services.AddScoped<IOfficerRankService, OfficerRankService>();
+         services.AddScoped<IWorkStatusService, WorkStatusService>();
 
-         //dang ky mapper
+
+         // Đăng ký các mapper
          services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
          services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
-
+         services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
+         services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
+         services.AddScoped<IGenericMapper<AcademicRankDto, AcademicRank>, AcademicRankMapper>();
+         services.AddScoped<IGenericMapper<OfficerRankDto, OfficerRank>, OfficerRankMapper>();
+         services.AddScoped<IGenericMapper<WorkStatusDto, WorkStatus>, WorkStatusMapper>();
 
          return services;
-      }
-   }
+        }
+    }
 }
