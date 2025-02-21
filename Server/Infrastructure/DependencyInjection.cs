@@ -18,6 +18,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Infrastructure.Identity;
 using Application.WorkTypes;
+using Application.ProofStatuses;
 
 namespace Infrastructure
 {
@@ -87,9 +88,11 @@ namespace Infrastructure
          services.AddScoped<IOfficerRankService, OfficerRankService>();
          services.AddScoped<IWorkStatusService, WorkStatusService>();
          services.AddScoped<IWorkTypeService, WorkTypeService>();
+         services.AddScoped<IProofStatusService, ProofStatusService>();
 
 
-         // Đăng ký các mapper
+
+            // Đăng ký các mapper
          services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
          services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
          services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
@@ -98,8 +101,10 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<OfficerRankDto, OfficerRank>, OfficerRankMapper>();
          services.AddScoped<IGenericMapper<WorkStatusDto, WorkStatus>, WorkStatusMapper>();
          services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
+         services.AddScoped<IGenericMapper<ProofStatusDto, ProofStatus>, ProofStatusMapper>();
 
-         return services;
+
+            return services;
       }
    }
 }
