@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data
@@ -9,6 +10,7 @@ namespace Infrastructure.Data
       {
       }
 
+      public DbSet<Employee> Employees { get; set; }
       public DbSet<Department> Departments { get; set; }
       public DbSet<Purpose> Purposes { get; set; }
       public DbSet<WorkLevel> WorkLevels { get; set; }
@@ -34,5 +36,36 @@ namespace Infrastructure.Data
 
          return base.SaveChangesAsync(cancellationToken);
       }
+
+      protected override void OnModelCreating(ModelBuilder builder)
+      {
+         base.OnModelCreating(builder);
+
+         // Configure relationships
+         builder.Entity<Employee>()
+            .HasOne(u => u.Department)
+            .WithMany(u => u.Employees)
+            .HasForeignKey(u => u.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+         builder.Entity<Employee>()
+             .HasOne(u => u.AcademicRank)
+             .WithMany(u => u.Employees)
+             .HasForeignKey(u => u.AcademicRankId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+         builder.Entity<Employee>()
+             .HasOne(u => u.OfficerRank)
+             .WithMany(u => u.Employees)
+             .HasForeignKey(u => u.OfficerRankId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+         builder.Entity<Employee>()
+             .HasOne(u => u.Field)
+             .WithMany(u => u.Employees)
+             .HasForeignKey(u => u.FieldId)
+             .OnDelete(DeleteBehavior.Restrict);
+      }
    }
 }
+

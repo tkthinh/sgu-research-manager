@@ -16,35 +16,44 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Infrastructure.Identity;
 
 namespace Infrastructure
 {
-    public static class DependencyInjection
-    {
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
-        {
-            // Cấu hình Entity Framework Core với SQL Server
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+   public static class DependencyInjection
+   {
+      public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+      {
+         // Cấu hình Entity Framework Core với SQL Server
+         services.AddDbContext<ApplicationDbContext>(options =>
+             options.UseSqlServer(
+                 configuration.GetConnectionString("DefaultConnection"),
+                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
-
+         // Cấu hình Identity với SQL Server
          services.AddDbContext<AuthDbContext>(options =>
             options.UseSqlServer(
                configuration.GetConnectionString("DefaultConnection"),
                b => b.MigrationsAssembly(typeof(AuthDbContext).Assembly.FullName)));
 
-            // Cấu hình Redis Cache
-            services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = configuration.GetConnectionString("Redis");
-            });
+         services.Configure<IdentityOptions>(options =>
+         {
+            options.Password.RequireDigit = false;
+            options.Password.RequireLowercase = false;
+            options.Password.RequireUppercase = false;
+            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequiredLength = 6;
+         });
 
-         // dang ky identity
+         // Cấu hình Redis Cache
+         services.AddStackExchangeRedisCache(options =>
+         {
+            options.Configuration = configuration.GetConnectionString("Redis");
+         });
+
+         // Đăng ký Identity
          services.AddIdentityCore<IdentityUser>()
             .AddRoles<IdentityRole>()
-            .AddTokenProvider<DataProtectorTokenProvider<IdentityUser>>("")
             .AddEntityFrameworkStores<AuthDbContext>()
             .AddDefaultTokenProviders();
 
@@ -67,7 +76,7 @@ namespace Infrastructure
          // Đăng ký UnitOfWork
          services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-         
+
          // Đăng ký các service
          services.AddScoped<IDepartmentService, DepartmentService>();
          services.AddScoped<IPurposeService, PurposeService>();
@@ -88,6 +97,6 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<WorkStatusDto, WorkStatus>, WorkStatusMapper>();
 
          return services;
-        }
-    }
+      }
+   }
 }
