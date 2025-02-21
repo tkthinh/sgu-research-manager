@@ -106,7 +106,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("OfficerRankId");
 
-                    b.ToTable("Employee");
+                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("Domain.Entities.Field", b =>

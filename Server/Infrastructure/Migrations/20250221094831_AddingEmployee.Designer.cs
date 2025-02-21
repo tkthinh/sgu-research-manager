@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250221093249_AddEmployee")]
-    partial class AddEmployee
+    [Migration("20250221094831_AddingEmployee")]
+    partial class AddingEmployee
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -109,7 +109,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("OfficerRankId");
 
-                    b.ToTable("Employee");
+                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("Domain.Entities.Field", b =>

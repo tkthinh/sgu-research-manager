@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddEmployee : Migration
+    public partial class AddingEmployee : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Employee",
+                name: "Employees",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -27,51 +27,52 @@ namespace Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Employee", x => x.Id);
+                    table.PrimaryKey("PK_Employees", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Employee_AcademicRanks_AcademicRankId",
+                        name: "FK_Employees_AcademicRanks_AcademicRankId",
                         column: x => x.AcademicRankId,
                         principalTable: "AcademicRanks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Employee_Departments_DepartmentId",
+                        name: "FK_Employees_Departments_DepartmentId",
                         column: x => x.DepartmentId,
                         principalTable: "Departments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Employee_Fields_FieldId",
+                        name: "FK_Employees_Fields_FieldId",
                         column: x => x.FieldId,
                         principalTable: "Fields",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Employee_OfficerRanks_OfficerRankId",
+                        name: "FK_Employees_OfficerRanks_OfficerRankId",
                         column: x => x.OfficerRankId,
                         principalTable: "OfficerRanks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
+
             migrationBuilder.CreateIndex(
-                name: "IX_Employee_AcademicRankId",
-                table: "Employee",
+                name: "IX_Employees_AcademicRankId",
+                table: "Employees",
                 column: "AcademicRankId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employee_DepartmentId",
-                table: "Employee",
+                name: "IX_Employees_DepartmentId",
+                table: "Employees",
                 column: "DepartmentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employee_FieldId",
-                table: "Employee",
+                name: "IX_Employees_FieldId",
+                table: "Employees",
                 column: "FieldId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employee_OfficerRankId",
-                table: "Employee",
+                name: "IX_Employees_OfficerRankId",
+                table: "Employees",
                 column: "OfficerRankId");
         }
 
@@ -79,7 +80,7 @@ namespace Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Employee");
+                name: "Employees");
         }
     }
 }

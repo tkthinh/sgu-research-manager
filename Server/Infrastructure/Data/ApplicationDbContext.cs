@@ -10,6 +10,7 @@ namespace Infrastructure.Data
       {
       }
 
+      public DbSet<Employee> Employees { get; set; }
       public DbSet<Department> Departments { get; set; }
       public DbSet<Purpose> Purposes { get; set; }
       public DbSet<WorkLevel> WorkLevels { get; set; }
