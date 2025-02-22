@@ -20,6 +20,8 @@ namespace Infrastructure.Data
       public DbSet<WorkStatus> WorkStatuses { get; set; }
       public DbSet<WorkType> WorkTypes { get; set; }
       public DbSet<ProofStatus> ProofStatuses { get; set; }
+      public DbSet<AuthorRole> AuthorRoles { get; set; }
+      //public DbSet<Author> Authors { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
@@ -67,7 +69,13 @@ namespace Infrastructure.Data
              .WithMany(u => u.Employees)
              .HasForeignKey(u => u.FieldId)
              .OnDelete(DeleteBehavior.Restrict);
-      }
+
+            builder.Entity<AuthorRole>()
+                .HasOne(ar => ar.WorkType)
+                .WithMany(wt => wt.AuthorRoles)
+                .HasForeignKey(ar => ar.WorkTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
    }
 }
 
