@@ -26,8 +26,9 @@ namespace Infrastructure.Data
       public DbSet<AuthorRole> AuthorRoles { get; set; }
       public DbSet<Work> Works { get; set; }
       public DbSet<Author> Authors { get; set; }
+      public DbSet<Assignment> Assignments { get; set; }
 
-      public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
          foreach (var entry in ChangeTracker.Entries<BaseEntity>())
          {
@@ -154,7 +155,14 @@ namespace Infrastructure.Data
           .WithMany(wt => wt.AuthorRoles)
           .HasForeignKey(ar => ar.WorkTypeId)
           .OnDelete(DeleteBehavior.Restrict);
-      }
+
+
+          builder.Entity<Department>()
+           .HasMany(d => d.Assignments)
+           .WithOne(a => a.Department)
+           .HasForeignKey(a => a.DepartmentId)
+           .OnDelete(DeleteBehavior.Restrict);
+        }
 
    }
 }

@@ -20,6 +20,7 @@ using Infrastructure.Identity;
 using Application.WorkTypes;
 using Application.ProofStatuses;
 using Application.AuthorRoles;
+using Application.Assignments;
 
 namespace Infrastructure
 {
@@ -91,11 +92,12 @@ namespace Infrastructure
          services.AddScoped<IWorkTypeService, WorkTypeService>();
          services.AddScoped<IProofStatusService, ProofStatusService>();
          services.AddScoped<IAuthorRoleService, AuthorRoleService>();
+         services.AddScoped<IAssignmentService, AssignmentService>();
 
 
 
 
-         // Đăng ký các mapper
+            // Đăng ký các mapper
          services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
          services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
          services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
@@ -106,10 +108,12 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
          services.AddScoped<IGenericMapper<ProofStatusDto, ProofStatus>, ProofStatusMapper>();
          services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
+         services.AddScoped<IGenericMapper<AssignmentDto, Assignment>, AssignmentMapper>();
 
 
 
-         return services;
+
+            return services;
       }
    }
 }
