@@ -52,12 +52,13 @@ namespace WebApi.Controllers
                 var statusDto = new WorkStatusDto
                 {
                     Name = requestDto.Name,
+                    WorkTypeId = requestDto.WorkTypeId, 
                 };
 
                 var status = await workStatusService.CreateAsync(statusDto);
                 var response = new ApiResponse<WorkStatusDto>(
                     true,
-                    "Tạo trạng thái công trình thành công",
+                    "Tạo trạng thái công việc thành công",
                     status
                 );
 
@@ -69,6 +70,7 @@ namespace WebApi.Controllers
                 return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
             }
         }
+
 
         [HttpPut("{id}")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateWorkStatus([FromRoute] Guid id, [FromBody] UpdateWorkStatusRequestDto request)

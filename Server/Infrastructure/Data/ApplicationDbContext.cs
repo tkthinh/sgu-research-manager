@@ -45,7 +45,7 @@ namespace Infrastructure.Data
       {
          base.OnModelCreating(builder);
 
-         // Configure relationships
+         // Employee
          builder.Entity<Employee>()
             .HasOne(u => u.Department)
             .WithMany(u => u.Employees)
@@ -70,12 +70,21 @@ namespace Infrastructure.Data
              .HasForeignKey(u => u.FieldId)
              .OnDelete(DeleteBehavior.Restrict);
 
+            // AuthorRole
             builder.Entity<AuthorRole>()
                 .HasOne(ar => ar.WorkType)
                 .WithMany(wt => wt.AuthorRoles)
                 .HasForeignKey(ar => ar.WorkTypeId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // WorkStatus
+            builder.Entity<WorkStatus>()
+                .HasOne(ws => ws.WorkType)
+                .WithMany(wt => wt.WorkStatuses)
+                .HasForeignKey(ws => ws.WorkTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
-   }
+    }
 }
 
