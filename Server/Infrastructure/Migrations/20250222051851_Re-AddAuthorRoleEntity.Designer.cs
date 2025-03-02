@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250222051851_Re-AddAuthorRoleEntity")]
+    partial class ReAddAuthorRoleEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -41,59 +44,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AcademicRanks");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Author", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AuthorRoleId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<float>("DeclaredScore")
-                        .HasColumnType("real");
-
-                    b.Property<Guid?>("EmployeeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("FinalHours")
-                        .HasColumnType("int");
-
-                    b.Property<float>("FinalScore")
-                        .HasColumnType("real");
-
-                    b.Property<bool>("IsNotMatch")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsScored")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("PurposeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("TempHours")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorRoleId");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.HasIndex("PurposeId");
-
-                    b.ToTable("Author");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -312,12 +262,7 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("WorkTypeId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("WorkTypeId");
 
                     b.ToTable("WorkStatuses");
                 });
@@ -341,31 +286,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("WorkTypes");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Author", b =>
-                {
-                    b.HasOne("Domain.Entities.AuthorRole", "AuthorRole")
-                        .WithMany("Authors")
-                        .HasForeignKey("AuthorRoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId");
-
-                    b.HasOne("Domain.Entities.Purpose", "Purpose")
-                        .WithMany("Authors")
-                        .HasForeignKey("PurposeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AuthorRole");
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Purpose");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -414,25 +334,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("OfficerRank");
                 });
 
-            modelBuilder.Entity("Domain.Entities.WorkStatus", b =>
-                {
-                    b.HasOne("Domain.Entities.WorkType", "WorkType")
-                        .WithMany("WorkStatuses")
-                        .HasForeignKey("WorkTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("WorkType");
-                });
-
             modelBuilder.Entity("Domain.Entities.AcademicRank", b =>
                 {
                     b.Navigation("Employees");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
-                {
-                    b.Navigation("Authors");
                 });
 
             modelBuilder.Entity("Domain.Entities.Department", b =>
@@ -450,16 +354,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("Employees");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Purpose", b =>
-                {
-                    b.Navigation("Authors");
-                });
-
             modelBuilder.Entity("Domain.Entities.WorkType", b =>
                 {
                     b.Navigation("AuthorRoles");
-
-                    b.Navigation("WorkStatuses");
                 });
 #pragma warning restore 612, 618
         }

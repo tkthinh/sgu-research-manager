@@ -18,6 +18,10 @@ namespace Infrastructure.Data
       public DbSet<AcademicRank> AcademicRanks { get; set; }
       public DbSet<OfficerRank> OfficerRanks { get; set; }
       public DbSet<WorkStatus> WorkStatuses { get; set; }
+      public DbSet<WorkType> WorkTypes { get; set; }
+      public DbSet<ProofStatus> ProofStatuses { get; set; }
+      public DbSet<AuthorRole> AuthorRoles { get; set; }
+      //public DbSet<Author> Authors { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
@@ -41,7 +45,7 @@ namespace Infrastructure.Data
       {
          base.OnModelCreating(builder);
 
-         // Configure relationships
+         // Employee
          builder.Entity<Employee>()
             .HasOne(u => u.Department)
             .WithMany(u => u.Employees)
@@ -65,7 +69,22 @@ namespace Infrastructure.Data
              .WithMany(u => u.Employees)
              .HasForeignKey(u => u.FieldId)
              .OnDelete(DeleteBehavior.Restrict);
-      }
-   }
+
+            // AuthorRole
+            builder.Entity<AuthorRole>()
+                .HasOne(ar => ar.WorkType)
+                .WithMany(wt => wt.AuthorRoles)
+                .HasForeignKey(ar => ar.WorkTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // WorkStatus
+            builder.Entity<WorkStatus>()
+                .HasOne(ws => ws.WorkType)
+                .WithMany(wt => wt.WorkStatuses)
+                .HasForeignKey(ws => ws.WorkTypeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+        }
+    }
 }
 

@@ -1,40 +1,42 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
 
-namespace Application.WorkStatuses
+namespace Application.AuthorRoles
 {
-    public class WorkStatusMapper : IGenericMapper<WorkStatusDto, WorkStatus>
+    public class AuthorRoleMapper : IGenericMapper<AuthorRoleDto, AuthorRole>
     {
-        public WorkStatusDto MapToDto(WorkStatus entity)
+        public AuthorRoleDto MapToDto(AuthorRole entity)
         {
-            return new WorkStatusDto
+            return new AuthorRoleDto
             {
                 Id = entity.Id,
                 Name = entity.Name,
+                IsMainAuthor = entity.IsMainAuthor,
                 WorkTypeId = entity.WorkTypeId,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
         }
 
-        public WorkStatus MapToEntity(WorkStatusDto dto)
+        public AuthorRole MapToEntity(AuthorRoleDto dto)
         {
-            return new WorkStatus
+            return new AuthorRole
             {
                 Id = dto.Id,
                 Name = dto.Name,
+                IsMainAuthor = dto.IsMainAuthor,
                 WorkTypeId = dto.WorkTypeId,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate
             };
         }
 
-        public IEnumerable<WorkStatusDto> MapToDtos(IEnumerable<WorkStatus> entities)
+        public IEnumerable<AuthorRoleDto> MapToDtos(IEnumerable<AuthorRole> entities)
         {
             return entities.Select(MapToDto);
         }
 
-        public IEnumerable<WorkStatus> MapToEntities(IEnumerable<WorkStatusDto> dtos)
+        public IEnumerable<AuthorRole> MapToEntities(IEnumerable<AuthorRoleDto> dtos)
         {
             return dtos.Select(MapToEntity);
         }

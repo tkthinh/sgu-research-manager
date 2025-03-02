@@ -1,40 +1,38 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
 
-namespace Application.WorkStatuses
+namespace Application.ProofStatuses
 {
-    public class WorkStatusMapper : IGenericMapper<WorkStatusDto, WorkStatus>
+    public class ProofStatusMapper : IGenericMapper<ProofStatusDto, ProofStatus>
     {
-        public WorkStatusDto MapToDto(WorkStatus entity)
+        public ProofStatusDto MapToDto(ProofStatus entity)
         {
-            return new WorkStatusDto
+            return new ProofStatusDto
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                WorkTypeId = entity.WorkTypeId,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
         }
 
-        public WorkStatus MapToEntity(WorkStatusDto dto)
+        public ProofStatus MapToEntity(ProofStatusDto dto)
         {
-            return new WorkStatus
+            return new ProofStatus
             {
                 Id = dto.Id,
                 Name = dto.Name,
-                WorkTypeId = dto.WorkTypeId,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate
             };
         }
 
-        public IEnumerable<WorkStatusDto> MapToDtos(IEnumerable<WorkStatus> entities)
+        public IEnumerable<ProofStatusDto> MapToDtos(IEnumerable<ProofStatus> entities)
         {
             return entities.Select(MapToDto);
         }
 
-        public IEnumerable<WorkStatus> MapToEntities(IEnumerable<WorkStatusDto> dtos)
+        public IEnumerable<ProofStatus> MapToEntities(IEnumerable<ProofStatusDto> dtos)
         {
             return dtos.Select(MapToEntity);
         }
