@@ -95,8 +95,8 @@ namespace Infrastructure
 
 
 
-            // Đăng ký các mapper
-            services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
+         // Đăng ký các mapper
+         services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
          services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
          services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
          services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
@@ -105,11 +105,11 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<WorkStatusDto, WorkStatus>, WorkStatusMapper>();
          services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
          services.AddScoped<IGenericMapper<ProofStatusDto, ProofStatus>, ProofStatusMapper>();
-            services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
+         services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
 
 
 
-            return services;
+         return services;
       }
    }
 }

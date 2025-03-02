@@ -55,11 +55,11 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("DeclaredHours")
+                        .HasColumnType("int");
+
                     b.Property<float>("DeclaredScore")
                         .HasColumnType("real");
-
-                    b.Property<Guid?>("EmployeeId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("FinalHours")
                         .HasColumnType("int");
@@ -70,7 +70,7 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsNotMatch")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsScored")
+                    b.Property<bool>("MarkedForScoring")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedDate")
@@ -82,18 +82,24 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("PurposeId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("TempHours")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorRoleId");
 
-                    b.HasIndex("EmployeeId");
-
                     b.HasIndex("PurposeId");
 
-                    b.ToTable("Author");
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex("WorkId");
+
+                    b.ToTable("Authors");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -275,6 +281,77 @@ namespace Infrastructure.Migrations
                     b.ToTable("Purposes");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Work", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("LevelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("MainAuthorCount")
+                        .HasColumnType("int");
+
+                    b.Property<float>("ManagerWorkScore")
+                        .HasColumnType("real");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ProofId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ScoringFieldId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly?>("TimePublished")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TotalAuthors")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalHours")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LevelId");
+
+                    b.HasIndex("ProofId");
+
+                    b.HasIndex("ScoringFieldId");
+
+                    b.HasIndex("StatusId");
+
+                    b.HasIndex("TypeId");
+
+                    b.ToTable("Works");
+                });
+
             modelBuilder.Entity("Domain.Entities.WorkLevel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -348,24 +425,34 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.AuthorRole", "AuthorRole")
                         .WithMany("Authors")
                         .HasForeignKey("AuthorRoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Domain.Entities.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId");
 
                     b.HasOne("Domain.Entities.Purpose", "Purpose")
                         .WithMany("Authors")
                         .HasForeignKey("PurposeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Employee", "User")
+                        .WithOne()
+                        .HasForeignKey("Domain.Entities.Author", "UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Work", "Work")
+                        .WithMany("Authors")
+                        .HasForeignKey("WorkId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("AuthorRole");
 
-                    b.Navigation("Employee");
-
                     b.Navigation("Purpose");
+
+                    b.Navigation("User");
+
+                    b.Navigation("Work");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -414,12 +501,55 @@ namespace Infrastructure.Migrations
                     b.Navigation("OfficerRank");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Work", b =>
+                {
+                    b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
+                        .WithMany()
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.ProofStatus", "ProofStatus")
+                        .WithMany()
+                        .HasForeignKey("ProofId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Field", "FieldForScoring")
+                        .WithMany()
+                        .HasForeignKey("ScoringFieldId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.WorkStatus", "WorkStatus")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.WorkType", "WorkType")
+                        .WithMany()
+                        .HasForeignKey("TypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FieldForScoring");
+
+                    b.Navigation("ProofStatus");
+
+                    b.Navigation("WorkLevel");
+
+                    b.Navigation("WorkStatus");
+
+                    b.Navigation("WorkType");
+                });
+
             modelBuilder.Entity("Domain.Entities.WorkStatus", b =>
                 {
                     b.HasOne("Domain.Entities.WorkType", "WorkType")
                         .WithMany("WorkStatuses")
                         .HasForeignKey("WorkTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("WorkType");
@@ -451,6 +581,11 @@ namespace Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Domain.Entities.Purpose", b =>
+                {
+                    b.Navigation("Authors");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
                     b.Navigation("Authors");
                 });
