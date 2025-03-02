@@ -17,6 +17,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Infrastructure.Identity;
+using Application.WorkTypes;
+using Application.ProofStatuses;
+using Application.AuthorRoles;
 
 namespace Infrastructure
 {
@@ -85,18 +88,28 @@ namespace Infrastructure
          services.AddScoped<IAcademicRankService, AcademicRankService>();
          services.AddScoped<IOfficerRankService, OfficerRankService>();
          services.AddScoped<IWorkStatusService, WorkStatusService>();
+         services.AddScoped<IWorkTypeService, WorkTypeService>();
+         services.AddScoped<IProofStatusService, ProofStatusService>();
+         services.AddScoped<IAuthorRoleService, AuthorRoleService>();
 
 
-         // Đăng ký các mapper
-         services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
+
+
+            // Đăng ký các mapper
+            services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
          services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
          services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
          services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
          services.AddScoped<IGenericMapper<AcademicRankDto, AcademicRank>, AcademicRankMapper>();
          services.AddScoped<IGenericMapper<OfficerRankDto, OfficerRank>, OfficerRankMapper>();
          services.AddScoped<IGenericMapper<WorkStatusDto, WorkStatus>, WorkStatusMapper>();
+         services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
+         services.AddScoped<IGenericMapper<ProofStatusDto, ProofStatus>, ProofStatusMapper>();
+            services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
 
-         return services;
+
+
+            return services;
       }
    }
 }

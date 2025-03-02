@@ -3,5 +3,6 @@
     public class UpdateWorkStatusRequestDto
     {
         public required string Name { get; set; }
+        public Guid WorkTypeId { get; set; }
     }
 }

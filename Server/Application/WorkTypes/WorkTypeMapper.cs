@@ -1,40 +1,38 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
 
-namespace Application.WorkStatuses
+namespace Application.WorkTypes
 {
-    public class WorkStatusMapper : IGenericMapper<WorkStatusDto, WorkStatus>
+    public class WorkTypeMapper : IGenericMapper<WorkTypeDto, WorkType>
     {
-        public WorkStatusDto MapToDto(WorkStatus entity)
+        public WorkTypeDto MapToDto(WorkType entity)
         {
-            return new WorkStatusDto
+            return new WorkTypeDto
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                WorkTypeId = entity.WorkTypeId,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
         }
 
-        public WorkStatus MapToEntity(WorkStatusDto dto)
+        public WorkType MapToEntity(WorkTypeDto dto)
         {
-            return new WorkStatus
+            return new WorkType
             {
                 Id = dto.Id,
                 Name = dto.Name,
-                WorkTypeId = dto.WorkTypeId,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate
             };
         }
 
-        public IEnumerable<WorkStatusDto> MapToDtos(IEnumerable<WorkStatus> entities)
+        public IEnumerable<WorkTypeDto> MapToDtos(IEnumerable<WorkType> entities)
         {
             return entities.Select(MapToDto);
         }
 
-        public IEnumerable<WorkStatus> MapToEntities(IEnumerable<WorkStatusDto> dtos)
+        public IEnumerable<WorkType> MapToEntities(IEnumerable<WorkTypeDto> dtos)
         {
             return dtos.Select(MapToEntity);
         }
