@@ -27,6 +27,7 @@ namespace Infrastructure.Data
       public DbSet<Work> Works { get; set; }
       public DbSet<Author> Authors { get; set; }
       public DbSet<Assignment> Assignments { get; set; }
+      public DbSet<Factor> Factors { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
@@ -151,19 +152,40 @@ namespace Infrastructure.Data
 
          // AuthorRole
          builder.Entity<AuthorRole>()
-          .HasOne(ar => ar.WorkType)
-          .WithMany(wt => wt.AuthorRoles)
-          .HasForeignKey(ar => ar.WorkTypeId)
-          .OnDelete(DeleteBehavior.Restrict);
+             .HasOne(ar => ar.WorkType)
+             .WithMany(wt => wt.AuthorRoles)
+             .HasForeignKey(ar => ar.WorkTypeId)
+             .OnDelete(DeleteBehavior.Restrict);
 
-
+          // Department
           builder.Entity<Department>()
-           .HasMany(d => d.Assignments)
-           .WithOne(a => a.Department)
-           .HasForeignKey(a => a.DepartmentId)
-           .OnDelete(DeleteBehavior.Restrict);
+             .HasMany(d => d.Assignments)
+             .WithOne(a => a.Department)
+             .HasForeignKey(a => a.DepartmentId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            // Purpose
+          builder.Entity<Purpose>()
+            .HasMany(p => p.Factors)
+            .WithOne(f => f.Purpose)
+            .HasForeignKey(f => f.PurposeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            // WorkLevel
+          builder.Entity<WorkLevel>()
+            .HasMany(wl => wl.Factors)
+            .WithOne(f => f.WorkLevel)
+            .HasForeignKey(f => f.WorkLevelId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            // WorkType
+          builder.Entity<WorkType>()
+            .HasMany(wt => wt.Factors)
+            .WithOne(f => f.WorkType)
+            .HasForeignKey(f => f.WorkTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
         }
 
-   }
+    }
 }
 

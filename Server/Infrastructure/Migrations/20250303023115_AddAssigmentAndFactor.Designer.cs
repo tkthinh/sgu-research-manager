@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250302150412_AddAssignment")]
-    partial class AddAssignment
+    [Migration("20250303023115_AddAssigmentAndFactor")]
+    partial class AddAssigmentAndFactor
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -225,6 +225,48 @@ namespace Infrastructure.Migrations
                     b.HasIndex("OfficerRankId");
 
                     b.ToTable("Employees");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Factor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Hours")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PurposeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<float>("Score")
+                        .HasColumnType("real");
+
+                    b.Property<Guid>("WorkLevelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PurposeId");
+
+                    b.HasIndex("WorkLevelId");
+
+                    b.HasIndex("WorkTypeId");
+
+                    b.ToTable("Factors");
                 });
 
             modelBuilder.Entity("Domain.Entities.Field", b =>
@@ -550,6 +592,33 @@ namespace Infrastructure.Migrations
                     b.Navigation("OfficerRank");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Factor", b =>
+                {
+                    b.HasOne("Domain.Entities.Purpose", "Purpose")
+                        .WithMany("Factors")
+                        .HasForeignKey("PurposeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
+                        .WithMany("Factors")
+                        .HasForeignKey("WorkLevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.WorkType", "WorkType")
+                        .WithMany("Factors")
+                        .HasForeignKey("WorkTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Purpose");
+
+                    b.Navigation("WorkLevel");
+
+                    b.Navigation("WorkType");
+                });
+
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
                     b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
@@ -634,6 +703,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Purpose", b =>
                 {
                     b.Navigation("Authors");
+
+                    b.Navigation("Factors");
                 });
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
@@ -641,9 +712,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("Authors");
                 });
 
+            modelBuilder.Entity("Domain.Entities.WorkLevel", b =>
+                {
+                    b.Navigation("Factors");
+                });
+
             modelBuilder.Entity("Domain.Entities.WorkType", b =>
                 {
                     b.Navigation("AuthorRoles");
+
+                    b.Navigation("Factors");
 
                     b.Navigation("WorkStatuses");
                 });

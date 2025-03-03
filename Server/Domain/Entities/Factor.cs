@@ -1,6 +1,15 @@
 ﻿namespace Domain.Entities
 {
-    class Factor
+    public class Factor : BaseEntity
     {
+        public Guid WorkTypeId { get; set; }
+        public Guid WorkLevelId { get; set; }
+        public Guid PurposeId { get; set; }
+        public required string Name { get; set; }
+        public float Score { get; set; } // Mức điểm của công trình
+        public int Hours { get; set; } // Giờ được quy đổi theo mục đích: Vượt/Nghĩa vụ
+        public virtual WorkType? WorkType { get; set; }
+        public virtual WorkLevel? WorkLevel { get; set; }
+        public virtual Purpose? Purpose { get; set; }
     }
 }

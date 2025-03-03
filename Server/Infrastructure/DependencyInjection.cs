@@ -21,6 +21,7 @@ using Application.WorkTypes;
 using Application.ProofStatuses;
 using Application.AuthorRoles;
 using Application.Assignments;
+using Application.Factors;
 
 namespace Infrastructure
 {
@@ -93,6 +94,7 @@ namespace Infrastructure
          services.AddScoped<IProofStatusService, ProofStatusService>();
          services.AddScoped<IAuthorRoleService, AuthorRoleService>();
          services.AddScoped<IAssignmentService, AssignmentService>();
+         services.AddScoped<IFactorService, FactorService>();
 
 
 
@@ -109,6 +111,7 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<ProofStatusDto, ProofStatus>, ProofStatusMapper>();
          services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
          services.AddScoped<IGenericMapper<AssignmentDto, Assignment>, AssignmentMapper>();
+         services.AddScoped<IGenericMapper<FactorDto, Factor>, FactorMapper>();
 
 
 
