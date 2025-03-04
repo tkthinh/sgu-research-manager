@@ -1,13 +1,14 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
+using System.Linq;
 
-namespace Application.WorkLevels
+namespace Application.BookExtraOptions
 {
-    public class WorkLevelMapper : IGenericMapper<WorkLevelDto, WorkLevel>
+    public class BookExtraOptionMapper : IGenericMapper<BookExtraOptionDto, BookExtraOption>
     {
-        public WorkLevelDto MapToDto(WorkLevel entity)
+        public BookExtraOptionDto MapToDto(BookExtraOption entity)
         {
-            return new WorkLevelDto
+            return new BookExtraOptionDto
             {
                 Id = entity.Id,
                 Name = entity.Name,
@@ -17,10 +18,9 @@ namespace Application.WorkLevels
             };
         }
 
-        public WorkLevel MapToEntity(WorkLevelDto dto)
+        public BookExtraOption MapToEntity(BookExtraOptionDto dto)
         {
-
-           return new WorkLevel
+            return new BookExtraOption
             {
                 Id = dto.Id,
                 Name = dto.Name,
@@ -30,12 +30,12 @@ namespace Application.WorkLevels
             };
         }
 
-        public IEnumerable<WorkLevelDto> MapToDtos(IEnumerable<WorkLevel> entities)
+        public IEnumerable<BookExtraOptionDto> MapToDtos(IEnumerable<BookExtraOption> entities)
         {
             return entities.Select(MapToDto);
         }
 
-        public IEnumerable<WorkLevel> MapToEntities(IEnumerable<WorkLevelDto> dtos)
+        public IEnumerable<BookExtraOption> MapToEntities(IEnumerable<BookExtraOptionDto> dtos)
         {
             return dtos.Select(MapToEntity);
         }

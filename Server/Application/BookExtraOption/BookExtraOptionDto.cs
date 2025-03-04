@@ -1,7 +1,8 @@
-﻿
-namespace Application.WorkLevels
+﻿using System;
+
+namespace Application.BookExtraOptions
 {
-    public class WorkLevelDto
+    public class BookExtraOptionDto
     {
         public Guid Id { get; set; }
         public required string Name { get; set; }

@@ -28,6 +28,7 @@ namespace Infrastructure.Data
       public DbSet<Author> Authors { get; set; }
       public DbSet<Assignment> Assignments { get; set; }
       public DbSet<Factor> Factors { get; set; }
+      public DbSet<BookExtraOption> BookExtraOptions { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
@@ -183,6 +184,19 @@ namespace Infrastructure.Data
             .HasMany(wt => wt.Factors)
             .WithOne(f => f.WorkType)
             .HasForeignKey(f => f.WorkTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<WorkType>()
+            .HasMany(wt => wt.WorkLevels)
+            .WithOne(wl => wl.WorkType)
+            .HasForeignKey(wl => wl.WorkTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+            // Cấu hình quan hệ 1‑n giữa WorkType và BookExtraOption
+            builder.Entity<WorkType>()
+            .HasMany(wt => wt.BookExtraOptions)
+            .WithOne(beo => beo.WorkType)
+            .HasForeignKey(beo => beo.WorkTypeId)
             .OnDelete(DeleteBehavior.Restrict);
         }
 

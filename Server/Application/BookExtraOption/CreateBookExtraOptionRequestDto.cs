@@ -1,6 +1,6 @@
-﻿namespace Application.WorkLevels
+﻿namespace Application.BookExtraOptions
 {
-    public class UpdateWorkLevelRequestDto
+    public class CreateBookExtraOptionRequestDto
     {
         public required string Name { get; set; }
         public Guid WorkTypeId { get; set; }

@@ -22,6 +22,7 @@ using Application.ProofStatuses;
 using Application.AuthorRoles;
 using Application.Assignments;
 using Application.Factors;
+using Application.BookExtraOptions;
 
 namespace Infrastructure
 {
@@ -95,6 +96,7 @@ namespace Infrastructure
          services.AddScoped<IAuthorRoleService, AuthorRoleService>();
          services.AddScoped<IAssignmentService, AssignmentService>();
          services.AddScoped<IFactorService, FactorService>();
+         services.AddScoped<IBookExtraOptionService, BookExtraOptionService>();
 
 
 
@@ -112,6 +114,7 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
          services.AddScoped<IGenericMapper<AssignmentDto, Assignment>, AssignmentMapper>();
          services.AddScoped<IGenericMapper<FactorDto, Factor>, FactorMapper>();
+         services.AddScoped<IGenericMapper<BookExtraOptionDto, BookExtraOption>, BookExtraOptionMapper>();
 
 
 

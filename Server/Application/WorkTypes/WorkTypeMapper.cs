@@ -11,6 +11,7 @@ namespace Application.WorkTypes
             {
                 Id = entity.Id,
                 Name = entity.Name,
+                HasExtraOption = entity.HasExtraOption,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
@@ -22,6 +23,7 @@ namespace Application.WorkTypes
             {
                 Id = dto.Id,
                 Name = dto.Name,
+                HasExtraOption = dto.HasExtraOption,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate
             };
