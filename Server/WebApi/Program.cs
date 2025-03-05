@@ -17,6 +17,14 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddCors(options =>
+{
+   options.AddPolicy("AllowDev",
+       policy => policy.WithOrigins("http://localhost:5173")
+                       .AllowAnyMethod()
+                       .AllowAnyHeader());
+});
+
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
@@ -27,6 +35,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseCors("AllowDev");
 
 app.UseHttpsRedirection();
 

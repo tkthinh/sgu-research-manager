@@ -1,29 +1,34 @@
-import { ReactRouterAppProvider } from '@toolpad/core/react-router';
-import { NAVIGATION } from './Navigation';
-import { Outlet } from 'react-router-dom';
-import { useMemo, useState } from 'react';
-import { Session } from '@toolpad/core';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Session } from "@toolpad/core";
+import { ReactRouterAppProvider } from "@toolpad/core/react-router";
+import { useMemo, useState } from "react";
+import { Outlet } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { NAVIGATION } from "./Navigation";
 
 const BRANDING = {
-  logo: <img src='./logo.png' alt='SGU'/>,
-  title: 'SGU - NCKH',
-}
+  logo: <img src="/logo.png" alt="SGU" />,
+  title: "SGU - NCKH",
+};
 
 export default function App() {
   const [session, setSession] = useState<Session | null>({
     user: {
-      name: 'Nguyễn Văn A',
-      email: 'test@sgu.edu.vn',
+      name: "Nguyễn Văn A",
+      email: "test@sgu.edu.vn",
     },
   });
+
+  const queryClient = new QueryClient();
 
   const authentication = useMemo(() => {
     return {
       signIn: () => {
         setSession({
           user: {
-            name: 'Nguyễn Văn A',
-            email: 'test@sgu.edu.vn',
+            name: "Nguyễn Văn A",
+            email: "test@sgu.edu.vn",
           },
         });
       },
@@ -34,8 +39,16 @@ export default function App() {
   }, []);
 
   return (
-    <ReactRouterAppProvider navigation={NAVIGATION} branding={BRANDING} session={session} authentication={authentication}>
-      <Outlet />
+    <ReactRouterAppProvider
+      navigation={NAVIGATION}
+      branding={BRANDING}
+      session={session}
+      authentication={authentication}
+    >
+      <QueryClientProvider client={queryClient}>
+        <ToastContainer position="top-right" autoClose={2000} />
+        <Outlet />
+      </QueryClientProvider>
     </ReactRouterAppProvider>
   );
 }
