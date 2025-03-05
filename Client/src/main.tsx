@@ -10,7 +10,7 @@ import '@fontsource/roboto/700.css';
 
 import { ThemeProvider } from '@mui/material';
 import { RouterProvider } from 'react-router-dom';
-import { router } from './app/routes/router';
+import { router } from './app/routes/Router';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
