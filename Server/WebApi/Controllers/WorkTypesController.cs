@@ -51,8 +51,7 @@ namespace WebApi.Controllers
             {
                 var workTypeDto = new WorkTypeDto
                 {
-                    Name = requestDto.Name,
-                    HasExtraOption = requestDto.HasExtraOption
+                    Name = requestDto.Name
                 };
 
                 var workType = await workTypeService.CreateAsync(workTypeDto);
@@ -83,7 +82,6 @@ namespace WebApi.Controllers
                 }
 
                 existingWorkType.Name = request.Name;
-                existingWorkType.HasExtraOption = request.HasExtraOption;
                 await workTypeService.UpdateAsync(existingWorkType);
 
                 return Ok(new ApiResponse<object>(true, "Cập nhật loại công trình thành công"));

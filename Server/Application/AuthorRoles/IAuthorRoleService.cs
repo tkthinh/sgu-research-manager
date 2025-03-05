@@ -4,5 +4,6 @@ namespace Application.AuthorRoles
 {
     public interface IAuthorRoleService : IGenericService<AuthorRoleDto>
     {
+        Task<IEnumerable<AuthorRoleDto>> GetByWorkTypeIdAsync(Guid workTypeId);
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Application.Shared.Services;
-using Application.WorkTypes;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
@@ -13,8 +12,7 @@ namespace Application.WorkLevels
         public WorkLevelService(
             IUnitOfWork unitOfWork,
             IGenericMapper<WorkLevelDto, WorkLevel> mapper,
-            IDistributedCache cache,
-            IGenericMapper<WorkTypeDto, WorkType> mappe)
+            IDistributedCache cache)
             : base(unitOfWork, mapper, cache)
         {
             _unitOfWork = unitOfWork;
@@ -23,9 +21,9 @@ namespace Application.WorkLevels
 
         public async Task<IEnumerable<WorkLevelDto>> GetWorkLevelsByWorkTypeIdAsync(Guid workTypeId)
         {
-            // Sử dụng phương thức FindAsync được định nghĩa trong repository
             var workLevels = await _unitOfWork.Repository<WorkLevel>()
                 .FindAsync(wl => wl.WorkTypeId == workTypeId);
+
             return _mapper.MapToDtos(workLevels);
         }
     }

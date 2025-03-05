@@ -20,7 +20,6 @@ namespace Infrastructure.Data
       public DbSet<Field> Fields { get; set; }
       public DbSet<AcademicRank> AcademicRanks { get; set; }
       public DbSet<OfficerRank> OfficerRanks { get; set; }
-      public DbSet<WorkStatus> WorkStatuses { get; set; }
       public DbSet<WorkType> WorkTypes { get; set; }
       public DbSet<ProofStatus> ProofStatuses { get; set; }
       public DbSet<AuthorRole> AuthorRoles { get; set; }
@@ -28,7 +27,6 @@ namespace Infrastructure.Data
       public DbSet<Author> Authors { get; set; }
       public DbSet<Assignment> Assignments { get; set; }
       public DbSet<Factor> Factors { get; set; }
-      public DbSet<BookExtraOption> BookExtraOptions { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
@@ -97,25 +95,19 @@ namespace Infrastructure.Data
          builder.Entity<Work>()
              .HasOne(w => w.WorkType)
              .WithMany()
-             .HasForeignKey(w => w.TypeId)
+             .HasForeignKey(w => w.WorkTypeId)
              .OnDelete(DeleteBehavior.Restrict);
 
          builder.Entity<Work>()
              .HasOne(w => w.WorkLevel)
              .WithMany()
-             .HasForeignKey(w => w.LevelId)
-             .OnDelete(DeleteBehavior.Restrict);
-
-         builder.Entity<Work>()
-             .HasOne(w => w.WorkStatus)
-             .WithMany()
-             .HasForeignKey(w => w.StatusId)
+             .HasForeignKey(w => w.WorkLevelId)
              .OnDelete(DeleteBehavior.Restrict);
 
          builder.Entity<Work>()
              .HasOne(w => w.ProofStatus)
              .WithMany()
-             .HasForeignKey(w => w.ProofId)
+             .HasForeignKey(w => w.WorkProofId)
              .OnDelete(DeleteBehavior.Restrict);
 
          builder.Entity<Work>()
@@ -192,12 +184,6 @@ namespace Infrastructure.Data
             .HasForeignKey(wl => wl.WorkTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-            // Cấu hình quan hệ 1‑n giữa WorkType và BookExtraOption
-            builder.Entity<WorkType>()
-            .HasMany(wt => wt.BookExtraOptions)
-            .WithOne(beo => beo.WorkType)
-            .HasForeignKey(beo => beo.WorkTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
         }
 
     }

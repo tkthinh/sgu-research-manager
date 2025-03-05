@@ -1,7 +1,10 @@
-﻿namespace Domain.Entities
+﻿using System;
+
+namespace Application.Authors
 {
-    public class Author : BaseEntity
+    public class AuthorDto
     {
+        public Guid Id { get; set; }
         public Guid WorkId { get; set; }
         public Guid UserId { get; set; }
         public Guid AuthorRoleId { get; set; }
@@ -14,10 +17,7 @@
         public bool IsNotMatch { get; set; }
         public bool MarkedForScoring { get; set; }
         public string? CoAuthors { get; set; }
-
-        public virtual Employee? User { get; set; }
-        public virtual AuthorRole? AuthorRole { get; set; }
-        public virtual Work? Work { get; set; }
-        public virtual Purpose? Purpose { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime? ModifiedDate { get; set; }
     }
 }

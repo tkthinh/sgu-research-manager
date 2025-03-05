@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250305111947_Update_Author_Work_AuthorRole")]
+    partial class Update_Author_Work_AuthorRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -348,12 +351,7 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("WorkTypeId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("WorkTypeId");
 
                     b.ToTable("Purposes");
                 });
@@ -422,6 +420,8 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("WorkProofId");
 
+                    b.HasIndex("WorkStatusId");
+
                     b.HasIndex("WorkTypeId");
 
                     b.ToTable("Works");
@@ -451,6 +451,32 @@ namespace Infrastructure.Migrations
                     b.HasIndex("WorkTypeId");
 
                     b.ToTable("WorkLevels");
+                });
+
+            modelBuilder.Entity("Domain.Entities.WorkStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("WorkTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkTypeId");
+
+                    b.ToTable("WorkStatuses");
                 });
 
             modelBuilder.Entity("Domain.Entities.WorkType", b =>
@@ -601,17 +627,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("WorkType");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Purpose", b =>
-                {
-                    b.HasOne("Domain.Entities.WorkType", "WorkType")
-                        .WithMany("Purposes")
-                        .HasForeignKey("WorkTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WorkType");
-                });
-
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
                     b.HasOne("Domain.Entities.Field", "FieldForScoring")
@@ -632,6 +647,12 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.WorkStatus", "WorkStatus")
+                        .WithMany()
+                        .HasForeignKey("WorkStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.WorkType", "WorkType")
                         .WithMany()
                         .HasForeignKey("WorkTypeId")
@@ -644,6 +665,8 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("WorkLevel");
 
+                    b.Navigation("WorkStatus");
+
                     b.Navigation("WorkType");
                 });
 
@@ -653,6 +676,17 @@ namespace Infrastructure.Migrations
                         .WithMany("WorkLevels")
                         .HasForeignKey("WorkTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("WorkType");
+                });
+
+            modelBuilder.Entity("Domain.Entities.WorkStatus", b =>
+                {
+                    b.HasOne("Domain.Entities.WorkType", "WorkType")
+                        .WithMany("WorkStatuses")
+                        .HasForeignKey("WorkTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("WorkType");
@@ -708,9 +742,9 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("Factors");
 
-                    b.Navigation("Purposes");
-
                     b.Navigation("WorkLevels");
+
+                    b.Navigation("WorkStatuses");
                 });
 #pragma warning restore 612, 618
         }

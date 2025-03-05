@@ -43,6 +43,17 @@ namespace WebApi.Controllers
             ));
         }
 
+        [HttpGet("by-worktype/{workTypeId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<AuthorRoleDto>>>> GetAuthorRolesByWorkTypeId([FromRoute] Guid workTypeId)
+        {
+            var roles = await authorRoleService.GetByWorkTypeIdAsync(workTypeId);
+            return Ok(new ApiResponse<IEnumerable<AuthorRoleDto>>(
+                true,
+                "Lấy dữ liệu vai trò tác giả theo loại công trình thành công",
+                roles
+            ));
+        }
+
         [HttpPost]
         public async Task<ActionResult<ApiResponse<AuthorRoleDto>>> CreateAuthorRole([FromBody] CreateAuthorRoleRequestDto requestDto)
         {

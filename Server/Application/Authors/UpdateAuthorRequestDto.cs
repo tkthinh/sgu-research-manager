@@ -1,6 +1,6 @@
-﻿namespace Domain.Entities
+﻿namespace Application.Authors
 {
-    public class Author : BaseEntity
+    public class UpdateAuthorRequestDto
     {
         public Guid WorkId { get; set; }
         public Guid UserId { get; set; }
@@ -14,10 +14,5 @@
         public bool IsNotMatch { get; set; }
         public bool MarkedForScoring { get; set; }
         public string? CoAuthors { get; set; }
-
-        public virtual Employee? User { get; set; }
-        public virtual AuthorRole? AuthorRole { get; set; }
-        public virtual Work? Work { get; set; }
-        public virtual Purpose? Purpose { get; set; }
     }
 }

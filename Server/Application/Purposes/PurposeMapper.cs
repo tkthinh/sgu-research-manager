@@ -11,6 +11,7 @@ namespace Application.Purposes
          {
             Id = entity.Id,
             Name = entity.Name,
+            WorkTypeId = entity.WorkTypeId,
             CreatedDate = entity.CreatedDate,
             ModifiedDate = entity.ModifiedDate
          };
@@ -21,6 +22,7 @@ namespace Application.Purposes
          {
             Id = dto.Id,
             Name = dto.Name,
+            WorkTypeId = dto.WorkTypeId,
             CreatedDate = dto.CreatedDate,
             ModifiedDate = dto.ModifiedDate
          };
