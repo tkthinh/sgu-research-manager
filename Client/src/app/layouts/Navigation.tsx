@@ -8,6 +8,7 @@ import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RestorePageIcon from '@mui/icons-material/RestorePage';
+import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 
 export const NAVIGATION: Navigation = [
   {
@@ -22,6 +23,11 @@ export const NAVIGATION: Navigation = [
     segment: 'cong-trinh',
     title: 'Công trình',
     icon: <ConstructionIcon />,
+  },
+  {
+    segment: 'quy-doi',
+    title: 'Đăng ký quy đổi',
+    icon: <LibraryAddIcon />,
   },
   {
     segment: 'cham-diem',
@@ -71,6 +77,21 @@ export const NAVIGATION: Navigation = [
         title: 'Hệ số chấm điểm',
       },
       {
+        segment: 'vai-tro-tac-gia',
+        title: 'Vai trò tác giả',
+      },
+      {
+        segment: 'muc-dich-quy-doi',
+        title: 'Mục đích quy đổi',
+      },
+      {
+        segment: 'tinh-trang-minh-chung',
+        title: 'Tình trạng minh chứng',
+      },
+      {
+        kind: 'divider',
+      },
+      {
         segment: 'loai-cong-trinh',
         title: 'Loại công trình',
       },
@@ -83,16 +104,7 @@ export const NAVIGATION: Navigation = [
         title: 'Tình trạng công trình',
       },
       {
-        segment: 'vai-tro-tac-gia',
-        title: 'Vai trò tác giả',
-      },
-      {
-        segment: 'muc-dich-quy-doi',
-        title: 'Mục đích quy đổi',
-      },
-      {
-        segment: 'tinh-trang-minh-chung',
-        title: 'Tình trạng minh chứng',
+        kind: 'divider',
       },
       {
         segment: 'nganh',
