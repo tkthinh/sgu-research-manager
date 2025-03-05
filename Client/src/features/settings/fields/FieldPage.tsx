@@ -1,20 +1,32 @@
-import { Box, Button, CircularProgress, Paper } from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Typography,
+} from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { getFields } from "../../../lib/api/fieldsApi";
-import FieldForm from "./FieldForm";
 import { toast } from "react-toastify";
+import GenericTable from "../../../app/shared/components/tables/DataTable";
+import { deleteField, getFields } from "../../../lib/api/fieldsApi";
+import FieldForm from "./FieldForm";
 
 export default function FieldPage() {
-  // Fetch data
+  const queryClient = useQueryClient();
+
+  // Fetch fields
   const { data, error, isPending, isSuccess } = useQuery({
     queryKey: ["fields"],
     queryFn: getFields,
   });
 
-  // Toast message
+  // Toast notifications
   useEffect(() => {
     if (isSuccess && data) {
       toast.success(data.message);
@@ -23,7 +35,7 @@ export default function FieldPage() {
 
   useEffect(() => {
     if (error) {
-      toast.error("Error fetching departments: " + (error as Error).message);
+      toast.error("Có lỗi đã xảy ra: " + (error as Error).message);
     }
   }, [error]);
 
@@ -42,14 +54,40 @@ export default function FieldPage() {
     handleOpen(row);
   };
 
-  // Handle deletion
-  const handleDelete = (id) => {
-    // Implement delete logic here
-    console.log("Delete ID:", id);
+  // Handle delete confirmation dialog
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDeleteClick = (id: string) => {
+    setDeleteId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteId(null);
+    setDeleteDialogOpen(false);
+  };
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteField(id),
+    onSuccess: () => {
+      toast.success("Xóa ngành thành công!");
+      queryClient.invalidateQueries({ queryKey: ["fields"] }); // Refresh the data
+      setDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error("Lỗi khi xóa: " + (error as Error).message);
+    },
+  });
+
+  const handleDeleteConfirm = () => {
+    if (deleteId) {
+      deleteMutation.mutate(deleteId);
+    }
   };
 
   const columns: GridColDef[] = [
-    // { field: "id", headerName: "Id", type: "string", width: 200 },
     { field: "name", headerName: "Tên ngành", type: "string", width: 500 },
     {
       field: "actions",
@@ -63,6 +101,7 @@ export default function FieldPage() {
             size="small"
             onClick={() => handleEdit(params.row)}
             sx={{ marginRight: 1 }}
+            disabled={deleteMutation.isPending}
           >
             Sửa
           </Button>
@@ -70,7 +109,8 @@ export default function FieldPage() {
             variant="contained"
             color="error"
             size="small"
-            onClick={() => handleDelete(params.row.id)}
+            onClick={() => handleDeleteClick(params.row.id)}
+            disabled={deleteMutation.isPending}
           >
             Xóa
           </Button>
@@ -85,19 +125,43 @@ export default function FieldPage() {
   return (
     <>
       <Box
-        display={"flex"}
-        flexDirection={"column-reverse"}
-        alignItems={"flex-end"}
+        display="flex"
+        flexDirection="column-reverse"
+        alignItems="flex-end"
         sx={{ marginBottom: 2 }}
       >
         <Button variant="contained" onClick={() => handleOpen(null)}>
           Thêm ngành
         </Button>
       </Box>
-      <Paper sx={{ width: 1010, marginX: 'auto' }}>
+      <Paper sx={{ width: 1010, marginX: "auto" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
       <FieldForm open={open} handleClose={handleClose} data={selectedData} />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
+        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogContent>
+          <Typography>Bạn có chắc chắn muốn xóa ngành này?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleDeleteCancel}
+            disabled={deleteMutation.isPending}
+          >
+            Hủy
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? "Đang xóa..." : "Xóa"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
