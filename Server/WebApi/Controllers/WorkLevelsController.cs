@@ -1,5 +1,6 @@
 ﻿using Application.Shared.Response;
 using Application.WorkLevels;
+using Application.WorkTypes;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
@@ -43,6 +44,18 @@ namespace WebApi.Controllers
                 true,
                 "Lấy dữ liệu cấp công trình thành công",
                 workLevel
+            ));
+        }
+
+
+        [HttpGet("by-worktype/{workTypeId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkLevelDto>>>> GetWorkLevelsByWorkTypeId([FromRoute] Guid workTypeId)
+        {
+            var workLevels = await workLevelService.GetWorkLevelsByWorkTypeIdAsync(workTypeId);
+            return Ok(new ApiResponse<IEnumerable<WorkLevelDto>>(
+                true,
+                "Lấy dữ liệu cấp công trình theo loại công trình thành công",
+                workLevels
             ));
         }
 

@@ -1,118 +1,119 @@
-﻿    using Application.WorkTypes;
-    using Application.Shared.Response;
-    using Microsoft.AspNetCore.Mvc;
+﻿using Application.WorkTypes;
+using Application.Shared.Response;
+using Microsoft.AspNetCore.Mvc;
+using Application.WorkLevels;
 
-    namespace WebApi.Controllers
+namespace WebApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class WorkTypesController : ControllerBase
     {
-        [Route("api/[controller]")]
-        [ApiController]
-        public class WorkTypesController : ControllerBase
+        private readonly IWorkTypeService workTypeService;
+        private readonly ILogger<WorkTypesController> logger;
+
+        public WorkTypesController(IWorkTypeService workTypeService, ILogger<WorkTypesController> logger)
         {
-            private readonly IWorkTypeService workTypeService;
-            private readonly ILogger<WorkTypesController> logger;
+            this.workTypeService = workTypeService;
+            this.logger = logger;
+        }
 
-            public WorkTypesController(IWorkTypeService workTypeService, ILogger<WorkTypesController> logger)
+        [HttpGet]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkTypeDto>>>> GetWorkTypes()
+        {
+            var workTypes = await workTypeService.GetAllAsync();
+            return Ok(new ApiResponse<IEnumerable<WorkTypeDto>>(
+                true,
+                "Lấy dữ liệu loại công trình thành công",
+                workTypes
+            ));
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ApiResponse<WorkTypeDto>>> GetWorkType([FromRoute] Guid id)
+        {
+            var workType = await workTypeService.GetByIdAsync(id);
+            if (workType is null)
             {
-                this.workTypeService = workTypeService;
-                this.logger = logger;
+                return NotFound(new ApiResponse<WorkTypeDto>(false, "Không tìm thấy loại công trình"));
             }
+            return Ok(new ApiResponse<WorkTypeDto>(
+                true,
+                "Lấy dữ liệu loại công trình thành công",
+                workType
+            ));
+        }
 
-            [HttpGet]
-            public async Task<ActionResult<ApiResponse<IEnumerable<WorkTypeDto>>>> GetWorkTypes()
+        [HttpPost]
+        public async Task<ActionResult<ApiResponse<WorkTypeDto>>> CreateWorkType([FromBody] CreateWorkTypeRequestDto requestDto)
+        {
+            try
             {
-                var workTypes = await workTypeService.GetAllAsync();
-                return Ok(new ApiResponse<IEnumerable<WorkTypeDto>>(
-                    true,
-                    "Lấy dữ liệu loại công trình thành công",
-                    workTypes
-                ));
-            }
-
-            [HttpGet("{id}")]
-            public async Task<ActionResult<ApiResponse<WorkTypeDto>>> GetWorkType([FromRoute] Guid id)
-            {
-                var workType = await workTypeService.GetByIdAsync(id);
-                if (workType is null)
+                var workTypeDto = new WorkTypeDto
                 {
-                    return NotFound(new ApiResponse<WorkTypeDto>(false, "Không tìm thấy loại công trình"));
-                }
-                return Ok(new ApiResponse<WorkTypeDto>(
+                    Name = requestDto.Name,
+                    HasExtraOption = requestDto.HasExtraOption
+                };
+
+                var workType = await workTypeService.CreateAsync(workTypeDto);
+                var response = new ApiResponse<WorkTypeDto>(
                     true,
-                    "Lấy dữ liệu loại công trình thành công",
+                    "Tạo loại công trình thành công",
                     workType
-                ));
+                );
+
+                return CreatedAtAction(nameof(GetWorkType), new { id = workType.Id }, response);
             }
-
-            [HttpPost]
-            public async Task<ActionResult<ApiResponse<WorkTypeDto>>> CreateWorkType([FromBody] CreateWorkTypeRequestDto requestDto)
+            catch (ArgumentException ex)
             {
-                try
-                {
-                    var workTypeDto = new WorkTypeDto
-                    {
-                        Name = requestDto.Name,
-                        HasExtraOption = requestDto.HasExtraOption
-                    };
-
-                    var workType = await workTypeService.CreateAsync(workTypeDto);
-                    var response = new ApiResponse<WorkTypeDto>(
-                        true,
-                        "Tạo loại công trình thành công",
-                        workType
-                    );
-
-                    return CreatedAtAction(nameof(GetWorkType), new { id = workType.Id }, response);
-                }
-                catch (ArgumentException ex)
-                {
-                    logger.LogError(ex, "Error creating work type");
-                    return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
-                }
+                logger.LogError(ex, "Error creating work type");
+                return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
             }
+        }
 
-            [HttpPut("{id}")]
-            public async Task<ActionResult<ApiResponse<object>>> UpdateWorkType([FromRoute] Guid id, [FromBody] UpdateWorkTypeRequestDto request)
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ApiResponse<object>>> UpdateWorkType([FromRoute] Guid id, [FromBody] UpdateWorkTypeRequestDto request)
+        {
+            try
             {
-                try
+                var existingWorkType = await workTypeService.GetByIdAsync(id);
+                if (existingWorkType is null)
                 {
-                    var existingWorkType = await workTypeService.GetByIdAsync(id);
-                    if (existingWorkType is null)
-                    {
-                        return NotFound(new ApiResponse<object>(false, "Không tìm thấy loại công trình"));
-                    }
-
-                    existingWorkType.Name = request.Name;
-                    existingWorkType.HasExtraOption = request.HasExtraOption;
-                    await workTypeService.UpdateAsync(existingWorkType);
-
-                    return Ok(new ApiResponse<object>(true, "Cập nhật loại công trình thành công"));
+                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy loại công trình"));
                 }
-                catch (ArgumentException ex)
-                {
-                    logger.LogError(ex, "Error updating work type");
-                    return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
-                }
+
+                existingWorkType.Name = request.Name;
+                existingWorkType.HasExtraOption = request.HasExtraOption;
+                await workTypeService.UpdateAsync(existingWorkType);
+
+                return Ok(new ApiResponse<object>(true, "Cập nhật loại công trình thành công"));
             }
-
-            [HttpDelete("{id}")]
-            public async Task<ActionResult<ApiResponse<object>>> DeleteWorkType([FromRoute] Guid id)
+            catch (ArgumentException ex)
             {
-                try
-                {
-                    var existingWorkType = await workTypeService.GetByIdAsync(id);
-                    if (existingWorkType is null)
-                    {
-                        return NotFound(new ApiResponse<object>(false, "Không tìm thấy loại công trình"));
-                    }
+                logger.LogError(ex, "Error updating work type");
+                return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
+            }
+        }
 
-                    await workTypeService.DeleteAsync(id);
-                    return Ok(new ApiResponse<object>(true, "Xóa loại công trình thành công"));
-                }
-                catch (Exception ex)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<ApiResponse<object>>> DeleteWorkType([FromRoute] Guid id)
+        {
+            try
+            {
+                var existingWorkType = await workTypeService.GetByIdAsync(id);
+                if (existingWorkType is null)
                 {
-                    logger.LogError(ex, "Error deleting work type");
-                    return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
+                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy loại công trình"));
                 }
+
+                await workTypeService.DeleteAsync(id);
+                return Ok(new ApiResponse<object>(true, "Xóa loại công trình thành công"));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error deleting work type");
+                return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
             }
         }
     }
+}
