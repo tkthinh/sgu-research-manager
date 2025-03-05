@@ -4,6 +4,7 @@ import Layout from "../layouts/Layout";
 
 import Dashboard from "../../features/dashboard/Dashboard";
 import FieldPage from "../../features/settings/fields/FieldPage";
+import DepartmentPage from "../../features/settings/departments/DepartmentPage";
 
 export const router = createBrowserRouter([
   {
@@ -53,10 +54,15 @@ export const router = createBrowserRouter([
             path: "/he-thong/lich-su-upload",
             element: <></>,
           },
-          // Cấu hình hệ thống
+          // Ngành
           {
             path: "/he-thong/nganh",
             element: <FieldPage />,
+          },
+          // Đơn vị công tác
+          {
+            path: "/he-thong/don-vi",
+            element: <DepartmentPage />,
           },
         ],
       },
