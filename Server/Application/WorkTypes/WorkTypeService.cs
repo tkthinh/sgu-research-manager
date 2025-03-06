@@ -10,8 +10,8 @@ namespace Application.WorkTypes
         public WorkTypeService(
             IUnitOfWork unitOfWork,
             IGenericMapper<WorkTypeDto, WorkType> mapper,
-            IDistributedCache cache
-        ) : base(unitOfWork, mapper, cache)
+            IDistributedCache cache)
+            : base(unitOfWork, mapper, cache)
         {
         }
     }

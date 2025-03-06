@@ -3,13 +3,13 @@ using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Application.WorkStatuses
+namespace Application.Factors
 {
-    public class WorkStatusService : GenericCachedService<WorkStatusDto, WorkStatus>, IWorkStatusService
+    public class FactorService : GenericCachedService<FactorDto, Factor>, IFactorService
     {
-        public WorkStatusService(
+        public FactorService(
             IUnitOfWork unitOfWork,
-            IGenericMapper<WorkStatusDto, WorkStatus> mapper,
+            IGenericMapper<FactorDto, Factor> mapper,
             IDistributedCache cache
         ) : base(unitOfWork, mapper, cache)
         {

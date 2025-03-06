@@ -1,7 +1,7 @@
 ﻿using Application.Shared.Response;
 using Application.WorkLevels;
+using Application.WorkTypes;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
 
 namespace WebApi.Controllers
 {
@@ -47,6 +47,18 @@ namespace WebApi.Controllers
             ));
         }
 
+
+        [HttpGet("by-worktype/{workTypeId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkLevelDto>>>> GetWorkLevelsByWorkTypeId([FromRoute] Guid workTypeId)
+        {
+            var workLevels = await workLevelService.GetWorkLevelsByWorkTypeIdAsync(workTypeId);
+            return Ok(new ApiResponse<IEnumerable<WorkLevelDto>>(
+                true,
+                "Lấy dữ liệu cấp công trình theo loại công trình thành công",
+                workLevels
+            ));
+        }
+
         [HttpPost]
         public async Task<ActionResult<ApiResponse<WorkLevelDto>>> CreateWorkLevel([FromBody] CreateWorkLevelRequestDto requestDto)
         {
@@ -55,6 +67,7 @@ namespace WebApi.Controllers
                 var workLevelDto = new WorkLevelDto
                 {
                     Name = requestDto.Name,
+                    WorkTypeId = requestDto.WorkTypeId
                 };
 
                 var workLevel = await workLevelService.CreateAsync(workLevelDto);
@@ -85,6 +98,7 @@ namespace WebApi.Controllers
                 }
 
                 existingWorkLevel.Name = request.Name;
+                existingWorkLevel.WorkTypeId = request.WorkTypeId;
                 await workLevelService.UpdateAsync(existingWorkLevel);
 
                 return Ok(new ApiResponse<object>(true, "Cập nhật cấp công trình"));
