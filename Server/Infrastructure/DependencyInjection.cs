@@ -23,6 +23,7 @@ using Application.Assignments;
 using Application.Factors;
 using Application.Authors;
 using Application.Works;
+using Infrastructure.Data.Repositories;
 
 namespace Infrastructure
 {
@@ -102,8 +103,8 @@ namespace Infrastructure
 
 
 
-            // Đăng ký các mapper
-            services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
+         // Đăng ký các mapper
+         services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
          services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
          services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
          services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
@@ -120,7 +121,10 @@ namespace Infrastructure
 
 
 
-            return services;
+         // Đăng ký custom repository (nếu có)
+         services.AddScoped<IWorkTypeRepository, WorkTypeRepository>();
+
+         return services;
       }
    }
 }
