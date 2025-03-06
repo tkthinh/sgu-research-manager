@@ -14,22 +14,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { deleteField, getFields } from "../../../lib/api/fieldsApi";
-import FieldForm from "./FieldForm";
+import { deleteWorkType, getWorkTypes } from "../../../lib/api/workTypesApi";
+import WorkTypeForm from "./WorkTypeForm";
 
-export default function FieldPage() {
+export default function WorkTypePage() {
   const queryClient = useQueryClient();
 
-  // Fetch fields
+  // Fetch work types
   const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
-    queryKey: ["fields"],
-    queryFn: getFields,
+    queryKey: ["workTypes"],
+    queryFn: getWorkTypes,
   });
 
   // Toast notifications
   useEffect(() => {
     if (isSuccess && data) {
-      toast.success(data.message, { toastId: "fetch-fields-success" });
+      toast.success(data.message);
     }
   }, [dataUpdatedAt]);
 
@@ -70,10 +70,10 @@ export default function FieldPage() {
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteField(id),
+    mutationFn: (id: string) => deleteWorkType(id),
     onSuccess: () => {
-      toast.success("Xóa ngành thành công!");
-      queryClient.invalidateQueries({ queryKey: ["fields"] }); // Refresh the data
+      toast.success("Xóa loại công trình thành công!");
+      queryClient.invalidateQueries({ queryKey: ["workTypes"] }); // Refresh the data
       setDeleteDialogOpen(false);
     },
     onError: (error) => {
@@ -88,11 +88,23 @@ export default function FieldPage() {
   };
 
   const columns: GridColDef[] = [
-    { field: "name", headerName: "Tên ngành", type: "string", width: 500 },
+    {
+      field: "name",
+      headerName: "Tên loại công trình",
+      type: "string",
+      width: 330,
+    },
+    {
+      field: "workLevelCount",
+      headerName: "Số cấp liên quan",
+      type: "number",
+      valueFormatter: (value) => value + ' cấp',
+      width: 330,
+    },
     {
       field: "actions",
       headerName: "",
-      width: 500,
+      width: 330,
       renderCell: (params) => (
         <Box>
           <Button
@@ -131,19 +143,19 @@ export default function FieldPage() {
         sx={{ marginBottom: 2 }}
       >
         <Button variant="contained" onClick={() => handleOpen(null)}>
-          Thêm ngành
+          Thêm loại công trình
         </Button>
       </Box>
       <Paper sx={{ width: 1010, marginX: "auto" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
-      <FieldForm open={open} handleClose={handleClose} data={selectedData} />
+      <WorkTypeForm open={open} handleClose={handleClose} data={selectedData} />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa ngành này?</Typography>
+          <Typography>Bạn có chắc chắn muốn xóa loại công trình này?</Typography>
         </DialogContent>
         <DialogActions>
           <Button

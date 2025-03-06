@@ -2,6 +2,7 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace Application.AcademicRanks
 {
@@ -10,9 +11,10 @@ namespace Application.AcademicRanks
         public AcademicRankService(
             IUnitOfWork unitOfWork,
             IGenericMapper<AcademicRankDto, AcademicRank> mapper,
-            IDistributedCache cache
+            IDistributedCache cache,
+            ILogger<AcademicRankService> logger
         )
-        : base(unitOfWork, mapper, cache)
+        : base(unitOfWork, mapper, cache, logger)
         {
         }
     }

@@ -14,14 +14,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { deleteDepartment, getDepartments } from "../../../lib/api/departmentsApi";
+import {
+  deleteDepartment,
+  getDepartments,
+} from "../../../lib/api/departmentsApi";
 import DepartmentForm from "./DepartmentForm";
 
 export default function DepartmentPage() {
   const queryClient = useQueryClient();
 
   // Fetch departments
-  const { data, error, isPending, isSuccess } = useQuery({
+  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
     queryKey: ["departments"],
     queryFn: getDepartments,
   });
@@ -29,9 +32,9 @@ export default function DepartmentPage() {
   // Toast notifications
   useEffect(() => {
     if (isSuccess && data) {
-      toast.success(data.message);
+      toast.success(data.message, { toastId: "fetch-departments-success" });
     }
-  }, [isSuccess, data]);
+  }, [dataUpdatedAt]);
 
   useEffect(() => {
     if (error) {
@@ -72,7 +75,7 @@ export default function DepartmentPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteDepartment(id),
     onSuccess: () => {
-      toast.success("Xóa phòng ban thành công!");
+      toast.success("Xóa đơn vị thành công!");
       queryClient.invalidateQueries({ queryKey: ["departments"] }); // Refresh the data
       setDeleteDialogOpen(false);
     },
@@ -88,7 +91,7 @@ export default function DepartmentPage() {
   };
 
   const columns: GridColDef[] = [
-    { field: "name", headerName: "Tên phòng ban", type: "string", width: 500 },
+    { field: "name", headerName: "Tên đơn vị", type: "string", width: 500 },
     {
       field: "actions",
       headerName: "",
@@ -131,19 +134,23 @@ export default function DepartmentPage() {
         sx={{ marginBottom: 2 }}
       >
         <Button variant="contained" onClick={() => handleOpen(null)}>
-          Thêm phòng ban
+          Thêm đơn vị
         </Button>
       </Box>
       <Paper sx={{ width: 1010, marginX: "auto" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
-      <DepartmentForm open={open} handleClose={handleClose} data={selectedData} />
+      <DepartmentForm
+        open={open}
+        handleClose={handleClose}
+        data={selectedData}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa phòng ban này?</Typography>
+          <Typography>Bạn có chắc chắn muốn xóa đơn vị này?</Typography>
         </DialogContent>
         <DialogActions>
           <Button

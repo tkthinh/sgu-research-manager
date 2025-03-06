@@ -7,7 +7,7 @@ namespace Infrastructure.Data.Repositories
 {
    public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
    {
-      private readonly ApplicationDbContext context;
+      protected readonly ApplicationDbContext context;
       private readonly DbSet<T> dbSet;
 
       public GenericRepository(ApplicationDbContext context)
@@ -57,9 +57,10 @@ namespace Infrastructure.Data.Repositories
             await context.SaveChangesAsync();
          }
       }
+
       public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
       {
-          return await dbSet.Where(predicate).ToListAsync();
+         return await dbSet.Where(predicate).ToListAsync();
       }
-    }
+   }
 }

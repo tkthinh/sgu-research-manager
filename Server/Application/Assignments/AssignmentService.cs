@@ -2,6 +2,7 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Assignments
 {
@@ -10,8 +11,9 @@ namespace Application.Assignments
         public AssignmentService(
             IUnitOfWork unitOfWork,
             IGenericMapper<AssignmentDto, Assignment> mapper,
-            IDistributedCache cache
-        ) : base(unitOfWork, mapper, cache)
+            IDistributedCache cache,
+            ILogger<AssignmentService> logger
+        ) : base(unitOfWork, mapper, cache, logger)
         {
         }
     }

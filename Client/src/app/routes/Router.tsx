@@ -3,8 +3,10 @@ import App from "../layouts/App";
 import Layout from "../layouts/Layout";
 
 import Dashboard from "../../features/dashboard/Dashboard";
-import FieldPage from "../../features/settings/fields/FieldPage";
 import DepartmentPage from "../../features/settings/departments/DepartmentPage";
+import FieldPage from "../../features/settings/fields/FieldPage";
+import Setting from "../../features/settings/Setting";
+import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +41,10 @@ export const router = createBrowserRouter([
           },
 
           // ============== HỆ THỐNG ==============
+          {
+            path: "/he-thong",
+            element: <Setting />,
+          },
           // Quản lý tài khoản
           {
             path: "/he-thong/quan-ly-tai-khoan",
@@ -53,6 +59,16 @@ export const router = createBrowserRouter([
           {
             path: "/he-thong/lich-su-upload",
             element: <></>,
+          },
+          // Loại công trình
+          {
+            path: "/he-thong/loai-cong-trinh",
+            element: <WorkTypePage />,
+          },
+          // Cấp công trình
+          {
+            path: "/he-thong/don-vi",
+            element: <DepartmentPage />,
           },
           // Ngành
           {

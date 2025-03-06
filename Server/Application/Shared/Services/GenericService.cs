@@ -28,7 +28,7 @@ namespace Application.Shared.Services
          return mapper.MapToDto(entity);
       }
 
-      public virtual async Task<IEnumerable<TDto>> GetAllAsync(CancellationToken cancellationToken)
+      public virtual async Task<IEnumerable<TDto>> GetAllAsync(CancellationToken cancellationToken = default)
       {
          var entities = await unitOfWork.Repository<T>().GetAllAsync();
 
