@@ -1,0 +1,33 @@
+import { ApiResponse } from "../types/common/ApiResponse";
+import { WorkType } from "../types/models/WorkType";
+import apiClient from "./api";
+
+// Fetch all work types
+export const getWorkTypes = async (): Promise<ApiResponse<WorkType[]>> => {
+  const response = await apiClient.get<ApiResponse<WorkType[]>>("/worktypes");
+  return response.data;
+};
+
+// Fetch work type by ID
+export const getWorkTypeById = async (id: string): Promise<ApiResponse<WorkType>> => {
+  const response = await apiClient.get<ApiResponse<WorkType>>(`/worktypes/${id}`);
+  return response.data;
+};
+
+// Create a new work type
+export const createWorkType = async (workTypeData: Partial<WorkType>) => {
+  const response = await apiClient.post("/worktypes", workTypeData);
+  return response.data;
+};
+
+// Update a work type
+export const updateWorkType = async (id: string, workTypeData: Partial<WorkType>) => {
+  const response = await apiClient.put(`/worktypes/${id}`, workTypeData);
+  return response.data;
+};
+
+// Delete a work type
+export const deleteWorkType = async (id: string) => {
+  const response = await apiClient.delete(`/worktypes/${id}`);
+  return response;
+};
