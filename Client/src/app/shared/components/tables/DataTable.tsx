@@ -1,4 +1,5 @@
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { viVN } from '@mui/x-data-grid/locales';
 import React from "react";
 
 interface GenericTableProps {
@@ -16,6 +17,7 @@ const GenericTable: React.FC<GenericTableProps> = ({ columns, data }) => {
       initialState={{ pagination: { paginationModel } }}
       pageSizeOptions={[10, 15, 25]}
       disableRowSelectionOnClick={true}
+      localeText={viVN.components.MuiDataGrid.defaultProps.localeText}
     />
   );
 };
