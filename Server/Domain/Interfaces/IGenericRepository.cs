@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using System.Linq.Expressions;
 
 namespace Domain.Interfaces
 {
@@ -9,6 +10,7 @@ namespace Domain.Interfaces
       Task CreateAsync(T entity);
       Task UpdateAsync(T entity);
       Task DeleteAsync(Guid id);
-      //Task SaveChangesAsync();
-   }
+        //Task SaveChangesAsync();
+      Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
+    }
 }

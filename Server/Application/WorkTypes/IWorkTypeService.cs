@@ -1,4 +1,5 @@
-﻿using Domain.Interfaces;
+﻿using Application.WorkLevels;
+using Domain.Interfaces;
 
 namespace Application.WorkTypes
 {

@@ -43,6 +43,33 @@ namespace Infrastructure.Migrations
                     b.ToTable("AcademicRanks");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Assignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Assignments");
+                });
+
             modelBuilder.Entity("Domain.Entities.Author", b =>
                 {
                     b.Property<Guid>("Id")
@@ -51,6 +78,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid>("AuthorRoleId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CoAuthors")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -76,7 +106,7 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Position")
+                    b.Property<int?>("Position")
                         .HasColumnType("int");
 
                     b.Property<Guid>("PurposeId")
@@ -197,6 +227,48 @@ namespace Infrastructure.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Factor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Hours")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PurposeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<float>("Score")
+                        .HasColumnType("real");
+
+                    b.Property<Guid>("WorkLevelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PurposeId");
+
+                    b.HasIndex("WorkLevelId");
+
+                    b.HasIndex("WorkTypeId");
+
+                    b.ToTable("Factors");
+                });
+
             modelBuilder.Entity("Domain.Entities.Field", b =>
                 {
                     b.Property<Guid>("Id")
@@ -276,7 +348,12 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("WorkTypeId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("WorkTypeId");
 
                     b.ToTable("Purposes");
                 });
@@ -293,10 +370,7 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("LevelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("MainAuthorCount")
+                    b.Property<int?>("MainAuthorCount")
                         .HasColumnType("int");
 
                     b.Property<float>("ManagerWorkScore")
@@ -308,18 +382,12 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("ProofId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("ScoringFieldId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("StatusId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateOnly?>("TimePublished")
                         .HasColumnType("date");
@@ -328,52 +396,38 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TotalAuthors")
+                    b.Property<int?>("TotalAuthors")
                         .HasColumnType("int");
 
                     b.Property<int>("TotalHours")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("TypeId")
+                    b.Property<Guid>("WorkLevelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkProofId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkStatusId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("WorkTypeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("LevelId");
-
-                    b.HasIndex("ProofId");
-
                     b.HasIndex("ScoringFieldId");
 
-                    b.HasIndex("StatusId");
+                    b.HasIndex("WorkLevelId");
 
-                    b.HasIndex("TypeId");
+                    b.HasIndex("WorkProofId");
+
+                    b.HasIndex("WorkTypeId");
 
                     b.ToTable("Works");
                 });
 
             modelBuilder.Entity("Domain.Entities.WorkLevel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WorkLevels");
-                });
-
-            modelBuilder.Entity("Domain.Entities.WorkStatus", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -396,7 +450,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("WorkTypeId");
 
-                    b.ToTable("WorkStatuses");
+                    b.ToTable("WorkLevels");
                 });
 
             modelBuilder.Entity("Domain.Entities.WorkType", b =>
@@ -418,6 +472,25 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("WorkTypes");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Assignment", b =>
+                {
+                    b.HasOne("Domain.Entities.Department", "Department")
+                        .WithMany("Assignments")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Employee", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.Author", b =>
@@ -501,35 +574,67 @@ namespace Infrastructure.Migrations
                     b.Navigation("OfficerRank");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Factor", b =>
+                {
+                    b.HasOne("Domain.Entities.Purpose", "Purpose")
+                        .WithMany("Factors")
+                        .HasForeignKey("PurposeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
+                        .WithMany("Factors")
+                        .HasForeignKey("WorkLevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.WorkType", "WorkType")
+                        .WithMany("Factors")
+                        .HasForeignKey("WorkTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Purpose");
+
+                    b.Navigation("WorkLevel");
+
+                    b.Navigation("WorkType");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Purpose", b =>
+                {
+                    b.HasOne("Domain.Entities.WorkType", "WorkType")
+                        .WithMany("Purposes")
+                        .HasForeignKey("WorkTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkType");
+                });
+
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
-                    b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
-                        .WithMany()
-                        .HasForeignKey("LevelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.ProofStatus", "ProofStatus")
-                        .WithMany()
-                        .HasForeignKey("ProofId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.Field", "FieldForScoring")
                         .WithMany()
                         .HasForeignKey("ScoringFieldId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.WorkStatus", "WorkStatus")
+                    b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
                         .WithMany()
-                        .HasForeignKey("StatusId")
+                        .HasForeignKey("WorkLevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.ProofStatus", "ProofStatus")
+                        .WithMany()
+                        .HasForeignKey("WorkProofId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.WorkType", "WorkType")
                         .WithMany()
-                        .HasForeignKey("TypeId")
+                        .HasForeignKey("WorkTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -539,17 +644,15 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("WorkLevel");
 
-                    b.Navigation("WorkStatus");
-
                     b.Navigation("WorkType");
                 });
 
-            modelBuilder.Entity("Domain.Entities.WorkStatus", b =>
+            modelBuilder.Entity("Domain.Entities.WorkLevel", b =>
                 {
                     b.HasOne("Domain.Entities.WorkType", "WorkType")
-                        .WithMany("WorkStatuses")
+                        .WithMany("WorkLevels")
                         .HasForeignKey("WorkTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("WorkType");
@@ -567,6 +670,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Department", b =>
                 {
+                    b.Navigation("Assignments");
+
                     b.Navigation("Employees");
                 });
 
@@ -583,6 +688,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Purpose", b =>
                 {
                     b.Navigation("Authors");
+
+                    b.Navigation("Factors");
                 });
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
@@ -590,11 +697,20 @@ namespace Infrastructure.Migrations
                     b.Navigation("Authors");
                 });
 
+            modelBuilder.Entity("Domain.Entities.WorkLevel", b =>
+                {
+                    b.Navigation("Factors");
+                });
+
             modelBuilder.Entity("Domain.Entities.WorkType", b =>
                 {
                     b.Navigation("AuthorRoles");
 
-                    b.Navigation("WorkStatuses");
+                    b.Navigation("Factors");
+
+                    b.Navigation("Purposes");
+
+                    b.Navigation("WorkLevels");
                 });
 #pragma warning restore 612, 618
         }

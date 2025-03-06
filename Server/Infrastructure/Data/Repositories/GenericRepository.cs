@@ -1,7 +1,7 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
-using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Infrastructure.Data.Repositories
 {
@@ -57,6 +57,9 @@ namespace Infrastructure.Data.Repositories
             await context.SaveChangesAsync();
          }
       }
-
-   }
+      public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
+      {
+          return await dbSet.Where(predicate).ToListAsync();
+      }
+    }
 }

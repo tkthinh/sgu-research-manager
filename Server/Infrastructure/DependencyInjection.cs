@@ -4,7 +4,6 @@ using Application.Fields;
 using Application.OfficerRanks;
 using Application.Purposes;
 using Application.WorkLevels;
-using Application.WorkStatuses;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Data;
@@ -20,6 +19,10 @@ using Infrastructure.Identity;
 using Application.WorkTypes;
 using Application.ProofStatuses;
 using Application.AuthorRoles;
+using Application.Assignments;
+using Application.Factors;
+using Application.Authors;
+using Application.Works;
 
 namespace Infrastructure
 {
@@ -87,29 +90,37 @@ namespace Infrastructure
          services.AddScoped<IFieldService, FieldService>();
          services.AddScoped<IAcademicRankService, AcademicRankService>();
          services.AddScoped<IOfficerRankService, OfficerRankService>();
-         services.AddScoped<IWorkStatusService, WorkStatusService>();
          services.AddScoped<IWorkTypeService, WorkTypeService>();
          services.AddScoped<IProofStatusService, ProofStatusService>();
          services.AddScoped<IAuthorRoleService, AuthorRoleService>();
+         services.AddScoped<IAssignmentService, AssignmentService>();
+         services.AddScoped<IFactorService, FactorService>();
+         services.AddScoped<IAuthorService, AuthorService>();
+         services.AddScoped<IWorkService, WorkService>();
 
 
 
 
-         // Đăng ký các mapper
-         services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
+
+            // Đăng ký các mapper
+            services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
          services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
          services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
          services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
          services.AddScoped<IGenericMapper<AcademicRankDto, AcademicRank>, AcademicRankMapper>();
          services.AddScoped<IGenericMapper<OfficerRankDto, OfficerRank>, OfficerRankMapper>();
-         services.AddScoped<IGenericMapper<WorkStatusDto, WorkStatus>, WorkStatusMapper>();
          services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
          services.AddScoped<IGenericMapper<ProofStatusDto, ProofStatus>, ProofStatusMapper>();
          services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
+         services.AddScoped<IGenericMapper<AssignmentDto, Assignment>, AssignmentMapper>();
+         services.AddScoped<IGenericMapper<FactorDto, Factor>, FactorMapper>();
+         services.AddScoped<IGenericMapper<AuthorDto, Author>, AuthorMapper>();
+         services.AddScoped<IGenericMapper<WorkDto, Work>, WorkMapper>();
 
 
 
-         return services;
+
+            return services;
       }
    }
 }

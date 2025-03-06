@@ -1,6 +1,7 @@
 ﻿using Application.WorkTypes;
 using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
+using Application.WorkLevels;
 
 namespace WebApi.Controllers
 {
@@ -50,7 +51,7 @@ namespace WebApi.Controllers
             {
                 var workTypeDto = new WorkTypeDto
                 {
-                    Name = requestDto.Name,
+                    Name = requestDto.Name
                 };
 
                 var workType = await workTypeService.CreateAsync(workTypeDto);
