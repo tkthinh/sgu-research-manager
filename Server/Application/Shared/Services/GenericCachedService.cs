@@ -13,6 +13,7 @@ namespace Application.Shared.Services
       protected readonly IDistributedCache cache;
       protected readonly string cacheKeyPrefix;
       protected readonly ILogger logger;
+      protected bool isCacheAvailable = true;
 
       public GenericCachedService(
           IUnitOfWork unitOfWork,
@@ -26,6 +27,9 @@ namespace Application.Shared.Services
          this.cache = cache;
          this.logger = logger;
          cacheKeyPrefix = typeof(T).Name.ToLower();
+
+         // Perform initial cache availability check
+         CheckCacheAvailability();
       }
 
       public virtual async Task<TDto> CreateAsync(TDto dto, CancellationToken cancellationToken = default)
@@ -36,48 +40,53 @@ namespace Application.Shared.Services
          await unitOfWork.Repository<T>().CreateAsync(entity);
          await unitOfWork.SaveChangesAsync();
 
-         // Clear cache after modification.
-         await InvalidateCacheAsync();
+         // Only try to clear cache if it was available
+         await SafeInvalidateCacheAsync();
 
          return mapper.MapToDto(entity);
       }
 
       public virtual async Task<IEnumerable<TDto>> GetAllAsync(CancellationToken cancellationToken = default)
       {
-         string cacheKey = $"{cacheKeyPrefix}_all";
-         string? cachedData = null;
-
-         try
+         if (isCacheAvailable)
          {
-            cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
-         }
-         catch (Exception ex)
-         {
-            logger.LogError(ex, "Error reading cache for key {CacheKey}", cacheKey);
+            string cacheKey = $"{cacheKeyPrefix}_all";
+            string? cachedData = null;
+
+            try
+            {
+               cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+               HandleCacheException(ex, $"Error reading cache for key {cacheKey}");
+            }
+
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+               try
+               {
+                  return JsonSerializer.Deserialize<IEnumerable<TDto>>(cachedData)!;
+               }
+               catch (Exception ex)
+               {
+                  logger.LogError(ex, "Error deserializing cached data for key {CacheKey}", cacheKey);
+               }
+            }
          }
 
-         if (!string.IsNullOrEmpty(cachedData))
-         {
-            return JsonSerializer.Deserialize<IEnumerable<TDto>>(cachedData)!;
-         }
-
+         // If cache is unavailable or empty, get from database
          var entities = await unitOfWork.Repository<T>().GetAllAsync();
          var dtos = mapper.MapToDtos(entities);
 
-         try
+         // Only try to cache if it was available
+         if (isCacheAvailable)
          {
-            await cache.SetStringAsync(
-                cacheKey,
+            await SafeSetCacheAsync(
+                $"{cacheKeyPrefix}_all",
                 JsonSerializer.Serialize(dtos),
-                new DistributedCacheEntryOptions
-                {
-                   AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
-                },
+                TimeSpan.FromMinutes(30),
                 cancellationToken);
-         }
-         catch (Exception ex)
-         {
-            logger.LogError(ex, "Error writing cache for key {CacheKey}", cacheKey);
          }
 
          return dtos;
@@ -85,43 +94,48 @@ namespace Application.Shared.Services
 
       public virtual async Task<TDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
       {
-         string cacheKey = $"{cacheKeyPrefix}_{id}";
-         string? cachedData = null;
-
-         try
+         if (isCacheAvailable)
          {
-            cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
-         }
-         catch (Exception ex)
-         {
-            logger.LogError(ex, "Error reading cache for key {CacheKey}", cacheKey);
+            string cacheKey = $"{cacheKeyPrefix}_{id}";
+            string? cachedData = null;
+
+            try
+            {
+               cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+               HandleCacheException(ex, $"Error reading cache for key {cacheKey}");
+            }
+
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+               try
+               {
+                  return JsonSerializer.Deserialize<TDto>(cachedData);
+               }
+               catch (Exception ex)
+               {
+                  logger.LogError(ex, "Error deserializing cached data for key {CacheKey}", cacheKey);
+               }
+            }
          }
 
-         if (!string.IsNullOrEmpty(cachedData))
-         {
-            return JsonSerializer.Deserialize<TDto>(cachedData);
-         }
-
+         // If cache is unavailable or empty, get from database
          var entity = await unitOfWork.Repository<T>().GetByIdAsync(id);
          if (entity == null)
             return default;
 
          var dto = mapper.MapToDto(entity);
 
-         try
+         // Only try to cache if it was available
+         if (isCacheAvailable)
          {
-            await cache.SetStringAsync(
-                cacheKey,
+            await SafeSetCacheAsync(
+                $"{cacheKeyPrefix}_{id}",
                 JsonSerializer.Serialize(dto),
-                new DistributedCacheEntryOptions
-                {
-                   AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
-                },
+                TimeSpan.FromMinutes(30),
                 cancellationToken);
-         }
-         catch (Exception ex)
-         {
-            logger.LogError(ex, "Error writing cache for key {CacheKey}", cacheKey);
          }
 
          return dto;
@@ -135,7 +149,7 @@ namespace Application.Shared.Services
          await unitOfWork.Repository<T>().UpdateAsync(entity);
          await unitOfWork.SaveChangesAsync();
 
-         await InvalidateCacheAsync(entity.Id);
+         await SafeInvalidateCacheAsync(entity.Id);
       }
 
       public virtual async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -143,11 +157,40 @@ namespace Application.Shared.Services
          await unitOfWork.Repository<T>().DeleteAsync(id);
          await unitOfWork.SaveChangesAsync();
 
-         await InvalidateCacheAsync(id);
+         await SafeInvalidateCacheAsync(id);
       }
 
-      private async Task InvalidateCacheAsync(Guid? id = null)
+      private void HandleCacheException(Exception ex, string message)
       {
+         isCacheAvailable = false;
+         logger.LogWarning(ex, $"{message} - Cache appears to be unavailable");
+      }
+
+      private async Task SafeSetCacheAsync(string key, string value, TimeSpan expiration, CancellationToken cancellationToken = default)
+      {
+         if (!isCacheAvailable) return;
+
+         try
+         {
+            await cache.SetStringAsync(
+                key,
+                value,
+                new DistributedCacheEntryOptions
+                {
+                   AbsoluteExpirationRelativeToNow = expiration
+                },
+                cancellationToken);
+         }
+         catch (Exception ex)
+         {
+            HandleCacheException(ex, $"Error writing cache for key {key}");
+         }
+      }
+
+      private async Task SafeInvalidateCacheAsync(Guid? id = null)
+      {
+         if (!isCacheAvailable) return;
+
          string allKey = $"{cacheKeyPrefix}_all";
          try
          {
@@ -155,7 +198,8 @@ namespace Application.Shared.Services
          }
          catch (Exception ex)
          {
-            logger.LogError(ex, "Error removing cache for key {CacheKey}", allKey);
+            HandleCacheException(ex, $"Error removing cache for key {allKey}");
+            return; // Don't try the second operation if the first fails
          }
 
          if (id != null)
@@ -167,8 +211,22 @@ namespace Application.Shared.Services
             }
             catch (Exception ex)
             {
-               logger.LogError(ex, "Error removing cache for key {CacheKey}", idKey);
+               HandleCacheException(ex, $"Error removing cache for key {idKey}");
             }
+         }
+      }
+
+      private async void CheckCacheAvailability()
+      {
+         try
+         {
+            await cache.GetStringAsync("__ping__");
+            isCacheAvailable = true;
+         }
+         catch (Exception ex)
+         {
+            isCacheAvailable = false;
+            logger.LogWarning(ex, "Cache unavailable - application will run without caching");
          }
       }
    }

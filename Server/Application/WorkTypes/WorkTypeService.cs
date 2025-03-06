@@ -23,14 +23,6 @@ public class WorkTypeService : GenericCachedService<WorkTypeDto, WorkType>, IWor
 
    public async Task<IEnumerable<WorkTypeWithLevelCountDto>> GetWorkTypesWithCountAsync(CancellationToken cancellationToken = default)
    {
-      string cacheKey = $"{cacheKeyPrefix}_all";
-
-      var cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
-      if (cachedData != null)
-      {
-         return JsonSerializer.Deserialize<IEnumerable<WorkTypeWithLevelCountDto>>(cachedData)!;
-      }
-
       var entities = await workTypeRepository.GetWorkTypesWithLevelCountAsync(cancellationToken);
       var dtos = entities.Select(wt => new WorkTypeWithLevelCountDto
       {
@@ -38,13 +30,6 @@ public class WorkTypeService : GenericCachedService<WorkTypeDto, WorkType>, IWor
          Name = wt.Name,
          WorkLevelCount = wt.WorkLevels?.Count ?? 0
       });
-
-      await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(dtos),
-          new DistributedCacheEntryOptions
-          {
-             AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-          },
-          cancellationToken);
 
       return dtos;
    }
