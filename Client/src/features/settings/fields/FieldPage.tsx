@@ -21,7 +21,7 @@ export default function FieldPage() {
   const queryClient = useQueryClient();
 
   // Fetch fields
-  const { data, error, isPending, isSuccess } = useQuery({
+  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
     queryKey: ["fields"],
     queryFn: getFields,
   });
@@ -29,9 +29,9 @@ export default function FieldPage() {
   // Toast notifications
   useEffect(() => {
     if (isSuccess && data) {
-      toast.success(data.message);
+      toast.success(data.message, { toastId: "fetch-fields-success" });
     }
-  }, [isSuccess, data]);
+  }, [dataUpdatedAt]);
 
   useEffect(() => {
     if (error) {

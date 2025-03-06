@@ -14,14 +14,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { deleteDepartment, getDepartments } from "../../../lib/api/departmentsApi";
+import {
+  deleteDepartment,
+  getDepartments,
+} from "../../../lib/api/departmentsApi";
 import DepartmentForm from "./DepartmentForm";
 
 export default function DepartmentPage() {
   const queryClient = useQueryClient();
 
   // Fetch departments
-  const { data, error, isPending, isSuccess } = useQuery({
+  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
     queryKey: ["departments"],
     queryFn: getDepartments,
   });
@@ -29,9 +32,9 @@ export default function DepartmentPage() {
   // Toast notifications
   useEffect(() => {
     if (isSuccess && data) {
-      toast.success(data.message);
+      toast.success(data.message, { toastId: "fetch-departments-success" });
     }
-  }, [isSuccess, data]);
+  }, [dataUpdatedAt]);
 
   useEffect(() => {
     if (error) {
@@ -137,7 +140,11 @@ export default function DepartmentPage() {
       <Paper sx={{ width: 1010, marginX: "auto" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
-      <DepartmentForm open={open} handleClose={handleClose} data={selectedData} />
+      <DepartmentForm
+        open={open}
+        handleClose={handleClose}
+        data={selectedData}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
