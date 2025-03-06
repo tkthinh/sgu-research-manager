@@ -2,6 +2,7 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace Application.ProofStatuses
 {
@@ -10,8 +11,9 @@ namespace Application.ProofStatuses
         public ProofStatusService(
             IUnitOfWork unitOfWork,
             IGenericMapper<ProofStatusDto, ProofStatus> mapper,
-            IDistributedCache cache
-        ) : base(unitOfWork, mapper, cache)
+            IDistributedCache cache,
+            ILogger<ProofStatusService> logger
+        ) : base(unitOfWork, mapper, cache, logger)
         {
         }
     }

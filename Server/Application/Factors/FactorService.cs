@@ -2,6 +2,7 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Factors
 {
@@ -10,8 +11,9 @@ namespace Application.Factors
         public FactorService(
             IUnitOfWork unitOfWork,
             IGenericMapper<FactorDto, Factor> mapper,
-            IDistributedCache cache
-        ) : base(unitOfWork, mapper, cache)
+            IDistributedCache cache,
+            ILogger<FactorService> logger
+        ) : base(unitOfWork, mapper, cache, logger)
         {
         }
     }

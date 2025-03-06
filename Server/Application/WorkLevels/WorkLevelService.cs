@@ -2,29 +2,29 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace Application.WorkLevels
 {
-    public class WorkLevelService : GenericCachedService<WorkLevelDto, WorkLevel>, IWorkLevelService
-    {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IGenericMapper<WorkLevelDto, WorkLevel> _mapper;
-        public WorkLevelService(
-            IUnitOfWork unitOfWork,
-            IGenericMapper<WorkLevelDto, WorkLevel> mapper,
-            IDistributedCache cache)
-            : base(unitOfWork, mapper, cache)
-        {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
-        }
+   public class WorkLevelService : GenericCachedService<WorkLevelDto, WorkLevel>, IWorkLevelService
+   {
+      public WorkLevelService(
+          IUnitOfWork unitOfWork,
+          IGenericMapper<WorkLevelDto, WorkLevel> mapper,
+          IDistributedCache cache,
+          ILogger<WorkLevelService> logger
+          )
+          : base(unitOfWork, mapper, cache, logger)
+      {
+      }
 
-        public async Task<IEnumerable<WorkLevelDto>> GetWorkLevelsByWorkTypeIdAsync(Guid workTypeId)
-        {
-            var workLevels = await _unitOfWork.Repository<WorkLevel>()
-                .FindAsync(wl => wl.WorkTypeId == workTypeId);
+      public async Task<IEnumerable<WorkLevelDto>> GetWorkLevelsByWorkTypeIdAsync(Guid workTypeId)
+      {
+         var workLevels = await unitOfWork.Repository<WorkLevel>()
+             .FindAsync(wl => wl.WorkTypeId == workTypeId);
 
-            return _mapper.MapToDtos(workLevels);
-        }
-    }
+         return mapper.MapToDtos(workLevels);
+      }
+
+   }
 }

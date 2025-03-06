@@ -2,6 +2,7 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Authors
 {
@@ -10,8 +11,10 @@ namespace Application.Authors
         public AuthorService(
             IUnitOfWork unitOfWork,
             IGenericMapper<AuthorDto, Author> mapper,
-            IDistributedCache cache)
-            : base(unitOfWork, mapper, cache)
+            IDistributedCache cache,
+            ILogger<AuthorService> logger
+            )
+            : base(unitOfWork, mapper, cache, logger)
         {
         }
     }

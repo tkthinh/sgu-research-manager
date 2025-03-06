@@ -1,28 +1,31 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using System.Text;
 
 namespace Application.Shared.Services
 {
    public abstract class GenericCachedService<TDto, T> : IGenericService<TDto> where T : BaseEntity
    {
-      private readonly IUnitOfWork unitOfWork;
-      private readonly IGenericMapper<TDto, T> mapper;
-      private readonly IDistributedCache cache;
-      private readonly string cacheKeyPrefix;
+      protected readonly IUnitOfWork unitOfWork;
+      protected readonly IGenericMapper<TDto, T> mapper;
+      protected readonly IDistributedCache cache;
+      protected readonly string cacheKeyPrefix;
+      protected readonly ILogger logger;
 
       public GenericCachedService(
-         IUnitOfWork unitOfWork,
-         IGenericMapper<TDto, T> mapper,
-         IDistributedCache cache
-         )
+          IUnitOfWork unitOfWork,
+          IGenericMapper<TDto, T> mapper,
+          IDistributedCache cache,
+          ILogger logger
+          )
       {
          this.unitOfWork = unitOfWork;
          this.mapper = mapper;
          this.cache = cache;
-         cacheKeyPrefix = typeof(T).Name.ToLower(); // Use entity name as cache key prefix
+         this.logger = logger;
+         cacheKeyPrefix = typeof(T).Name.ToLower();
       }
 
       public virtual async Task<TDto> CreateAsync(TDto dto, CancellationToken cancellationToken = default)
@@ -33,8 +36,8 @@ namespace Application.Shared.Services
          await unitOfWork.Repository<T>().CreateAsync(entity);
          await unitOfWork.SaveChangesAsync();
 
-         // Clear cache after modification
-         await InvalidateCacheAsync(); 
+         // Clear cache after modification.
+         await InvalidateCacheAsync();
 
          return mapper.MapToDto(entity);
       }
@@ -42,9 +45,18 @@ namespace Application.Shared.Services
       public virtual async Task<IEnumerable<TDto>> GetAllAsync(CancellationToken cancellationToken = default)
       {
          string cacheKey = $"{cacheKeyPrefix}_all";
+         string? cachedData = null;
 
-         var cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
-         if (cachedData != null)
+         try
+         {
+            cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(ex, "Error reading cache for key {CacheKey}", cacheKey);
+         }
+
+         if (!string.IsNullOrEmpty(cachedData))
          {
             return JsonSerializer.Deserialize<IEnumerable<TDto>>(cachedData)!;
          }
@@ -52,12 +64,21 @@ namespace Application.Shared.Services
          var entities = await unitOfWork.Repository<T>().GetAllAsync();
          var dtos = mapper.MapToDtos(entities);
 
-         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(dtos),
-            new DistributedCacheEntryOptions
-            {
-               AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-            },
-            cancellationToken);
+         try
+         {
+            await cache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(dtos),
+                new DistributedCacheEntryOptions
+                {
+                   AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+                },
+                cancellationToken);
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(ex, "Error writing cache for key {CacheKey}", cacheKey);
+         }
 
          return dtos;
       }
@@ -65,23 +86,43 @@ namespace Application.Shared.Services
       public virtual async Task<TDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
       {
          string cacheKey = $"{cacheKeyPrefix}_{id}";
+         string? cachedData = null;
 
-         var cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
-         if (cachedData != null)
+         try
+         {
+            cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(ex, "Error reading cache for key {CacheKey}", cacheKey);
+         }
+
+         if (!string.IsNullOrEmpty(cachedData))
          {
             return JsonSerializer.Deserialize<TDto>(cachedData);
          }
 
          var entity = await unitOfWork.Repository<T>().GetByIdAsync(id);
-         if (entity == null) return default;
+         if (entity == null)
+            return default;
 
          var dto = mapper.MapToDto(entity);
-         await cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(dto),
-            new DistributedCacheEntryOptions
-            {
-               AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
-            },
-            cancellationToken);
+
+         try
+         {
+            await cache.SetStringAsync(
+                cacheKey,
+                JsonSerializer.Serialize(dto),
+                new DistributedCacheEntryOptions
+                {
+                   AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+                },
+                cancellationToken);
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(ex, "Error writing cache for key {CacheKey}", cacheKey);
+         }
 
          return dto;
       }
@@ -107,10 +148,27 @@ namespace Application.Shared.Services
 
       private async Task InvalidateCacheAsync(Guid? id = null)
       {
-         await cache.RemoveAsync($"{cacheKeyPrefix}_all");
+         string allKey = $"{cacheKeyPrefix}_all";
+         try
+         {
+            await cache.RemoveAsync(allKey);
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(ex, "Error removing cache for key {CacheKey}", allKey);
+         }
+
          if (id != null)
          {
-            await cache.RemoveAsync($"{cacheKeyPrefix}_{id}");
+            string idKey = $"{cacheKeyPrefix}_{id}";
+            try
+            {
+               await cache.RemoveAsync(idKey);
+            }
+            catch (Exception ex)
+            {
+               logger.LogError(ex, "Error removing cache for key {CacheKey}", idKey);
+            }
          }
       }
    }
