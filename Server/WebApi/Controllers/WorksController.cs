@@ -60,7 +60,7 @@ namespace WebApi.Controllers
                     WorkLevelId = request.WorkLevelId,
                     WorkStatusId = request.WorkStatusId,
                     ScoringFieldId = request.ScoringFieldId,
-                    WorkProofId = request.WorkProofId,
+                    ProofStatus = request.ProofStatus,
                     ManagerWorkScore = request.ManagerWorkScore,
                     TotalAuthors = request.TotalAuthors,
                     TotalHours = request.TotalHours,
@@ -103,7 +103,7 @@ namespace WebApi.Controllers
                 existingWork.WorkLevelId = request.WorkLevelId;
                 existingWork.WorkStatusId = request.WorkStatusId;
                 existingWork.ScoringFieldId = request.ScoringFieldId;
-                existingWork.WorkProofId = request.WorkProofId;
+                existingWork.ProofStatus = request.ProofStatus;
                 existingWork.ManagerWorkScore = request.ManagerWorkScore;
                 existingWork.TotalAuthors = request.TotalAuthors;
                 existingWork.TotalHours = request.TotalHours;

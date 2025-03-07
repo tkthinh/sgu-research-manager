@@ -1,28 +1,29 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Works
 {
-    public class WorkDto
-    {
-        public Guid Id { get; set; }
-        public required string Title { get; set; }
-        public DateOnly? TimePublished { get; set; }
-        public WorkSource Source { get; set; }
-        public string? Note { get; set; }
-        public Dictionary<string, string>? Details { get; set; }
+   public class WorkDto
+   {
+      public Guid Id { get; set; }
+      public required string Title { get; set; }
+      public DateOnly? TimePublished { get; set; }
+      public WorkSource Source { get; set; }
+      public ProofStatus ProofStatus { get; set; }
+      public string? Note { get; set; }
+      public Dictionary<string, string>? Details { get; set; }
 
-        public Guid WorkTypeId { get; set; }
-        public Guid WorkLevelId { get; set; }
-        public Guid WorkStatusId { get; set; }
-        public Guid ScoringFieldId { get; set; }
-        public Guid WorkProofId { get; set; }
+      public Guid WorkTypeId { get; set; }
+      public Guid WorkLevelId { get; set; }
+      public Guid WorkStatusId { get; set; }
+      public Guid ScoringFieldId { get; set; }
 
-        public float ManagerWorkScore { get; set; }
-        public int? TotalAuthors { get; set; }
-        public int TotalHours { get; set; }
-        public int? MainAuthorCount { get; set; }
+      public float ManagerWorkScore { get; set; }
+      public int? TotalAuthors { get; set; }
+      public int TotalHours { get; set; }
+      public int? MainAuthorCount { get; set; }
 
-        public DateTime CreatedDate { get; set; }
-        public DateTime? ModifiedDate { get; set; }
-    }
+      public DateTime CreatedDate { get; set; }
+      public DateTime? ModifiedDate { get; set; }
+   }
 }
