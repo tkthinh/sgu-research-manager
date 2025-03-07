@@ -56,7 +56,7 @@ namespace WebApi.Controllers
                     PurposeId = request.PurposeId,
                     Name = request.Name,
                     Score = request.Score,
-                    Hours = request.Hours
+                    ConvertHour = request.ConvertHour
                 };
 
                 var createdFactor = await factorService.CreateAsync(dto);
@@ -91,7 +91,7 @@ namespace WebApi.Controllers
                 existingFactor.PurposeId = request.PurposeId;
                 existingFactor.Name = request.Name;
                 existingFactor.Score = request.Score;
-                existingFactor.Hours = request.Hours;
+                existingFactor.ConvertHour = request.ConvertHour;
 
                 await factorService.UpdateAsync(existingFactor);
                 return Ok(new ApiResponse<object>(true, "Cập nhật hệ số thành công"));

@@ -23,6 +23,7 @@ using Application.Assignments;
 using Application.Factors;
 using Application.Authors;
 using Application.Works;
+using Application.SCImagoFields;
 using Infrastructure.Data.Repositories;
 
 namespace Infrastructure
@@ -98,6 +99,7 @@ namespace Infrastructure
          services.AddScoped<IFactorService, FactorService>();
          services.AddScoped<IAuthorService, AuthorService>();
          services.AddScoped<IWorkService, WorkService>();
+         services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
 
 
 
@@ -117,6 +119,7 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<FactorDto, Factor>, FactorMapper>();
          services.AddScoped<IGenericMapper<AuthorDto, Author>, AuthorMapper>();
          services.AddScoped<IGenericMapper<WorkDto, Work>, WorkMapper>();
+         services.AddScoped<IGenericMapper<SCImagoFieldDto, SCImagoField>, SCImagoFieldMapper>();
 
 
 

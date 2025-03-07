@@ -27,6 +27,7 @@ namespace Infrastructure.Data
       public DbSet<Author> Authors { get; set; }
       public DbSet<Assignment> Assignments { get; set; }
       public DbSet<Factor> Factors { get; set; }
+      public DbSet<SCImagoField> SCImagoFields { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
@@ -102,12 +103,6 @@ namespace Infrastructure.Data
              .HasOne(w => w.WorkLevel)
              .WithMany()
              .HasForeignKey(w => w.WorkLevelId)
-             .OnDelete(DeleteBehavior.Restrict);
-
-         builder.Entity<Work>()
-             .HasOne(w => w.ProofStatus)
-             .WithMany()
-             .HasForeignKey(w => w.WorkProofId)
              .OnDelete(DeleteBehavior.Restrict);
 
          builder.Entity<Work>()

@@ -1,7 +1,6 @@
 ﻿using Application.Works;
 using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
-using Serilog;
 
 namespace WebApi.Controllers
 {
@@ -45,26 +44,25 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<WorkDto>>> CreateWork([FromBody] CreateWorkRequestDto request)
+        public async Task<ActionResult<ApiResponse<WorkDto>>> CreateWork([FromBody] CreateWorkRequestDto requestDto)
         {
             try
             {
                 var dto = new WorkDto
                 {
-                    Title = request.Title,
-                    TimePublished = request.TimePublished,
-                    Source = request.Source,
-                    Note = request.Note,
-                    Details = request.Details,
-                    WorkTypeId = request.WorkTypeId,
-                    WorkLevelId = request.WorkLevelId,
-                    WorkStatusId = request.WorkStatusId,
-                    ScoringFieldId = request.ScoringFieldId,
-                    WorkProofId = request.WorkProofId,
-                    ManagerWorkScore = request.ManagerWorkScore,
-                    TotalAuthors = request.TotalAuthors,
-                    TotalHours = request.TotalHours,
-                    MainAuthorCount = request.MainAuthorCount
+                    Title = requestDto.Title,
+                    TimePublished = requestDto.TimePublished,
+                    TotalAuthors = requestDto.TotalAuthors,
+                    TotalMainAuthors = requestDto.TotalMainAuthors,
+                    FinalWorkHour = requestDto.FinalWorkHour,
+                    Note = requestDto.Note,
+                    Details = requestDto.Details,
+                    Source = requestDto.Source,
+                    WorkTypeId = requestDto.WorkTypeId,
+                    WorkLevelId = requestDto.WorkLevelId,
+                    SCImagoFieldId = requestDto.SCImagoFieldId,
+                    ScoringFieldId = requestDto.ScoringFieldId,
+                    ProofStatusId = requestDto.ProofStatusId
                 };
 
                 var createdWork = await workService.CreateAsync(dto);
@@ -96,18 +94,17 @@ namespace WebApi.Controllers
 
                 existingWork.Title = request.Title;
                 existingWork.TimePublished = request.TimePublished;
-                existingWork.Source = request.Source;
+                existingWork.TotalAuthors = request.TotalAuthors;
+                existingWork.TotalMainAuthors = request.TotalMainAuthors;
+                existingWork.FinalWorkHour = request.FinalWorkHour;
                 existingWork.Note = request.Note;
                 existingWork.Details = request.Details;
+                existingWork.Source = request.Source;
                 existingWork.WorkTypeId = request.WorkTypeId;
                 existingWork.WorkLevelId = request.WorkLevelId;
-                existingWork.WorkStatusId = request.WorkStatusId;
+                existingWork.SCImagoFieldId = request.SCImagoFieldId;
                 existingWork.ScoringFieldId = request.ScoringFieldId;
-                existingWork.WorkProofId = request.WorkProofId;
-                existingWork.ManagerWorkScore = request.ManagerWorkScore;
-                existingWork.TotalAuthors = request.TotalAuthors;
-                existingWork.TotalHours = request.TotalHours;
-                existingWork.MainAuthorCount = request.MainAuthorCount;
+                existingWork.ProofStatusId = request.ProofStatusId;
 
                 await workService.UpdateAsync(existingWork);
                 return Ok(new ApiResponse<object>(true, "Cập nhật công trình thành công"));

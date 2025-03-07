@@ -57,12 +57,12 @@ namespace WebApi.Controllers
                     PurposeId = requestDto.PurposeId,
                     Position = requestDto.Position,
                     DeclaredScore = requestDto.DeclaredScore,
-                    FinalScore = requestDto.FinalScore,
-                    DeclaredHours = requestDto.DeclaredHours,
-                    FinalHours = requestDto.FinalHours,
+                    FinalAuthorHour = requestDto.FinalAuthorHour,
+                    TempAuthorHour = requestDto.TempAuthorHour,
+                    TempWorkHour = requestDto.TempWorkHour,
                     IsNotMatch = requestDto.IsNotMatch,
                     MarkedForScoring = requestDto.MarkedForScoring,
-                    CoAuthors = requestDto.CoAuthors
+                    CoAuthors = requestDto.CoAuthors,
                 };
 
                 var createdAuthor = await authorService.CreateAsync(dto);
@@ -97,9 +97,9 @@ namespace WebApi.Controllers
                 existingAuthor.PurposeId = request.PurposeId;
                 existingAuthor.Position = request.Position;
                 existingAuthor.DeclaredScore = request.DeclaredScore;
-                existingAuthor.FinalScore = request.FinalScore;
-                existingAuthor.DeclaredHours = request.DeclaredHours;
-                existingAuthor.FinalHours = request.FinalHours;
+                existingAuthor.FinalAuthorHour = request.FinalAuthorHour;
+                existingAuthor.TempAuthorHour = request.TempAuthorHour;
+                existingAuthor.TempWorkHour = request.TempWorkHour;
                 existingAuthor.IsNotMatch = request.IsNotMatch;
                 existingAuthor.MarkedForScoring = request.MarkedForScoring;
                 existingAuthor.CoAuthors = request.CoAuthors;

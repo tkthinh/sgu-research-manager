@@ -15,7 +15,7 @@ namespace Application.Factors
                 PurposeId = entity.PurposeId,
                 Name = entity.Name,
                 Score = entity.Score,
-                Hours = entity.Hours,
+                ConvertHour = entity.ConvertHour,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
@@ -31,7 +31,7 @@ namespace Application.Factors
                 PurposeId = dto.PurposeId,
                 Name = dto.Name,
                 Score = dto.Score,
-                Hours = dto.Hours,
+                ConvertHour = dto.ConvertHour,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate
             };
