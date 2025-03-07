@@ -18,17 +18,14 @@ namespace Infrastructure.Data
       public DbSet<Purpose> Purposes { get; set; }
       public DbSet<WorkLevel> WorkLevels { get; set; }
       public DbSet<Field> Fields { get; set; }
-      public DbSet<AcademicRank> AcademicRanks { get; set; }
-      public DbSet<OfficerRank> OfficerRanks { get; set; }
       public DbSet<WorkType> WorkTypes { get; set; }
-      public DbSet<ProofStatus> ProofStatuses { get; set; }
       public DbSet<AuthorRole> AuthorRoles { get; set; }
       public DbSet<Work> Works { get; set; }
       public DbSet<Author> Authors { get; set; }
       public DbSet<Assignment> Assignments { get; set; }
       public DbSet<Factor> Factors { get; set; }
 
-        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+      public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
          foreach (var entry in ChangeTracker.Entries<BaseEntity>())
          {
@@ -58,28 +55,12 @@ namespace Infrastructure.Data
              .OnDelete(DeleteBehavior.Restrict);
 
          builder.Entity<Employee>()
-             .HasOne(e => e.AcademicRank)
-             .WithMany(a => a.Employees)
-             .HasForeignKey(e => e.AcademicRankId)
-             .OnDelete(DeleteBehavior.Restrict);
-
-         builder.Entity<Employee>()
-             .HasOne(e => e.OfficerRank)
-             .WithMany(o => o.Employees)
-             .HasForeignKey(e => e.OfficerRankId)
-             .OnDelete(DeleteBehavior.Restrict);
-
-         builder.Entity<Employee>()
              .HasOne(e => e.Field)
              .WithMany(f => f.Employees)
              .HasForeignKey(e => e.FieldId)
              .OnDelete(DeleteBehavior.Restrict);
 
          // Work Relationships
-         builder.Entity<Work>()
-             .Property(w => w.Source)
-             .HasConversion<string>();
-
          builder.Entity<Work>()
              .Property(w => w.Details)
              .HasConversion(
@@ -102,12 +83,6 @@ namespace Infrastructure.Data
              .HasOne(w => w.WorkLevel)
              .WithMany()
              .HasForeignKey(w => w.WorkLevelId)
-             .OnDelete(DeleteBehavior.Restrict);
-
-         builder.Entity<Work>()
-             .HasOne(w => w.ProofStatus)
-             .WithMany()
-             .HasForeignKey(w => w.WorkProofId)
              .OnDelete(DeleteBehavior.Restrict);
 
          builder.Entity<Work>()
@@ -150,42 +125,58 @@ namespace Infrastructure.Data
              .HasForeignKey(ar => ar.WorkTypeId)
              .OnDelete(DeleteBehavior.Restrict);
 
-          // Department
-          builder.Entity<Department>()
-             .HasMany(d => d.Assignments)
-             .WithOne(a => a.Department)
-             .HasForeignKey(a => a.DepartmentId)
-             .OnDelete(DeleteBehavior.Restrict);
-
-            // Purpose
-          builder.Entity<Purpose>()
-            .HasMany(p => p.Factors)
-            .WithOne(f => f.Purpose)
-            .HasForeignKey(f => f.PurposeId)
+         // Department
+         builder.Entity<Department>()
+            .HasMany(d => d.Assignments)
+            .WithOne(a => a.Department)
+            .HasForeignKey(a => a.DepartmentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-            // WorkLevel
-          builder.Entity<WorkLevel>()
-            .HasMany(wl => wl.Factors)
-            .WithOne(f => f.WorkLevel)
-            .HasForeignKey(f => f.WorkLevelId)
-            .OnDelete(DeleteBehavior.Restrict);
+         // Purpose
+         builder.Entity<Purpose>()
+           .HasMany(p => p.Factors)
+           .WithOne(f => f.Purpose)
+           .HasForeignKey(f => f.PurposeId)
+           .OnDelete(DeleteBehavior.Restrict);
 
-            // WorkType
-          builder.Entity<WorkType>()
-            .HasMany(wt => wt.Factors)
-            .WithOne(f => f.WorkType)
-            .HasForeignKey(f => f.WorkTypeId)
-            .OnDelete(DeleteBehavior.Restrict);
+         // WorkLevel
+         builder.Entity<WorkLevel>()
+           .HasMany(wl => wl.Factors)
+           .WithOne(f => f.WorkLevel)
+           .HasForeignKey(f => f.WorkLevelId)
+           .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<WorkType>()
+         // WorkType
+         builder.Entity<WorkType>()
+           .HasMany(wt => wt.Factors)
+           .WithOne(f => f.WorkType)
+           .HasForeignKey(f => f.WorkTypeId)
+           .OnDelete(DeleteBehavior.Restrict);
+
+         builder.Entity<WorkType>()
             .HasMany(wt => wt.WorkLevels)
             .WithOne(wl => wl.WorkType)
             .HasForeignKey(wl => wl.WorkTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        }
+         // Enum to string
+         builder.Entity<Work>()
+             .Property(w => w.Source)
+             .HasConversion<string>();
 
-    }
+         builder.Entity<Work>()
+             .Property(w => w.ProofStatus)
+             .HasConversion<string>();
+
+         builder.Entity<Employee>()
+            .Property(e => e.AcademicTitle)
+            .HasConversion<string>();
+
+         builder.Entity<Employee>()
+            .Property(e => e.OfficerRank)
+            .HasConversion<string>();
+      }
+
+   }
 }
 
