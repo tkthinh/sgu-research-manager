@@ -1,9 +1,8 @@
-﻿using System.Reflection.Emit;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Domain.Entities;
-using Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Infrastructure.Data.Seeding;
 
 namespace Infrastructure.Data
 {
@@ -13,7 +12,7 @@ namespace Infrastructure.Data
       {
       }
 
-      public DbSet<Employee> Employees { get; set; }
+      public DbSet<User> Employees { get; set; }
       public DbSet<Department> Departments { get; set; }
       public DbSet<Purpose> Purposes { get; set; }
       public DbSet<WorkLevel> WorkLevels { get; set; }
@@ -48,13 +47,13 @@ namespace Infrastructure.Data
          base.OnModelCreating(builder);
 
          // Employee Relationships
-         builder.Entity<Employee>()
+         builder.Entity<User>()
              .HasOne(e => e.Department)
              .WithMany(d => d.Employees)
              .HasForeignKey(e => e.DepartmentId)
              .OnDelete(DeleteBehavior.Restrict);
 
-         builder.Entity<Employee>()
+         builder.Entity<User>()
              .HasOne(e => e.Field)
              .WithMany(f => f.Employees)
              .HasForeignKey(e => e.FieldId)
@@ -168,13 +167,18 @@ namespace Infrastructure.Data
              .Property(w => w.ProofStatus)
              .HasConversion<string>();
 
-         builder.Entity<Employee>()
+         builder.Entity<User>()
             .Property(e => e.AcademicTitle)
             .HasConversion<string>();
 
-         builder.Entity<Employee>()
+         builder.Entity<User>()
             .Property(e => e.OfficerRank)
             .HasConversion<string>();
+
+
+         // Seed Data
+         builder.ApplyConfiguration(new FieldSeeding());
+         builder.ApplyConfiguration(new DepartmentSeeding());
       }
 
    }
