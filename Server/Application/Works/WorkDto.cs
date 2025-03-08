@@ -10,7 +10,7 @@ namespace Application.Works
         public required string Title { get; set; }
         public DateOnly? TimePublished { get; set; }
         public int? TotalAuthors { get; set; }
-        public int? TotalMainAuthor { get; set; }
+        public int? TotalMainAuthors { get; set; }
         public int FinalWorkHour { get; set; }
 
         public WorkSource Source { get; set; }
@@ -20,7 +20,7 @@ namespace Application.Works
 
         public Guid WorkTypeId { get; set; }
         public Guid WorkLevelId { get; set; }
-        public Guid SCImagoFieldID { get; set; }
+        public Guid SCImagoFieldId { get; set; }
         public Guid ScoringFieldId { get; set; }
 
         public DateTime CreatedDate { get; set; }

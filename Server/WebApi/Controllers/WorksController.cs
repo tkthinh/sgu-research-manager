@@ -124,7 +124,6 @@ namespace WebApi.Controllers
                     WorkLevelId = request.WorkLevelId,
                     SCImagoFieldId = request.SCImagoFieldId,
                     ScoringFieldId = request.ScoringFieldId,
-                    ProofStatusId = request.ProofStatusId,
                     CreatedDate = existingWork.CreatedDate,
                     ModifiedDate = DateTime.UtcNow
                 };

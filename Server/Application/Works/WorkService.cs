@@ -64,7 +64,7 @@ namespace Application.Works
                 WorkLevelId = request.WorkLevelId,
                 SCImagoFieldId = request.SCImagoFieldId,
                 ScoringFieldId = request.ScoringFieldId,
-                ProofStatusId = request.ProofStatusId,
+                ProofStatus = request.ProofStatus,
                 CreatedDate = DateTime.UtcNow
             };
 
