@@ -118,6 +118,7 @@ namespace WebApi.Controllers
                     FinalWorkHour = request.FinalWorkHour,
                     Note = request.Note,
                     Details = request.Details,
+                    ProofStatus = request.ProofStatus,
                     Source = request.Source,
                     WorkTypeId = request.WorkTypeId,
                     WorkLevelId = request.WorkLevelId,

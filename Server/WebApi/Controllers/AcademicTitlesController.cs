@@ -6,14 +6,14 @@ namespace WebApi.Controllers
 {
    [Route("api/[controller]")]
    [ApiController]
-   public class OfficerRanksController : ControllerBase
+   public class AcademicTitlesController : ControllerBase
    {
       [HttpGet]
-      public ActionResult<ApiResponse<IEnumerable<object>>> GetOfficerRanks()
+      public ActionResult<ApiResponse<IEnumerable<object>>> GetAcademicTitles()
       {
-         // Lấy tất cả các giá trị của enum OfficerRank, chuyển đổi sang object gồm id và name.
-         var ranks = Enum.GetValues(typeof(OfficerRank))
-                         .Cast<OfficerRank>()
+         // Lấy tất cả các giá trị của enum AcademicTitle, chuyển đổi sang object gồm id và name.
+         var ranks = Enum.GetValues(typeof(AcademicTitle))
+                         .Cast<AcademicTitle>()
                          .Select(rank => new
                          {
                             Id = (int)rank,
@@ -23,7 +23,7 @@ namespace WebApi.Controllers
 
          return Ok(new ApiResponse<IEnumerable<object>>(
              true,
-             "Lấy dữ liệu ngạch công chức thành công",
+             "Lấy dữ liệu học vị thành công",
              ranks
          ));
       }

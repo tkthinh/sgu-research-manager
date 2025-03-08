@@ -96,7 +96,7 @@ namespace Application.Works
                 WorkLevelId = entity.WorkLevelId,
                 SCImagoFieldId = entity.SCImagoFieldId,
                 ScoringFieldId = entity.ScoringFieldId,
-                ProofStatusId = entity.ProofStatusId,
+                ProofStatus = entity.ProofStatus,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate,
                 Authors = entity.Authors != null ? _authorMapper.MapToDtos(entity.Authors).ToList() : null
@@ -120,7 +120,7 @@ namespace Application.Works
                 WorkLevelId = dto.WorkLevelId,
                 SCImagoFieldId = dto.SCImagoFieldId,
                 ScoringFieldId = dto.ScoringFieldId,
-                ProofStatusId = dto.ProofStatusId,
+                ProofStatus = dto.ProofStatus,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate,
                 Authors = dto.Authors != null ? _authorMapper.MapToEntities(dto.Authors).ToList() : null

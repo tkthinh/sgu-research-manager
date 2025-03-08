@@ -1,7 +1,5 @@
-using Application.AcademicRanks;
 using Application.Departments;
 using Application.Fields;
-using Application.OfficerRanks;
 using Application.Purposes;
 using Application.WorkLevels;
 using Domain.Entities;
@@ -17,7 +15,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Infrastructure.Identity;
 using Application.WorkTypes;
-using Application.ProofStatuses;
 using Application.AuthorRoles;
 using Application.Assignments;
 using Application.Factors;
@@ -91,10 +88,7 @@ namespace Infrastructure
          services.AddScoped<IPurposeService, PurposeService>();
          services.AddScoped<IWorkLevelService, WorkLevelService>();
          services.AddScoped<IFieldService, FieldService>();
-         services.AddScoped<IAcademicRankService, AcademicRankService>();
-         services.AddScoped<IOfficerRankService, OfficerRankService>();
          services.AddScoped<IWorkTypeService, WorkTypeService>();
-         services.AddScoped<IProofStatusService, ProofStatusService>();
          services.AddScoped<IAuthorRoleService, AuthorRoleService>();
          services.AddScoped<IAssignmentService, AssignmentService>();
          services.AddScoped<IFactorService, FactorService>();
@@ -111,10 +105,7 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
          services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
          services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
-         services.AddScoped<IGenericMapper<AcademicRankDto, AcademicRank>, AcademicRankMapper>();
-         services.AddScoped<IGenericMapper<OfficerRankDto, OfficerRank>, OfficerRankMapper>();
          services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
-         services.AddScoped<IGenericMapper<ProofStatusDto, ProofStatus>, ProofStatusMapper>();
          services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
          services.AddScoped<IGenericMapper<AssignmentDto, Assignment>, AssignmentMapper>();
          services.AddScoped<IGenericMapper<FactorDto, Factor>, FactorMapper>();
