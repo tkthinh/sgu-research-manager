@@ -1,7 +1,6 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Data.Repositories;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.UnitOfWork
 {
@@ -23,7 +22,7 @@ namespace Infrastructure.Data.UnitOfWork
          return (IGenericRepository<T>)repositories[typeof(T)];
       }
 
-      public Task<int> SaveChangesAsync()
+      public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
          return context.SaveChangesAsync();
       }

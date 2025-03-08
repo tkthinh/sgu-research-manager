@@ -83,10 +83,11 @@ namespace Infrastructure
 
          // Đăng ký UnitOfWork
          services.AddScoped<IUnitOfWork, UnitOfWork>();
+         services.AddHttpContextAccessor();
 
 
-         // Đăng ký các service
-         services.AddScoped<IDepartmentService, DepartmentService>();
+            // Đăng ký các service
+            services.AddScoped<IDepartmentService, DepartmentService>();
          services.AddScoped<IPurposeService, PurposeService>();
          services.AddScoped<IWorkLevelService, WorkLevelService>();
          services.AddScoped<IFieldService, FieldService>();

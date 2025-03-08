@@ -3,7 +3,7 @@ using Domain.Entities;
 
 namespace Application.Works
 {
-    public class WorkDto
+    public class CreateWorkWithAuthorsRequestDto
     {
         public Guid Id { get; set; }
         public required string Title { get; set; }
@@ -22,7 +22,7 @@ namespace Application.Works
         public DateTime CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
-        // Danh sách tác giả
-        public List<AuthorDto>? Authors { get; set; }
+        // Danh sách tác giả (với các trường cần thiết)
+        public List<CreateAuthorRequestDto> Authors { get; set; } = new List<CreateAuthorRequestDto>();
     }
 }

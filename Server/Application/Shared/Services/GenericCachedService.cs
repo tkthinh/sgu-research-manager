@@ -187,7 +187,7 @@ namespace Application.Shared.Services
          }
       }
 
-      private async Task SafeInvalidateCacheAsync(Guid? id = null)
+      protected async Task SafeInvalidateCacheAsync(Guid? id = null, CancellationToken cancellationToken = default)
       {
          if (!isCacheAvailable) return;
 

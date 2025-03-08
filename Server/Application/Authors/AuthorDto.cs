@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Application.Authors
+﻿namespace Application.Authors
 {
     public class AuthorDto
     {
