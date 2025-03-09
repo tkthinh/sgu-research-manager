@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250308100340_SeedDatabase")]
+    partial class SeedDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -612,17 +615,13 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DepartmentId");
 
                     b.HasIndex("FieldId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
@@ -846,13 +845,13 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.HasOne("Domain.Entities.Department", "Department")
-                        .WithMany("Users")
+                        .WithMany("Employees")
                         .HasForeignKey("DepartmentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Field", "Field")
-                        .WithMany("Users")
+                        .WithMany("Employees")
                         .HasForeignKey("FieldId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -909,12 +908,12 @@ namespace Infrastructure.Migrations
                 {
                     b.Navigation("Assignments");
 
-                    b.Navigation("Users");
+                    b.Navigation("Employees");
                 });
 
             modelBuilder.Entity("Domain.Entities.Field", b =>
                 {
-                    b.Navigation("Users");
+                    b.Navigation("Employees");
                 });
 
             modelBuilder.Entity("Domain.Entities.Purpose", b =>

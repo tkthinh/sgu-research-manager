@@ -21,6 +21,7 @@ using Application.Factors;
 using Application.Authors;
 using Application.Works;
 using Infrastructure.Data.Repositories;
+using Application.Users;
 
 namespace Infrastructure
 {
@@ -92,7 +93,7 @@ namespace Infrastructure
          services.AddScoped<IFactorService, FactorService>();
          services.AddScoped<IAuthorService, AuthorService>();
          services.AddScoped<IWorkService, WorkService>();
-
+         services.AddScoped<IUserService, UserService>();
 
 
 
@@ -108,6 +109,7 @@ namespace Infrastructure
          services.AddScoped<IGenericMapper<FactorDto, Factor>, FactorMapper>();
          services.AddScoped<IGenericMapper<AuthorDto, Author>, AuthorMapper>();
          services.AddScoped<IGenericMapper<WorkDto, Work>, WorkMapper>();
+         services.AddScoped<IGenericMapper<UserDto, User>, UserMapper>();
 
 
 
