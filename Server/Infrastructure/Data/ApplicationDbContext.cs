@@ -12,7 +12,6 @@ namespace Infrastructure.Data
       {
       }
 
-      public DbSet<User> Employees { get; set; }
       public DbSet<Department> Departments { get; set; }
       public DbSet<Purpose> Purposes { get; set; }
       public DbSet<WorkLevel> WorkLevels { get; set; }
@@ -23,6 +22,7 @@ namespace Infrastructure.Data
       public DbSet<Author> Authors { get; set; }
       public DbSet<Assignment> Assignments { get; set; }
       public DbSet<Factor> Factors { get; set; }
+      public DbSet<User> Users { get; set; }
 
       public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
       {
@@ -46,16 +46,16 @@ namespace Infrastructure.Data
       {
          base.OnModelCreating(builder);
 
-         // Employee Relationships
+         // User Relationships
          builder.Entity<User>()
              .HasOne(e => e.Department)
-             .WithMany(d => d.Employees)
+             .WithMany(d => d.Users)
              .HasForeignKey(e => e.DepartmentId)
              .OnDelete(DeleteBehavior.Restrict);
 
          builder.Entity<User>()
              .HasOne(e => e.Field)
-             .WithMany(f => f.Employees)
+             .WithMany(f => f.Users)
              .HasForeignKey(e => e.FieldId)
              .OnDelete(DeleteBehavior.Restrict);
 

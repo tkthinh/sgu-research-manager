@@ -2,9 +2,10 @@
 
 namespace Domain.Entities
 {
-   public class Employee : BaseEntity
+   public class User : BaseEntity
    {
       public required string FullName { get; set; }
+      public required string UserName { get; set; }
       public AcademicTitle AcademicTitle { get; set; }
       public OfficerRank OfficerRank { get; set; }
 
