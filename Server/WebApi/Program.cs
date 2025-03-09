@@ -1,4 +1,7 @@
 using Infrastructure;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.Extensions.Options;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +14,13 @@ builder.Host.UseSerilog((context, configuration) =>
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddControllers();
+
+builder.Services.AddControllers(options =>
+{
+   //var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+   //options.Filters.Add(new AuthorizeFilter(policy));
+});
+
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -45,5 +54,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await AuthDbInitializer.SeedDataAsync(app.Services);
 
+app.Run();

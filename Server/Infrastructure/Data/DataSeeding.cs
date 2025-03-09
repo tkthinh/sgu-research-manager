@@ -83,26 +83,4 @@ namespace Infrastructure.Data.Seeding
          builder.HasData(departments);
       }
    }
-
-   public class IdentityUserSeeding : IEntityTypeConfiguration<IdentityUser>
-   {
-      public void Configure(EntityTypeBuilder<IdentityUser> builder)
-      {
-         var hasher = new PasswordHasher<IdentityUser>();
-         var users = new List<IdentityUser>
-                {
-                    new IdentityUser
-                    {
-                        UserName = "admin",
-                        NormalizedUserName = "ADMIN",
-                        Email = "admin@localhost",
-                        NormalizedEmail = "ADMIN@LOCALHOST",
-                        EmailConfirmed = true,
-                        PasswordHash = hasher.HashPassword(null, "Admin@123"),
-                        SecurityStamp = string.Empty
-                    }
-                };
-         builder.HasData(users);
-      }
-   }
 }

@@ -62,5 +62,10 @@ namespace Infrastructure.Data.Repositories
       {
          return await dbSet.Where(predicate).ToListAsync();
       }
+
+      public virtual async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+      {
+         return await dbSet.FirstOrDefaultAsync(predicate);
+      }
    }
 }
