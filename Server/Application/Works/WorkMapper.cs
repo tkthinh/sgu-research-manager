@@ -89,6 +89,7 @@ namespace Application.Works
                 TotalAuthors = entity.TotalAuthors,
                 TotalMainAuthors = entity.TotalMainAuthors,
                 FinalWorkHour = entity.FinalWorkHour,
+                ProofStatus = entity.ProofStatus,
                 Note = entity.Note,
                 Details = entity.Details,
                 Source = entity.Source,
@@ -96,7 +97,6 @@ namespace Application.Works
                 WorkLevelId = entity.WorkLevelId,
                 SCImagoFieldId = entity.SCImagoFieldId,
                 ScoringFieldId = entity.ScoringFieldId,
-                ProofStatus = entity.ProofStatus,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate,
                 Authors = entity.Authors != null ? _authorMapper.MapToDtos(entity.Authors).ToList() : null
@@ -113,6 +113,7 @@ namespace Application.Works
                 TotalAuthors = dto.TotalAuthors,
                 TotalMainAuthors = dto.TotalMainAuthors,
                 FinalWorkHour = dto.FinalWorkHour,
+                ProofStatus = dto.ProofStatus,
                 Note = dto.Note,
                 Details = dto.Details,
                 Source = dto.Source,
@@ -120,7 +121,6 @@ namespace Application.Works
                 WorkLevelId = dto.WorkLevelId,
                 SCImagoFieldId = dto.SCImagoFieldId,
                 ScoringFieldId = dto.ScoringFieldId,
-                ProofStatus = dto.ProofStatus,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate,
                 Authors = dto.Authors != null ? _authorMapper.MapToEntities(dto.Authors).ToList() : null

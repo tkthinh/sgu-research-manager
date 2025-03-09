@@ -12,20 +12,6 @@ namespace Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "AcademicRanks",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AcademicRanks", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Departments",
                 columns: table => new
                 {
@@ -54,62 +40,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OfficerRanks",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OfficerRanks", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ProofStatuses",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProofStatuses", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Purposes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Purposes", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "WorkLevels",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_WorkLevels", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "WorkTypes",
                 columns: table => new
                 {
@@ -129,10 +59,10 @@ namespace Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AcademicTitle = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OfficerRank = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IdentityId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DepartmentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AcademicRankId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OfficerRankId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -140,12 +70,6 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Employees", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Employees_AcademicRanks_AcademicRankId",
-                        column: x => x.AcademicRankId,
-                        principalTable: "AcademicRanks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Employees_Departments_DepartmentId",
                         column: x => x.DepartmentId,
@@ -156,12 +80,6 @@ namespace Infrastructure.Migrations
                         name: "FK_Employees_Fields_FieldId",
                         column: x => x.FieldId,
                         principalTable: "Fields",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Employees_OfficerRanks_OfficerRankId",
-                        column: x => x.OfficerRankId,
-                        principalTable: "OfficerRanks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -189,7 +107,7 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "WorkStatuses",
+                name: "Purposes",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -200,13 +118,119 @@ namespace Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_WorkStatuses", x => x.Id);
+                    table.PrimaryKey("PK_Purposes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WorkStatuses_WorkTypes_WorkTypeId",
+                        name: "FK_Purposes_WorkTypes_WorkTypeId",
                         column: x => x.WorkTypeId,
                         principalTable: "WorkTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SCImagoFields",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    WorkTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SCImagoFields", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SCImagoFields_WorkTypes_WorkTypeId",
+                        column: x => x.WorkTypeId,
+                        principalTable: "WorkTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WorkLevels",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    WorkTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkLevels", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WorkLevels_WorkTypes_WorkTypeId",
+                        column: x => x.WorkTypeId,
+                        principalTable: "WorkTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Assignments",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    DepartmentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Assignments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Assignments_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Assignments_Employees_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Employees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Factors",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    WorkTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    WorkLevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PurposeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Score = table.Column<float>(type: "real", nullable: false),
+                    ConvertHour = table.Column<int>(type: "int", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Factors", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Factors_Purposes_PurposeId",
+                        column: x => x.PurposeId,
+                        principalTable: "Purposes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Factors_WorkLevels_WorkLevelId",
+                        column: x => x.WorkLevelId,
+                        principalTable: "WorkLevels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Factors_WorkTypes_WorkTypeId",
+                        column: x => x.WorkTypeId,
+                        principalTable: "WorkTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -216,18 +240,17 @@ namespace Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     TimePublished = table.Column<DateOnly>(type: "date", nullable: true),
-                    Source = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TotalAuthors = table.Column<int>(type: "int", nullable: true),
+                    TotalMainAuthors = table.Column<int>(type: "int", nullable: true),
+                    FinalWorkHour = table.Column<int>(type: "int", nullable: false),
+                    ProofStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Details = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    LevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    StatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Source = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    WorkTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    WorkLevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SCImagoFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ScoringFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProofId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ManagerWorkScore = table.Column<float>(type: "real", nullable: false),
-                    TotalAuthors = table.Column<int>(type: "int", nullable: false),
-                    TotalHours = table.Column<int>(type: "int", nullable: false),
-                    MainAuthorCount = table.Column<int>(type: "int", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -241,26 +264,14 @@ namespace Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Works_ProofStatuses_ProofId",
-                        column: x => x.ProofId,
-                        principalTable: "ProofStatuses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Works_WorkLevels_LevelId",
-                        column: x => x.LevelId,
+                        name: "FK_Works_WorkLevels_WorkLevelId",
+                        column: x => x.WorkLevelId,
                         principalTable: "WorkLevels",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Works_WorkStatuses_StatusId",
-                        column: x => x.StatusId,
-                        principalTable: "WorkStatuses",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Works_WorkTypes_TypeId",
-                        column: x => x.TypeId,
+                        name: "FK_Works_WorkTypes_WorkTypeId",
+                        column: x => x.WorkTypeId,
                         principalTable: "WorkTypes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -275,13 +286,14 @@ namespace Infrastructure.Migrations
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AuthorRoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PurposeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Position = table.Column<int>(type: "int", nullable: false),
+                    Position = table.Column<int>(type: "int", nullable: true),
                     DeclaredScore = table.Column<float>(type: "real", nullable: false),
-                    FinalScore = table.Column<float>(type: "real", nullable: false),
-                    DeclaredHours = table.Column<int>(type: "int", nullable: false),
-                    FinalHours = table.Column<int>(type: "int", nullable: false),
+                    FinalAuthorHour = table.Column<int>(type: "int", nullable: false),
+                    TempAuthorHour = table.Column<int>(type: "int", nullable: false),
+                    TempWorkHour = table.Column<int>(type: "int", nullable: false),
                     IsNotMatch = table.Column<bool>(type: "bit", nullable: false),
                     MarkedForScoring = table.Column<bool>(type: "bit", nullable: false),
+                    CoAuthors = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -315,6 +327,16 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Assignments_DepartmentId",
+                table: "Assignments",
+                column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Assignments_UserId",
+                table: "Assignments",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AuthorRoles_WorkTypeId",
                 table: "AuthorRoles",
                 column: "WorkTypeId");
@@ -341,11 +363,6 @@ namespace Infrastructure.Migrations
                 column: "WorkId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_AcademicRankId",
-                table: "Employees",
-                column: "AcademicRankId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Employees_DepartmentId",
                 table: "Employees",
                 column: "DepartmentId");
@@ -356,19 +373,34 @@ namespace Infrastructure.Migrations
                 column: "FieldId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Employees_OfficerRankId",
-                table: "Employees",
-                column: "OfficerRankId");
+                name: "IX_Factors_PurposeId",
+                table: "Factors",
+                column: "PurposeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Works_LevelId",
-                table: "Works",
-                column: "LevelId");
+                name: "IX_Factors_WorkLevelId",
+                table: "Factors",
+                column: "WorkLevelId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Works_ProofId",
-                table: "Works",
-                column: "ProofId");
+                name: "IX_Factors_WorkTypeId",
+                table: "Factors",
+                column: "WorkTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Purposes_WorkTypeId",
+                table: "Purposes",
+                column: "WorkTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SCImagoFields_WorkTypeId",
+                table: "SCImagoFields",
+                column: "WorkTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkLevels_WorkTypeId",
+                table: "WorkLevels",
+                column: "WorkTypeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Works_ScoringFieldId",
@@ -376,18 +408,13 @@ namespace Infrastructure.Migrations
                 column: "ScoringFieldId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Works_StatusId",
+                name: "IX_Works_WorkLevelId",
                 table: "Works",
-                column: "StatusId");
+                column: "WorkLevelId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Works_TypeId",
+                name: "IX_Works_WorkTypeId",
                 table: "Works",
-                column: "TypeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_WorkStatuses_WorkTypeId",
-                table: "WorkStatuses",
                 column: "WorkTypeId");
         }
 
@@ -395,7 +422,16 @@ namespace Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Assignments");
+
+            migrationBuilder.DropTable(
                 name: "Authors");
+
+            migrationBuilder.DropTable(
+                name: "Factors");
+
+            migrationBuilder.DropTable(
+                name: "SCImagoFields");
 
             migrationBuilder.DropTable(
                 name: "AuthorRoles");
@@ -404,31 +440,19 @@ namespace Infrastructure.Migrations
                 name: "Employees");
 
             migrationBuilder.DropTable(
-                name: "Purposes");
-
-            migrationBuilder.DropTable(
                 name: "Works");
 
             migrationBuilder.DropTable(
-                name: "AcademicRanks");
+                name: "Purposes");
 
             migrationBuilder.DropTable(
                 name: "Departments");
 
             migrationBuilder.DropTable(
-                name: "OfficerRanks");
-
-            migrationBuilder.DropTable(
                 name: "Fields");
 
             migrationBuilder.DropTable(
-                name: "ProofStatuses");
-
-            migrationBuilder.DropTable(
                 name: "WorkLevels");
-
-            migrationBuilder.DropTable(
-                name: "WorkStatuses");
 
             migrationBuilder.DropTable(
                 name: "WorkTypes");

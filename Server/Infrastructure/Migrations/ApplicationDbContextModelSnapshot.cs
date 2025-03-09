@@ -375,8 +375,6 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SCImagoFieldId");
-
                     b.HasIndex("ScoringFieldId");
 
                     b.HasIndex("WorkLevelId");
@@ -568,18 +566,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
-                    b.HasOne("Domain.Entities.ProofStatus", "ProofStatus")
-                        .WithMany()
-                        .HasForeignKey("ProofStatusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.SCImagoField", "SCImagoField")
-                        .WithMany()
-                        .HasForeignKey("SCImagoFieldId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.Field", "FieldForScoring")
                         .WithMany()
                         .HasForeignKey("ScoringFieldId")
@@ -599,9 +585,6 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("FieldForScoring");
-
-
-                    b.Navigation("SCImagoField");
 
                     b.Navigation("WorkLevel");
 

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250305111947_Update_Author_Work_AuthorRole")]
-    partial class Update_Author_Work_AuthorRole
+    [Migration("20250309132138_FreshMigration")]
+    partial class FreshMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,27 +24,6 @@ namespace Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Domain.Entities.AcademicRank", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AcademicRanks");
-                });
 
             modelBuilder.Entity("Domain.Entities.Assignment", b =>
                 {
@@ -88,17 +67,11 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DeclaredHours")
-                        .HasColumnType("int");
-
                     b.Property<float>("DeclaredScore")
                         .HasColumnType("real");
 
-                    b.Property<int>("FinalHours")
+                    b.Property<int>("FinalAuthorHour")
                         .HasColumnType("int");
-
-                    b.Property<float>("FinalScore")
-                        .HasColumnType("real");
 
                     b.Property<bool>("IsNotMatch")
                         .HasColumnType("bit");
@@ -114,6 +87,12 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid>("PurposeId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("TempAuthorHour")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TempWorkHour")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
@@ -191,8 +170,9 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AcademicRankId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("AcademicTitle")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -214,18 +194,15 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("OfficerRankId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("OfficerRank")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AcademicRankId");
 
                     b.HasIndex("DepartmentId");
 
                     b.HasIndex("FieldId");
-
-                    b.HasIndex("OfficerRankId");
 
                     b.ToTable("Employees");
                 });
@@ -236,11 +213,11 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("ConvertHour")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Hours")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -293,48 +270,6 @@ namespace Infrastructure.Migrations
                     b.ToTable("Fields");
                 });
 
-            modelBuilder.Entity("Domain.Entities.OfficerRank", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OfficerRanks");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ProofStatus", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ProofStatuses");
-                });
-
             modelBuilder.Entity("Domain.Entities.Purpose", b =>
                 {
                     b.Property<Guid>("Id")
@@ -351,9 +286,40 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("WorkTypeId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("WorkTypeId");
+
                     b.ToTable("Purposes");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SCImagoField", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("WorkTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkTypeId");
+
+                    b.ToTable("SCImagoFields");
                 });
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
@@ -368,17 +334,21 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("MainAuthorCount")
+                    b.Property<int>("FinalWorkHour")
                         .HasColumnType("int");
-
-                    b.Property<float>("ManagerWorkScore")
-                        .HasColumnType("real");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProofStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("SCImagoFieldId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ScoringFieldId")
                         .HasColumnType("uniqueidentifier");
@@ -397,16 +367,10 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("TotalAuthors")
                         .HasColumnType("int");
 
-                    b.Property<int>("TotalHours")
+                    b.Property<int?>("TotalMainAuthors")
                         .HasColumnType("int");
 
                     b.Property<Guid>("WorkLevelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("WorkProofId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("WorkStatusId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("WorkTypeId")
@@ -417,10 +381,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("ScoringFieldId");
 
                     b.HasIndex("WorkLevelId");
-
-                    b.HasIndex("WorkProofId");
-
-                    b.HasIndex("WorkStatusId");
 
                     b.HasIndex("WorkTypeId");
 
@@ -451,32 +411,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("WorkTypeId");
 
                     b.ToTable("WorkLevels");
-                });
-
-            modelBuilder.Entity("Domain.Entities.WorkStatus", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("WorkTypeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WorkTypeId");
-
-                    b.ToTable("WorkStatuses");
                 });
 
             modelBuilder.Entity("Domain.Entities.WorkType", b =>
@@ -567,12 +501,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Employee", b =>
                 {
-                    b.HasOne("Domain.Entities.AcademicRank", "AcademicRank")
-                        .WithMany("Employees")
-                        .HasForeignKey("AcademicRankId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.Department", "Department")
                         .WithMany("Employees")
                         .HasForeignKey("DepartmentId")
@@ -585,19 +513,9 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.OfficerRank", "OfficerRank")
-                        .WithMany("Employees")
-                        .HasForeignKey("OfficerRankId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AcademicRank");
-
                     b.Navigation("Department");
 
                     b.Navigation("Field");
-
-                    b.Navigation("OfficerRank");
                 });
 
             modelBuilder.Entity("Domain.Entities.Factor", b =>
@@ -627,6 +545,28 @@ namespace Infrastructure.Migrations
                     b.Navigation("WorkType");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Purpose", b =>
+                {
+                    b.HasOne("Domain.Entities.WorkType", "WorkType")
+                        .WithMany("Purposes")
+                        .HasForeignKey("WorkTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkType");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SCImagoField", b =>
+                {
+                    b.HasOne("Domain.Entities.WorkType", "WorkType")
+                        .WithMany("SCImagoFields")
+                        .HasForeignKey("WorkTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkType");
+                });
+
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
                     b.HasOne("Domain.Entities.Field", "FieldForScoring")
@@ -641,18 +581,6 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.ProofStatus", "ProofStatus")
-                        .WithMany()
-                        .HasForeignKey("WorkProofId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.WorkStatus", "WorkStatus")
-                        .WithMany()
-                        .HasForeignKey("WorkStatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.WorkType", "WorkType")
                         .WithMany()
                         .HasForeignKey("WorkTypeId")
@@ -661,11 +589,7 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("FieldForScoring");
 
-                    b.Navigation("ProofStatus");
-
                     b.Navigation("WorkLevel");
-
-                    b.Navigation("WorkStatus");
 
                     b.Navigation("WorkType");
                 });
@@ -681,22 +605,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("WorkType");
                 });
 
-            modelBuilder.Entity("Domain.Entities.WorkStatus", b =>
-                {
-                    b.HasOne("Domain.Entities.WorkType", "WorkType")
-                        .WithMany("WorkStatuses")
-                        .HasForeignKey("WorkTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WorkType");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AcademicRank", b =>
-                {
-                    b.Navigation("Employees");
-                });
-
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
                 {
                     b.Navigation("Authors");
@@ -710,11 +618,6 @@ namespace Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("Domain.Entities.Field", b =>
-                {
-                    b.Navigation("Employees");
-                });
-
-            modelBuilder.Entity("Domain.Entities.OfficerRank", b =>
                 {
                     b.Navigation("Employees");
                 });
@@ -742,9 +645,11 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("Factors");
 
-                    b.Navigation("WorkLevels");
+                    b.Navigation("Purposes");
 
-                    b.Navigation("WorkStatuses");
+                    b.Navigation("SCImagoFields");
+
+                    b.Navigation("WorkLevels");
                 });
 #pragma warning restore 612, 618
         }

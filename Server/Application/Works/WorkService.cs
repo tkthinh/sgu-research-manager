@@ -57,6 +57,7 @@ namespace Application.Works
                 TotalAuthors = request.TotalAuthors,
                 TotalMainAuthors = request.TotalMainAuthors,
                 FinalWorkHour = 0, // Admin sẽ cập nhật sau
+                ProofStatus = request.ProofStatus,
                 Note = request.Note,
                 Details = request.Details,
                 Source = request.Source,
@@ -64,7 +65,6 @@ namespace Application.Works
                 WorkLevelId = request.WorkLevelId,
                 SCImagoFieldId = request.SCImagoFieldId,
                 ScoringFieldId = request.ScoringFieldId,
-                ProofStatus = request.ProofStatus,
                 CreatedDate = DateTime.UtcNow
             };
 

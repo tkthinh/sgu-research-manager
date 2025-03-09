@@ -12,11 +12,11 @@ namespace Application.Works
         public int? TotalAuthors { get; set; }
         public int? TotalMainAuthors { get; set; }
         public int FinalWorkHour { get; set; }
-
-        public WorkSource Source { get; set; }
+        public ProofStatus ProofStatus { get; set; }
         public string? Note { get; set; }
         public Dictionary<string, string>? Details { get; set; }
-        public ProofStatus ProofStatus { get; set; }
+        public WorkSource Source { get; set; }
+
 
         public Guid WorkTypeId { get; set; }
         public Guid WorkLevelId { get; set; }
