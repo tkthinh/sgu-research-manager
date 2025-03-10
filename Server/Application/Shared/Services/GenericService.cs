@@ -1,20 +1,24 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Shared.Services
 {
    public abstract class GenericService<TDto, T> : IGenericService<TDto> where T : BaseEntity
    {
-      private readonly IUnitOfWork unitOfWork;
-      private readonly IGenericMapper<TDto, T> mapper;
+      protected readonly IUnitOfWork unitOfWork;
+      protected readonly IGenericMapper<TDto, T> mapper;
+      protected readonly ILogger logger;
 
       public GenericService(
          IUnitOfWork unitOfWork,
-         IGenericMapper<TDto, T> mapper
+         IGenericMapper<TDto, T> mapper,
+         ILogger logger
          )
       {
          this.unitOfWork = unitOfWork;
          this.mapper = mapper;
+         this.logger = logger;
       }
 
       public virtual async Task<TDto> CreateAsync(TDto dto, CancellationToken cancellationToken = default)

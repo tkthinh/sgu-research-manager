@@ -15,7 +15,7 @@
         public bool MarkedForScoring { get; set; }  // Cờ đánh dấu công trình được chọn để quy đổi
         public string? CoAuthors { get; set; }
 
-        public virtual Employee? User { get; set; }
+        public virtual User? User { get; set; }
         public virtual AuthorRole? AuthorRole { get; set; }
         public virtual Work? Work { get; set; }
         public virtual Purpose? Purpose { get; set; }

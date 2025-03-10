@@ -126,9 +126,14 @@ namespace Infrastructure.Data.Repositories
             }
         }
 
-        public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
-        {
-            return await dbSet.Where(predicate).ToListAsync(cancellationToken);
-        }
-    }
+      public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
+      {
+         return await dbSet.Where(predicate).ToListAsync();
+      }
+
+      public virtual async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+      {
+         return await dbSet.FirstOrDefaultAsync(predicate);
+      }
+   }
 }
