@@ -180,7 +180,13 @@ namespace Infrastructure.Data
          // Seed Data
          builder.ApplyConfiguration(new FieldSeeding());
          builder.ApplyConfiguration(new DepartmentSeeding());
-      }
+            builder.ApplyConfiguration(new WorkTypeSeeding());
+            builder.ApplyConfiguration(new WorkLevelSeeding());
+            builder.ApplyConfiguration(new AuthorRoleSeeding());
+            builder.ApplyConfiguration(new PurposeSeeding());
+            builder.ApplyConfiguration(new SCImagoFieldSeeding());
+            builder.ApplyConfiguration(new FactorSeeding());
+        }
 
    }
 }

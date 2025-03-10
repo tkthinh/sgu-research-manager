@@ -83,25 +83,25 @@ namespace Infrastructure.Data.Repositories
             dbSet = context.Set<T>();
         }
 
-        public virtual async Task CreateAsync(T entity, CancellationToken cancellationToken = default)
+        public virtual async Task CreateAsync(T entity)
         {
             entity.CreatedDate = DateTime.UtcNow;
-            await dbSet.AddAsync(entity, cancellationToken);
+            await dbSet.AddAsync(entity);
         }
 
-        public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
+        public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await dbSet.ToListAsync(cancellationToken);
+            return await dbSet.ToListAsync();
         }
 
-        public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public virtual async Task<T?> GetByIdAsync(Guid id)
         {
-            return await dbSet.FindAsync(new object[] { id }, cancellationToken);
+            return await dbSet.FindAsync(new object[] { id });
         }
 
-        public virtual async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
+        public virtual async Task UpdateAsync(T entity)
         {
-            var existingEntity = await dbSet.FindAsync(new object[] { entity.Id }, cancellationToken);
+            var existingEntity = await dbSet.FindAsync(new object[] { entity.Id });
             if (existingEntity != null)
             {
                 context.Entry(existingEntity).CurrentValues.SetValues(entity);
@@ -116,9 +116,9 @@ namespace Infrastructure.Data.Repositories
             // Không gọi SaveChangesAsync ở đây, để UnitOfWork xử lý
         }
 
-        public virtual async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        public virtual async Task DeleteAsync(Guid id)
         {
-            var entity = await dbSet.FindAsync(new object[] { id }, cancellationToken);
+            var entity = await dbSet.FindAsync(new object[] { id });
             if (entity != null)
             {
                 dbSet.Remove(entity);

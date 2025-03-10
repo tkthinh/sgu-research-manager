@@ -13,8 +13,9 @@ namespace Application.Factors
                 WorkTypeId = entity.WorkTypeId,
                 WorkLevelId = entity.WorkLevelId,
                 PurposeId = entity.PurposeId,
+                AuthorRoleId = entity.AuthorRoleId,
                 Name = entity.Name,
-                Score = entity.Score,
+                ScoreLevel = entity.ScoreLevel,
                 ConvertHour = entity.ConvertHour,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
@@ -29,8 +30,9 @@ namespace Application.Factors
                 WorkTypeId = dto.WorkTypeId,
                 WorkLevelId = dto.WorkLevelId,
                 PurposeId = dto.PurposeId,
+                AuthorRoleId = dto.AuthorRoleId,
                 Name = dto.Name,
-                Score = dto.Score,
+                ScoreLevel = dto.ScoreLevel,
                 ConvertHour = dto.ConvertHour,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate

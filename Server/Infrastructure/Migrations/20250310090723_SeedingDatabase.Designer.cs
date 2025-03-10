@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250310090723_SeedingDatabase")]
+    partial class SeedingDatabase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,6 +67,9 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<float>("DeclaredScore")
+                        .HasColumnType("real");
+
                     b.Property<int>("FinalAuthorHour")
                         .HasColumnType("int");
 
@@ -81,9 +87,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid>("PurposeId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("ScoreLevel")
-                        .HasColumnType("int");
 
                     b.Property<int>("TempAuthorHour")
                         .HasColumnType("int");
@@ -567,7 +570,7 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AuthorRoleId")
+                    b.Property<Guid>("AuthorRoleId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ConvertHour")
@@ -586,10 +589,10 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("PurposeId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("ScoreLevel")
-                        .HasColumnType("int");
+                    b.Property<float>("Score")
+                        .HasColumnType("real");
 
-                    b.Property<Guid?>("WorkLevelId")
+                    b.Property<Guid>("WorkLevelId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("WorkTypeId")
@@ -606,492 +609,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("WorkTypeId");
 
                     b.ToTable("Factors");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("ad619718-0937-4693-a40f-04e56241a52c"),
-                            ConvertHour = 40,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Trường - Quy đổi giờ nghĩa vụ",
-                            PurposeId = new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                            WorkLevelId = new Guid("3c21b247-16ce-40a9-a921-abef0e1bba56"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("60f6bc8a-05ff-4322-bccd-5ea9335139c1"),
-                            ConvertHour = 80,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ",
-                            PurposeId = new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                            WorkLevelId = new Guid("250662c1-1c69-4ef0-a21d-7077cafd1d06"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("2ba0b318-cb6f-49a0-b6a3-9040dcc46a9b"),
-                            ConvertHour = 80,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Quốc gia - Quy đổi giờ nghĩa vụ",
-                            PurposeId = new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                            WorkLevelId = new Guid("740e8212-f47b-4080-b57a-839b8b90056c"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("146e3c5e-7bee-41a6-9f1b-8f00ee2a4eb7"),
-                            ConvertHour = 54,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Bộ/Ngành - Quy đổi vượt định mức",
-                            PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                            WorkLevelId = new Guid("250662c1-1c69-4ef0-a21d-7077cafd1d06"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("3c39ab6a-8c61-4321-b498-4a3a469ea1cc"),
-                            ConvertHour = 54,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Quốc gia - Quy đổi vượt định mức",
-                            PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                            WorkLevelId = new Guid("740e8212-f47b-4080-b57a-839b8b90056c"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("30775a5a-9282-4801-80f2-acaea95c5f71"),
-                            ConvertHour = 120,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Quốc tế - Quy đổi giờ nghĩa vụ",
-                            PurposeId = new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                            WorkLevelId = new Guid("db324190-d1ed-4712-b3db-94a6e043bf1e"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("4f163c6f-ad7b-4f38-8125-0584678164b6"),
-                            ConvertHour = 76,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Quốc tế - Quy đổi vượt định mức",
-                            PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                            WorkLevelId = new Guid("db324190-d1ed-4712-b3db-94a6e043bf1e"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("cbd4799e-ec4b-41a7-8eb2-744841178857"),
-                            ConvertHour = 200,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - WoS - Quy đổi giờ nghĩa vụ",
-                            PurposeId = new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                            WorkLevelId = new Guid("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("415d12ed-7551-48fd-8a5c-87e02fee0dd3"),
-                            ConvertHour = 120,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - WoS - Quy đổi vượt định mức",
-                            PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                            WorkLevelId = new Guid("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("86f1114c-73b7-4c4f-bac7-95b602bcc397"),
-                            ConvertHour = 200,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Scopus - Quy đổi giờ nghĩa vụ",
-                            PurposeId = new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                            WorkLevelId = new Guid("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("31673044-6195-4d65-a1f0-453cee604604"),
-                            ConvertHour = 120,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Báo cáo khoa học - Scopus - Quy đổi vượt định mức",
-                            PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                            WorkLevelId = new Guid("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),
-                            WorkTypeId = new Guid("03412ca7-8ccf-4903-9018-457768060ab4")
-                        },
-                        new
-                        {
-                            Id = new Guid("c5c436fe-fac7-4243-afd7-a07ba9fa6113"),
-                            ConvertHour = 600,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 10",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 4,
-                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("c7fc7ef4-dc3e-473f-af05-5514f6c223e8"),
-                            ConvertHour = 800,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - WoS - Quy đổi giờ nghĩa vụ - Score 10",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 4,
-                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("849b4d7e-3928-45b6-8f4d-17c078bbcc7f"),
-                            ConvertHour = 400,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 30",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 5,
-                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("5e382f01-49b7-4910-bf99-cdcddd5042e3"),
-                            ConvertHour = 640,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - WoS - Quy đổi giờ nghĩa vụ - Score 30",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 5,
-                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("43454113-745b-4eee-b266-ff515ed9027b"),
-                            ConvertHour = 240,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 50",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 6,
-                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("aeb8a311-304e-4c6e-b944-7cdafac6947b"),
-                            ConvertHour = 560,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - WoS - Quy đổi giờ nghĩa vụ - Score 50",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 6,
-                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("b0a80a7a-9703-4af2-b154-bb4a5bd9c315"),
-                            ConvertHour = 120,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 100",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 7,
-                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("35ba841d-42b2-425a-9e27-82b52a81dc73"),
-                            ConvertHour = 400,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - WoS - Quy đổi giờ nghĩa vụ - Score 100",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 7,
-                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("c2288e08-eb6b-4cd0-91ce-9adf4ee8e745"),
-                            ConvertHour = 600,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 10",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 4,
-                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("10c586ce-79ec-4859-881f-5d38245ce47b"),
-                            ConvertHour = 800,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Scopus - Quy đổi giờ nghĩa vụ - Score 10",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 4,
-                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("2fca54b4-555a-4d67-9e9a-f522e0c802cb"),
-                            ConvertHour = 400,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 30",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 5,
-                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("0fa0aa31-978d-42be-8adc-a47729ff9b9d"),
-                            ConvertHour = 640,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Scopus - Quy đổi giờ nghĩa vụ - Score 30",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 5,
-                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("85f22829-055a-4314-a8dc-649a14346610"),
-                            ConvertHour = 240,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 50",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 6,
-                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("38f2bbe7-8e32-477a-85bf-e2a08fb88c03"),
-                            ConvertHour = 560,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Scopus - Quy đổi giờ nghĩa vụ - Score 50",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 6,
-                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("9c4ed0a6-b71a-46ea-a27f-02b38bd0c544"),
-                            ConvertHour = 120,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 100",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 7,
-                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("e4f74734-e0f5-446d-8221-cc3a519ad461"),
-                            ConvertHour = 400,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Scopus - Quy đổi giờ nghĩa vụ - Score 100",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 7,
-                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("92f2fdef-e1cf-4062-aa96-f01c1820bb98"),
-                            ConvertHour = 76,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 1",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 1,
-                            WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("779bdc74-0043-46a0-84ad-940af4f4dc49"),
-                            ConvertHour = 160,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Trường - Quy đổi giờ nghĩa vụ - Score 1",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 1,
-                            WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("decaf6cd-fb66-440c-9cc3-155036dfc775"),
-                            ConvertHour = 76,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 1",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 1,
-                            WorkLevelId = new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("f56495e4-eac2-47f5-b282-d3f39055fecb"),
-                            ConvertHour = 160,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ - Score 1",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 1,
-                            WorkLevelId = new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("8695bc4f-992a-4b44-ad3e-a373f88672f4"),
-                            ConvertHour = 76,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 1",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 1,
-                            WorkLevelId = new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("630d6ebe-34a2-4533-9a06-ec28ad6d1cd4"),
-                            ConvertHour = 160,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Quốc tế - Quy đổi giờ nghĩa vụ - Score 1",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 1,
-                            WorkLevelId = new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("5a01f52c-999f-447e-bb2d-2fb4c9161d25"),
-                            ConvertHour = 54,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 0.75",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 2,
-                            WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("4f47632f-9796-45fa-b4a5-e0c39be496e9"),
-                            ConvertHour = 120,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Trường - Quy đổi giờ nghĩa vụ - Score 0.75",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 2,
-                            WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("d473791e-fb18-409a-be03-a0b60c75912c"),
-                            ConvertHour = 54,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 0.75",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 2,
-                            WorkLevelId = new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("45892e0d-6abb-41ea-8e29-c34c05b58068"),
-                            ConvertHour = 120,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ - Score 0.75",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 2,
-                            WorkLevelId = new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("54740838-3d63-43b4-a498-9c5152dd7528"),
-                            ConvertHour = 54,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 0.75",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 2,
-                            WorkLevelId = new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("c8785d2b-244a-40ac-9430-7c416adefbc9"),
-                            ConvertHour = 120,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Quốc tế - Quy đổi giờ nghĩa vụ - Score 0.75",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 2,
-                            WorkLevelId = new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("5386b122-9311-453e-ab70-de37d9673ef5"),
-                            ConvertHour = 34,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 0.5",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 3,
-                            WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("bd63c850-3c87-4836-9a7e-7c402ad436cf"),
-                            ConvertHour = 80,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Trường - Quy đổi giờ nghĩa vụ - Score 0.5",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 3,
-                            WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("3236b11f-a2ac-4e51-85d1-fcc5594455b6"),
-                            ConvertHour = 34,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 0.5",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 3,
-                            WorkLevelId = new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("fcd3b42b-7151-4100-8f08-0019c14a764c"),
-                            ConvertHour = 80,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ - Score 0.5",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 3,
-                            WorkLevelId = new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("ce72ef2c-a629-40ea-9bab-d77b87421fdf"),
-                            ConvertHour = 34,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 0.5",
-                            PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                            ScoreLevel = 3,
-                            WorkLevelId = new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        },
-                        new
-                        {
-                            Id = new Guid("b7c82548-b2cd-4368-8b6e-919f7f6b1e5f"),
-                            ConvertHour = 80,
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Bài báo khoa học - Quốc tế - Quy đổi giờ nghĩa vụ - Score 0.5",
-                            PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                            ScoreLevel = 3,
-                            WorkLevelId = new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.Field", b =>
@@ -2688,7 +2205,9 @@ namespace Infrastructure.Migrations
                 {
                     b.HasOne("Domain.Entities.AuthorRole", "AuthorRole")
                         .WithMany("Factors")
-                        .HasForeignKey("AuthorRoleId");
+                        .HasForeignKey("AuthorRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Domain.Entities.Purpose", "Purpose")
                         .WithMany("Factors")
@@ -2699,7 +2218,8 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
                         .WithMany("Factors")
                         .HasForeignKey("WorkLevelId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Domain.Entities.WorkType", "WorkType")
                         .WithMany("Factors")

@@ -54,8 +54,9 @@ namespace WebApi.Controllers
                     WorkTypeId = request.WorkTypeId,
                     WorkLevelId = request.WorkLevelId,
                     PurposeId = request.PurposeId,
+                    AuthorRoleId = request.AuthorRoleId,
                     Name = request.Name,
-                    Score = request.Score,
+                    ScoreLevel = request.ScoreLevel,
                     ConvertHour = request.ConvertHour
                 };
 
@@ -89,8 +90,9 @@ namespace WebApi.Controllers
                 existingFactor.WorkTypeId = request.WorkTypeId;
                 existingFactor.WorkLevelId = request.WorkLevelId;
                 existingFactor.PurposeId = request.PurposeId;
+                existingFactor.AuthorRoleId = request.AuthorRoleId;
                 existingFactor.Name = request.Name;
-                existingFactor.Score = request.Score;
+                existingFactor.ScoreLevel = request.ScoreLevel;
                 existingFactor.ConvertHour = request.ConvertHour;
 
                 await factorService.UpdateAsync(existingFactor);

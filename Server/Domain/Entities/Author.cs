@@ -1,4 +1,6 @@
-﻿namespace Domain.Entities
+﻿using Domain.Enums;
+
+namespace Domain.Entities
 {
     public class Author : BaseEntity
     {
@@ -7,7 +9,7 @@
         public Guid AuthorRoleId { get; set; }
         public Guid PurposeId { get; set; }
         public int? Position { get; set; }
-        public float DeclaredScore { get; set; }
+        public ScoreLevel? ScoreLevel { get; set; } // Mức điểm do người dùng chọn
         public int FinalAuthorHour { get; set; }    // Giờ chính thức do admin chấm
         public int TempAuthorHour { get; set; }     // Giờ dự kiến
         public int TempWorkHour { get; set; }       // Giờ dự kiến của công trình (tính từ DeclaredScore)

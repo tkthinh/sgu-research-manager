@@ -159,7 +159,7 @@ namespace WebApi.Controllers
                     AuthorRoleId = request.AuthorRoleId,
                     PurposeId = request.PurposeId,
                     Position = request.Position,
-                    DeclaredScore = request.DeclaredScore,
+                    ScoreLevel = request.ScoreLevel,
                     FinalAuthorHour = existingAuthor.FinalAuthorHour,
                     TempAuthorHour = existingAuthor.TempAuthorHour,
                     TempWorkHour = existingAuthor.TempWorkHour,

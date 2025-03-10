@@ -1,4 +1,6 @@
-﻿namespace Application.Authors
+﻿using Domain.Enums;
+
+namespace Application.Authors
 {
     public class AuthorDto
     {
@@ -8,7 +10,7 @@
         public Guid AuthorRoleId { get; set; }
         public Guid PurposeId { get; set; }
         public int? Position { get; set; }
-        public float DeclaredScore { get; set; }
+        public ScoreLevel? ScoreLevel { get; set; }
         public int FinalAuthorHour { get; set; }
         public int TempAuthorHour { get; set; }
         public int TempWorkHour { get; set; }

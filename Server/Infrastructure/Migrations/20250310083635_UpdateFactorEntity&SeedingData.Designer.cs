@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250309072735_UpdateUser")]
-    partial class UpdateUser
+    [Migration("20250310083635_UpdateFactorEntity&SeedingData")]
+    partial class UpdateFactorEntitySeedingData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,17 +67,11 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("DeclaredHours")
-                        .HasColumnType("int");
-
                     b.Property<float>("DeclaredScore")
                         .HasColumnType("real");
 
-                    b.Property<int>("FinalHours")
+                    b.Property<int>("FinalAuthorHour")
                         .HasColumnType("int");
-
-                    b.Property<float>("FinalScore")
-                        .HasColumnType("real");
 
                     b.Property<bool>("IsNotMatch")
                         .HasColumnType("bit");
@@ -93,6 +87,12 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid>("PurposeId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("TempAuthorHour")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TempWorkHour")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
@@ -328,11 +328,14 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("AuthorRoleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ConvertHour")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Hours")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -354,6 +357,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthorRoleId");
 
                     b.HasIndex("PurposeId");
 
@@ -581,6 +586,32 @@ namespace Infrastructure.Migrations
                     b.ToTable("Purposes");
                 });
 
+            modelBuilder.Entity("Domain.Entities.SCImagoField", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("WorkTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkTypeId");
+
+                    b.ToTable("SCImagoFields");
+                });
+
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -640,11 +671,8 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("MainAuthorCount")
+                    b.Property<int>("FinalWorkHour")
                         .HasColumnType("int");
-
-                    b.Property<float>("ManagerWorkScore")
-                        .HasColumnType("real");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -655,6 +683,9 @@ namespace Infrastructure.Migrations
                     b.Property<string>("ProofStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("SCImagoFieldId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ScoringFieldId")
                         .HasColumnType("uniqueidentifier");
@@ -673,13 +704,10 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("TotalAuthors")
                         .HasColumnType("int");
 
-                    b.Property<int>("TotalHours")
+                    b.Property<int?>("TotalMainAuthors")
                         .HasColumnType("int");
 
                     b.Property<Guid>("WorkLevelId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("WorkStatusId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("WorkTypeId")
@@ -810,6 +838,12 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Factor", b =>
                 {
+                    b.HasOne("Domain.Entities.AuthorRole", "AuthorRole")
+                        .WithMany("Factors")
+                        .HasForeignKey("AuthorRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Purpose", "Purpose")
                         .WithMany("Factors")
                         .HasForeignKey("PurposeId")
@@ -828,6 +862,8 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("AuthorRole");
+
                     b.Navigation("Purpose");
 
                     b.Navigation("WorkLevel");
@@ -839,6 +875,17 @@ namespace Infrastructure.Migrations
                 {
                     b.HasOne("Domain.Entities.WorkType", "WorkType")
                         .WithMany("Purposes")
+                        .HasForeignKey("WorkTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WorkType");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SCImagoField", b =>
+                {
+                    b.HasOne("Domain.Entities.WorkType", "WorkType")
+                        .WithMany("SCImagoFields")
                         .HasForeignKey("WorkTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -906,6 +953,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
                 {
                     b.Navigation("Authors");
+
+                    b.Navigation("Factors");
                 });
 
             modelBuilder.Entity("Domain.Entities.Department", b =>
@@ -944,6 +993,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("Factors");
 
                     b.Navigation("Purposes");
+
+                    b.Navigation("SCImagoFields");
 
                     b.Navigation("WorkLevels");
                 });
