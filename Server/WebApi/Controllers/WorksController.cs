@@ -2,6 +2,8 @@
 using Application.Works;
 using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace WebApi.Controllers
 {
@@ -21,21 +23,33 @@ namespace WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorks()
         {
-            var works = await _workService.GetAllAsync();
-            return Ok(new ApiResponse<IEnumerable<WorkDto>>(
-                true,
-                "Lấy dữ liệu công trình thành công",
-                works
-            ));
+            try
+            {
+                var works = await _workService.GetAllWorksWithAuthorsAsync();
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy dữ liệu công trình thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
         }
+
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> GetWork([FromRoute] Guid id)
         {
-            var work = await _workService.GetByIdAsync(id);
-            if (work == null)
+            var work = await _workService.GetWorkByIdWithAuthorsAsync(id);
+            if (work is null)
             {
-                return NotFound(new ApiResponse<WorkDto>(false, "Không tìm thấy công trình"));
+                return NotFound(new ApiResponse<WorkDto>(
+                    false,
+                    "Không tìm thấy công trình"
+                ));
             }
             return Ok(new ApiResponse<WorkDto>(
                 true,
@@ -43,6 +57,7 @@ namespace WebApi.Controllers
                 work
             ));
         }
+
 
         [HttpGet("search")]
         public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> SearchWorks([FromQuery] string title)
@@ -59,40 +74,36 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApiResponse<WorkDto>>> CreateWork([FromBody] CreateWorkRequestDto requestDto)
+        public async Task<ActionResult<ApiResponse<WorkDto>>> CreateWork([FromBody] CreateWorkRequestDto request)
         {
             try
             {
-                var createdWork = await _workService.CreateWorkWithAuthorAsync(requestDto);
-                var response = new ApiResponse<WorkDto>(
-                    true,
-                    "Tạo công trình thành công",
-                    createdWork
-                );
-                return CreatedAtAction(nameof(GetWork), new { id = createdWork.Id }, response);
+                var work = await _workService.CreateWorkWithAuthorAsync(request);
+                return CreatedAtAction(nameof(GetWork), new { id = work.Id },
+                    new ApiResponse<WorkDto>(true, "Tạo công trình và tác giả thành công", work));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tạo công trình");
+                _logger.LogError(ex, "Lỗi khi tạo công trình và tác giả");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
 
-        [HttpPost("{workId}/authors")]
-        public async Task<ActionResult<ApiResponse<AuthorDto>>> AddAuthorToWork([FromRoute] Guid workId, [FromBody] CreateAuthorRequestDto request)
+        [HttpPost("{workId}/co-author-declare")]
+        public async Task<ActionResult<ApiResponse<WorkDto>>> CoAuthorDeclare([FromRoute] Guid workId,[FromBody] UpdateWorkWithAuthorRequestDto request)
         {
             try
             {
-                var author = await _workService.AddAuthorToWorkAsync(workId, request);
-                return Ok(new ApiResponse<AuthorDto>(
+                var work = await _workService.CoAuthorDeclaredAsync(workId, request.WorkRequest, request.AuthorRequest);
+                return Ok(new ApiResponse<WorkDto>(
                     true,
-                    "Thêm tác giả vào công trình thành công",
-                    author
+                    "Đồng tác giả kê khai công trình thành công",
+                    work
                 ));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi thêm tác giả vào công trình");
+                _logger.LogError(ex, "Lỗi khi đồng tác giả kê khai công trình");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
@@ -115,10 +126,8 @@ namespace WebApi.Controllers
                     TimePublished = request.TimePublished,
                     TotalAuthors = request.TotalAuthors,
                     TotalMainAuthors = request.TotalMainAuthors,
-                    FinalWorkHour = request.FinalWorkHour,
                     Note = request.Note,
                     Details = request.Details,
-                    ProofStatus = request.ProofStatus,
                     Source = request.Source,
                     WorkTypeId = request.WorkTypeId,
                     WorkLevelId = request.WorkLevelId,
@@ -134,48 +143,6 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi cập nhật công trình");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
-        }
-
-        [HttpPut("authors/{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> UpdateAuthor([FromRoute] Guid id, [FromBody] UpdateAuthorRequestDto request)
-        {
-            try
-            {
-                var works = await _workService.GetAllAsync();
-                var existingAuthor = works.SelectMany(w => w.Authors ?? new List<AuthorDto>())
-                    .FirstOrDefault(a => a.Id == id);
-                if (existingAuthor == null)
-                {
-                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy tác giả"));
-                }
-
-                var authorDto = new AuthorDto
-                {
-                    Id = id,
-                    WorkId = existingAuthor.WorkId,
-                    UserId = request.UserId,
-                    AuthorRoleId = request.AuthorRoleId,
-                    PurposeId = request.PurposeId,
-                    Position = request.Position,
-                    ScoreLevel = request.ScoreLevel,
-                    FinalAuthorHour = existingAuthor.FinalAuthorHour,
-                    TempAuthorHour = existingAuthor.TempAuthorHour,
-                    TempWorkHour = existingAuthor.TempWorkHour,
-                    IsNotMatch = existingAuthor.TempAuthorHour != existingAuthor.FinalAuthorHour,
-                    MarkedForScoring = request.MarkedForScoring,
-                    CoAuthors = request.CoAuthors,
-                    CreatedDate = existingAuthor.CreatedDate,
-                    ModifiedDate = DateTime.UtcNow
-                };
-
-                await _workService.UpdateAuthorAsync(id, authorDto);
-                return Ok(new ApiResponse<object>(true, "Cập nhật tác giả thành công"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi cập nhật tác giả");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
@@ -246,6 +213,32 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi cập nhật trạng thái MarkedForScoring");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpPatch("{workId}/admin-update")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<ApiResponse<WorkDto>>> AdminUpdateWork(
+            [FromRoute] Guid workId,
+            [FromBody] AdminUpdateWorkRequestDto request)
+        {
+            try
+            {
+                var work = await _workService.GetWorkByIdWithAuthorsAsync(workId);
+                if (work == null)
+                    return NotFound(new ApiResponse<WorkDto>(false, "Công trình không tồn tại"));
+
+                var workEntity = await _workService.UpdateWorkAdminAsync(workId, request);
+                return Ok(new ApiResponse<WorkDto>(
+                    true,
+                    "Cập nhật công trình thành công",
+                    workEntity
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi cập nhật công trình");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }

@@ -15,9 +15,9 @@ namespace Domain.Entities
         public WorkSource Source { get; set; }
 
         public Guid WorkTypeId { get; set; }
-        public Guid WorkLevelId { get; set; }
-        public Guid SCImagoFieldId { get; set; }
-        public Guid ScoringFieldId { get; set; }
+        public Guid? WorkLevelId { get; set; }
+        public Guid? SCImagoFieldId { get; set; }
+        public Guid? ScoringFieldId { get; set; }
 
 
       // (Tuỳ chọn) Navigation properties đến các entity khác

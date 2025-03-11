@@ -3,6 +3,7 @@ using Application.Shared.Response;
 using Application.Works;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace WebApi.Controllers
 {
@@ -25,7 +26,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var works = await _workService.GetAllAsync();
+                var works = await _workService.GetAllWorksWithAuthorsAsync();
                 var authors = works.SelectMany(w => w.Authors ?? new List<AuthorDto>());
                 return Ok(new ApiResponse<IEnumerable<AuthorDto>>(true, "Lấy dữ liệu tác giả thành công", authors));
             }
@@ -41,7 +42,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var works = await _workService.GetAllAsync();
+                var works = await _workService.GetAllWorksWithAuthorsAsync();
                 var author = works.SelectMany(w => w.Authors ?? new List<AuthorDto>())
                     .FirstOrDefault(a => a.Id == id);
                 if (author == null)
@@ -75,49 +76,6 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi tạo tác giả");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
-        }
-
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
-        public async Task<ActionResult<ApiResponse<object>>> UpdateAuthor([FromRoute] Guid id, [FromBody] UpdateAuthorRequestDto request)
-        {
-            try
-            {
-                var works = await _workService.GetAllAsync();
-                var existingAuthor = works.SelectMany(w => w.Authors ?? new List<AuthorDto>())
-                    .FirstOrDefault(a => a.Id == id);
-                if (existingAuthor == null)
-                {
-                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy tác giả"));
-                }
-
-                var authorDto = new AuthorDto
-                {
-                    Id = id,
-                    WorkId = existingAuthor.WorkId,
-                    UserId = request.UserId,
-                    AuthorRoleId = request.AuthorRoleId,
-                    PurposeId = request.PurposeId,
-                    Position = request.Position,
-                    ScoreLevel = request.ScoreLevel,
-                    FinalAuthorHour = existingAuthor.FinalAuthorHour,
-                    TempAuthorHour = existingAuthor.TempAuthorHour,
-                    TempWorkHour = existingAuthor.TempWorkHour,
-                    IsNotMatch = existingAuthor.TempAuthorHour != existingAuthor.FinalAuthorHour,
-                    MarkedForScoring = request.MarkedForScoring,
-                    CoAuthors = request.CoAuthors,
-                    CreatedDate = existingAuthor.CreatedDate,
-                    ModifiedDate = DateTime.UtcNow
-                };
-
-                await _workService.UpdateAuthorAsync(id, authorDto);
-                return Ok(new ApiResponse<object>(true, "Cập nhật tác giả thành công"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi cập nhật tác giả");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }

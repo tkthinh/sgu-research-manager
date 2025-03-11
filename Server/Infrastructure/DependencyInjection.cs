@@ -121,8 +121,9 @@ namespace Infrastructure
 
          // Đăng ký custom repository (nếu có)
          services.AddScoped<IWorkTypeRepository, WorkTypeRepository>();
+            services.AddScoped<IWorkRepository, WorkRepository>();
 
-         return services;
+            return services;
       }
    }
 }

@@ -5,6 +5,8 @@ using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Domain.Enums;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace Application.Works
 {
@@ -15,13 +17,15 @@ namespace Application.Works
         private readonly IGenericMapper<AuthorDto, Author> _authorMapper;
         private readonly IGenericRepository<AuthorRole> _authorRoleRepository;
         private readonly IGenericRepository<Factor> _factorRepository;
+        private readonly IWorkRepository _workRepository;
 
         public WorkService(
             IUnitOfWork unitOfWork,
             IGenericMapper<WorkDto, Work> mapper,
             IGenericMapper<AuthorDto, Author> authorMapper,
             IDistributedCache cache,
-            ILogger<WorkService> logger)
+            ILogger<WorkService> logger,
+            IWorkRepository workRepository)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
@@ -29,7 +33,24 @@ namespace Application.Works
             _authorMapper = authorMapper;
             _authorRoleRepository = unitOfWork.Repository<AuthorRole>();
             _factorRepository = unitOfWork.Repository<Factor>();
+            _workRepository = workRepository;
         }
+        public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
+        {
+            var works = await _workRepository.GetWorksWithAuthorsAsync();
+         
+            return _mapper.MapToDtos(works);
+        }
+
+        public async Task<WorkDto?> GetWorkByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(id);
+            if (work == null)
+                return null;
+            return _mapper.MapToDto(work);
+        }
+
+
 
         public async Task<IEnumerable<WorkDto>> SearchWorksAsync(string title, CancellationToken cancellationToken = default)
         {
@@ -106,51 +127,6 @@ namespace Application.Works
             return _mapper.MapToDto(work);
         }
 
-        public async Task<AuthorDto> AddAuthorToWorkAsync(Guid workId, CreateAuthorRequestDto request, CancellationToken cancellationToken = default)
-        {
-            var work = await _unitOfWork.Repository<Work>().GetByIdAsync(workId);
-            if (work == null)
-                throw new Exception("Công trình không tồn tại");
-
-            var factor = (await _factorRepository.FindAsync(f =>
-                f.WorkTypeId == work.WorkTypeId &&
-                f.WorkLevelId == work.WorkLevelId &&
-                f.PurposeId == request.PurposeId &&
-                f.ScoreLevel == request.ScoreLevel))
-                .FirstOrDefault();
-            if (factor == null)
-                throw new Exception("Không tìm thấy Factor phù hợp");
-
-            var tempWorkHour = CalculateTempWorkHour(request.ScoreLevel, factor);
-
-            var author = new Author
-            {
-                Id = Guid.NewGuid(),
-                WorkId = workId,
-                UserId = request.UserId,
-                AuthorRoleId = request.AuthorRoleId,
-                PurposeId = request.PurposeId,
-                Position = request.Position,
-                ScoreLevel = request.ScoreLevel,
-                CoAuthors = request.CoAuthors,
-                TempWorkHour = tempWorkHour,
-                CreatedDate = DateTime.UtcNow
-            };
-
-            var tempAuthorHour = await CalculateTempAuthorHour(tempWorkHour, work.TotalAuthors ?? 0,
-                work.TotalMainAuthors ?? 0, request.AuthorRoleId);
-            author.TempAuthorHour = tempAuthorHour;
-            author.IsNotMatch = tempAuthorHour != 0;
-            author.MarkedForScoring = false;
-
-            await _unitOfWork.Repository<Author>().CreateAsync(author);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            await SafeInvalidateCacheAsync(workId);
-
-            return _authorMapper.MapToDto(author);
-        }
-
         private int CalculateTempWorkHour(ScoreLevel? scoreLevel, Factor factor)
         {
             return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
@@ -171,25 +147,76 @@ namespace Application.Works
             return (int)((2.0 / 3) * (tempWorkHour / totalAuthors));
         }
 
-        public async Task UpdateAuthorAsync(Guid authorId, AuthorDto authorDto, CancellationToken cancellationToken = default)
+        public async Task<WorkDto?> CoAuthorDeclaredAsync(Guid workId, UpdateWorkRequestDto workRequest, CreateAuthorRequestDto authorRequest, CancellationToken cancellationToken = default)
         {
-            var author = await _unitOfWork.Repository<Author>().GetByIdAsync(authorId);
-            if (author == null)
-                throw new Exception("Không tìm thấy tác giả");
+            // Kiểm tra công trình có tồn tại không
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
+            if (work == null)
+                throw new Exception("Công trình không tồn tại");
 
-            author.UserId = authorDto.UserId;
-            author.AuthorRoleId = authorDto.AuthorRoleId;
-            author.PurposeId = authorDto.PurposeId;
-            author.Position = authorDto.Position;
-            author.ScoreLevel = authorDto.ScoreLevel;
-            author.CoAuthors = authorDto.CoAuthors;
-            author.MarkedForScoring = authorDto.MarkedForScoring;
-            author.IsNotMatch = author.TempAuthorHour != author.FinalAuthorHour;
-            author.ModifiedDate = DateTime.UtcNow;
 
-            await _unitOfWork.Repository<Author>().UpdateAsync(author);
+            //// Thêm kiểm tra quyền (giả định lấy currentUserId từ IHttpContextAccessor)
+            //var currentUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //if (string.IsNullOrEmpty(currentUserId) || !work.Authors.Any(a => a.UserId.ToString() == currentUserId))
+            //    throw new Exception("Bạn không có quyền kê khai công trình này");
+
+            // Cập nhật thông tin công trình
+            work.Title = workRequest.Title ?? work.Title;
+            work.TimePublished = workRequest.TimePublished ?? work.TimePublished;
+            work.TotalAuthors = workRequest.TotalAuthors ?? work.TotalAuthors;
+            work.TotalMainAuthors = workRequest.TotalMainAuthors ?? work.TotalMainAuthors;
+            work.Note = workRequest.Note ?? work.Note;
+            work.Details = workRequest.Details ?? work.Details;
+            work.Source = workRequest.Source;
+            work.WorkTypeId = workRequest.WorkTypeId;
+            work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
+            work.SCImagoFieldId = workRequest.SCImagoFieldId ?? work.SCImagoFieldId;
+            work.ScoringFieldId = workRequest.ScoringFieldId ?? work.ScoringFieldId;
+            work.ModifiedDate = DateTime.UtcNow;
+
+            // Tính toán giờ làm việc tạm thời cho tác giả mới
+            var factor = (await _factorRepository.FindAsync(f =>
+                f.WorkTypeId == work.WorkTypeId &&
+                f.WorkLevelId == work.WorkLevelId &&
+                f.PurposeId == authorRequest.PurposeId &&
+                f.ScoreLevel == authorRequest.ScoreLevel))
+                .FirstOrDefault();
+            if (factor == null)
+                throw new Exception("Không tìm thấy Factor phù hợp");
+
+            var tempWorkHour = CalculateTempWorkHour(authorRequest.ScoreLevel, factor);
+
+            // Tạo mới tác giả
+            var author = new Author
+            {
+                Id = Guid.NewGuid(),
+                WorkId = workId,
+                UserId = authorRequest.UserId,
+                AuthorRoleId = authorRequest.AuthorRoleId,
+                PurposeId = authorRequest.PurposeId,
+                Position = authorRequest.Position,
+                ScoreLevel = authorRequest.ScoreLevel,
+                CoAuthors = authorRequest.CoAuthors,
+                TempWorkHour = tempWorkHour,
+                CreatedDate = DateTime.UtcNow
+            };
+
+            var tempAuthorHour = await CalculateTempAuthorHour(tempWorkHour, work.TotalAuthors ?? 0,
+                work.TotalMainAuthors ?? 0, author.AuthorRoleId);
+            author.TempAuthorHour = tempAuthorHour;
+            author.IsNotMatch = tempAuthorHour != 0;
+            author.MarkedForScoring = false;
+
+            // Lưu thay đổi vào database
+            await _unitOfWork.Repository<Work>().UpdateAsync(work);
+            await _unitOfWork.Repository<Author>().CreateAsync(author);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await SafeInvalidateCacheAsync(author.WorkId);
+
+            // Invalidate cache
+            await SafeInvalidateCacheAsync(workId);
+
+            // Trả về thông tin công trình đã cập nhật kèm tác giả
+            return _mapper.MapToDto(work);
         }
 
         public async Task<IEnumerable<AuthorDto>> GetWorksByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -279,13 +306,22 @@ namespace Application.Works
             return 1; // Giá trị mặc định
         }
 
-        public async Task DeleteAuthorAsync(Guid authorId, CancellationToken cancellationToken = default)
+        public async Task<WorkDto> UpdateWorkAdminAsync(Guid workId, AdminUpdateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
-            await _unitOfWork.Repository<Author>().DeleteAsync(authorId);
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
+            if (work == null)
+                throw new Exception("Công trình không tồn tại");
+
+            work.FinalWorkHour = request.FinalWorkHour;
+            work.ProofStatus = request.ProofStatus;
+            work.ModifiedDate = DateTime.UtcNow;
+
+            await _unitOfWork.Repository<Work>().UpdateAsync(work);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            var author = await _unitOfWork.Repository<Author>().GetByIdAsync(authorId);
-            if (author != null)
-                await SafeInvalidateCacheAsync(author.WorkId);
+
+            await SafeInvalidateCacheAsync(workId);
+
+            return _mapper.MapToDto(work);
         }
     }
 }

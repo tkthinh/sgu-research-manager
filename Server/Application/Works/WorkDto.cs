@@ -19,9 +19,9 @@ namespace Application.Works
 
 
         public Guid WorkTypeId { get; set; }
-        public Guid WorkLevelId { get; set; }
-        public Guid SCImagoFieldId { get; set; }
-        public Guid ScoringFieldId { get; set; }
+        public Guid? WorkLevelId { get; set; }
+        public Guid? SCImagoFieldId { get; set; }
+        public Guid? ScoringFieldId { get; set; }
 
         public DateTime CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }
