@@ -57,7 +57,8 @@ namespace WebApi.Controllers
                     AuthorRoleId = request.AuthorRoleId,
                     Name = request.Name,
                     ScoreLevel = request.ScoreLevel,
-                    ConvertHour = request.ConvertHour
+                    ConvertHour = request.ConvertHour,
+                    MaxAllowed = request.MaxAllowed
                 };
 
                 var createdFactor = await factorService.CreateAsync(dto);
@@ -94,6 +95,7 @@ namespace WebApi.Controllers
                 existingFactor.Name = request.Name;
                 existingFactor.ScoreLevel = request.ScoreLevel;
                 existingFactor.ConvertHour = request.ConvertHour;
+                existingFactor.MaxAllowed = request.MaxAllowed;
 
                 await factorService.UpdateAsync(existingFactor);
                 return Ok(new ApiResponse<object>(true, "Cập nhật hệ số thành công"));

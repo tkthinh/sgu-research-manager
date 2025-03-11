@@ -17,6 +17,7 @@ namespace Application.Factors
                 Name = entity.Name,
                 ScoreLevel = entity.ScoreLevel,
                 ConvertHour = entity.ConvertHour,
+                MaxAllowed = entity.MaxAllowed,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
@@ -34,6 +35,7 @@ namespace Application.Factors
                 Name = dto.Name,
                 ScoreLevel = dto.ScoreLevel,
                 ConvertHour = dto.ConvertHour,
+                MaxAllowed = dto.MaxAllowed,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate
             };

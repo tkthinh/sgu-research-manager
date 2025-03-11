@@ -643,7 +643,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("3c21b247-16ce-40a9-a921-abef0e1bba56"),
                     PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null // Nếu không có AuthorRoleId, để null
+                    AuthorRoleId = null, // Nếu không có AuthorRoleId, để null
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -654,7 +655,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),
                     PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -665,7 +667,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),
                     PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -676,7 +679,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),
                     PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 1
                 },
                 new Factor
                 {
@@ -687,7 +691,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),
                     PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 1
                 },
                 new Factor
                 {
@@ -698,7 +703,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),
                     PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -709,7 +715,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),
                     PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 2
                 },
                 new Factor
                 {
@@ -720,7 +727,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),
                     PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -731,7 +739,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),
                     PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 6
                 },
                 new Factor
                 {
@@ -742,7 +751,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),
                     PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -753,7 +763,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
                     WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),
                     PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 6
                 },
 
                 // Bài báo khoa học - WoS và Scopus
@@ -766,7 +777,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -777,7 +789,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -788,7 +801,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -799,7 +813,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -810,7 +825,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 8
                 },
                 new Factor
                 {
@@ -821,7 +837,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -832,7 +849,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 6
                 },
                 new Factor
                 {
@@ -843,7 +861,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -854,7 +873,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -865,7 +885,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -876,7 +897,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -887,7 +909,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -898,7 +921,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 8
                 },
                 new Factor
                 {
@@ -909,7 +933,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -920,7 +945,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 6
                 },
                 new Factor
                 {
@@ -931,7 +957,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
 
                 // Bài báo khoa học - Trường, Bộ/Ngành, Quốc tế (Score = 1)
@@ -944,7 +971,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 4
                 },
                 new Factor
                 {
@@ -955,7 +983,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -966,7 +995,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 4
                 },
                 new Factor
                 {
@@ -977,7 +1007,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -988,7 +1019,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 4
                 },
                 new Factor
                 {
@@ -999,7 +1031,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
 
                 // Bài báo khoa học - Trường, Bộ/Ngành, Quốc tế (Score = 0.75)
@@ -1012,7 +1045,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 2
                 },
                 new Factor
                 {
@@ -1023,7 +1057,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -1034,7 +1069,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 2
                 },
                 new Factor
                 {
@@ -1045,7 +1081,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -1056,7 +1093,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 2
                 },
                 new Factor
                 {
@@ -1067,7 +1105,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
 
                 // Bài báo khoa học - Trường, Bộ/Ngành, Quốc tế (Score = 0.5)
@@ -1080,7 +1119,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 2
                 },
                 new Factor
                 {
@@ -1091,7 +1131,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 },
                 new Factor
                 {
@@ -1113,7 +1154,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 2
                 },
                 new Factor
                 {
@@ -1124,7 +1166,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
                     PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = 2
                 },
                 new Factor
                 {
@@ -1135,7 +1178,8 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
                     WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
                     PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null
+                    AuthorRoleId = null,
+                    MaxAllowed = null
                 }
             };
 

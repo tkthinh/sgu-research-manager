@@ -11,5 +11,6 @@ namespace Application.Factors
         public required string Name { get; set; }
         public ScoreLevel? ScoreLevel { get; set; }
         public int ConvertHour { get; set; }
+        public int? MaxAllowed { get; set; }
     }
 }

@@ -5,8 +5,6 @@ using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Domain.Enums;
-using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
 
 namespace Application.Works
 {
@@ -219,12 +217,34 @@ namespace Application.Works
             if (work == null)
                 throw new Exception("Công trình không tồn tại");
 
-            var maxAllowed = await GetMaxAllowedForScoring(work.WorkTypeId, work.WorkLevelId, author.ScoreLevel);
-            var markedAuthors = await _unitOfWork.Repository<Author>()
-                .FindAsync(a => a.UserId == author.UserId && a.MarkedForScoring && a.ScoreLevel == author.ScoreLevel);
-            if (marked && markedAuthors.Count() >= maxAllowed)
-                throw new Exception($"Đã vượt quá giới hạn quy đổi ({maxAllowed} công trình)");
+            // Nếu đánh dấu công trình, kiểm tra giới hạn
+            if (marked)
+            {
+                // Lấy giới hạn số lượng công trình được phép đánh dấu từ bảng Factor
+                var maxAllowed = await GetMaxAllowedForScoring(work.WorkTypeId, work.WorkLevelId, author.ScoreLevel, cancellationToken);
 
+                // Đếm số lượng công trình đã được đánh dấu của người dùng với cùng ScoreLevel
+                var markedAuthors = await _unitOfWork.Repository<Author>()
+                    .FindAsync(a => a.UserId == author.UserId &&
+                                   a.MarkedForScoring &&
+                                   a.ScoreLevel == author.ScoreLevel);
+
+                if (markedAuthors.Count() >= maxAllowed)
+                {
+                    var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
+                    var workLevel = work.WorkLevelId.HasValue
+                        ? await _unitOfWork.Repository<WorkLevel>().GetByIdAsync(work.WorkLevelId.Value)
+                        : null;
+
+                    var workTypeInfo = workType?.Name ?? "Không xác định";
+                    var workLevelInfo = workLevel?.Name ?? "Không xác định";
+                    var scoreLevelInfo = author.ScoreLevel.HasValue ? author.ScoreLevel.ToString() : "Không xác định";
+
+                    throw new Exception($"Đã vượt quá giới hạn quy đổi ({maxAllowed} công trình) cho loại công trình '{workTypeInfo}', cấp '{workLevelInfo}' với mức điểm {scoreLevelInfo}");
+                }
+            }
+
+            // Cập nhật trạng thái đánh dấu
             author.MarkedForScoring = marked;
             author.ModifiedDate = DateTime.UtcNow;
             await _unitOfWork.Repository<Author>().UpdateAsync(author);
@@ -234,20 +254,21 @@ namespace Application.Works
 
         private async Task<int> GetMaxAllowedForScoring(Guid workTypeId, Guid? workLevelId, ScoreLevel? scoreLevel, CancellationToken cancellationToken = default)
         {
-            var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(workTypeId);
-            if (workType == null)
-                return 1; // Giá trị mặc định
+            // Tìm kiếm Factor phù hợp với các tiêu chí: WorkTypeId, WorkLevelId, ScoreLevel
+            var factor = (await _factorRepository.FindAsync(f =>
+                f.WorkTypeId == workTypeId &&
+                f.WorkLevelId == workLevelId &&
+                f.ScoreLevel == scoreLevel))
+                .FirstOrDefault();
 
-            // Logic giới hạn dựa trên WorkType và ScoreLevel
-            if (workType.Name == "Bài báo")
-            {
-                if (scoreLevel == ScoreLevel.One)
-                    return 4;
-                if (scoreLevel == ScoreLevel.ZeroPointSevenFive)
-                    return 2;
-            }
-            return 1; // Giá trị mặc định
+            // Nếu tìm thấy Factor và có giá trị MaxAllowed, sử dụng giá trị đó
+            if (factor != null && factor.MaxAllowed.HasValue)
+                return factor.MaxAllowed.Value;
+
+            // Nếu không tìm thấy, có thể trả về giá trị mặc định (ví dụ: 1)
+            return 1;
         }
+
 
         public async Task<WorkDto> UpdateWorkAdminAsync(Guid workId, AdminUpdateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
