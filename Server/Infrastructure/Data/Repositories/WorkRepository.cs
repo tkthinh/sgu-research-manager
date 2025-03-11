@@ -23,5 +23,27 @@ namespace Infrastructure.Data.Repositories
                 .Include(w => w.Authors)
                 .FirstOrDefaultAsync(w => w.Id == id);
         }
+
+        public async Task<IEnumerable<Work>> FindWorksWithAuthorsAsync(string title)
+        {
+            return await context.Set<Work>()
+                .Include(w => w.Authors)
+                .Where(w => w.Title.Contains(title))
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Work>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default)
+        {
+            return await context.Works
+                .Include(w => w.Authors) // Bao gồm thông tin Authors để trả về đầy đủ WorkDto
+                .Where(w => w.Authors.Any(a =>
+                    context.Users
+                        .Where(u => u.DepartmentId == departmentId)
+                        .Select(u => u.Id)
+                        .Contains(a.UserId)))
+                .Distinct()
+                .ToListAsync(cancellationToken);
+        }
+
     }
 }

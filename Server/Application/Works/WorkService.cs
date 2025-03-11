@@ -50,12 +50,9 @@ namespace Application.Works
             return _mapper.MapToDto(work);
         }
 
-
-
         public async Task<IEnumerable<WorkDto>> SearchWorksAsync(string title, CancellationToken cancellationToken = default)
         {
-            var works = await _unitOfWork.Repository<Work>()
-                .FindAsync(w => w.Title.Contains(title));
+            var works = await _workRepository.FindWorksWithAuthorsAsync(title);
             return _mapper.MapToDtos(works);
         }
 
@@ -125,26 +122,6 @@ namespace Application.Works
             await SafeInvalidateCacheAsync(work.Id);
 
             return _mapper.MapToDto(work);
-        }
-
-        private int CalculateTempWorkHour(ScoreLevel? scoreLevel, Factor factor)
-        {
-            return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
-        }
-
-        private async Task<int> CalculateTempAuthorHour(int tempWorkHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
-        {
-            if (totalAuthors == 0 || totalMainAuthors == 0)
-                return 0;
-
-            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
-            if (authorRole == null)
-                throw new Exception("Không tìm thấy vai trò tác giả");
-
-            if (authorRole.IsMainAuthor)
-                return (int)((1.0 / 3) * (tempWorkHour / totalMainAuthors) +
-                             (2.0 / 3) * (tempWorkHour / totalAuthors));
-            return (int)((2.0 / 3) * (tempWorkHour / totalAuthors));
         }
 
         public async Task<WorkDto?> CoAuthorDeclaredAsync(Guid workId, UpdateWorkRequestDto workRequest, CreateAuthorRequestDto authorRequest, CancellationToken cancellationToken = default)
@@ -226,29 +203,10 @@ namespace Application.Works
             return _authorMapper.MapToDtos(authors);
         }
 
-        public async Task UpdateWorkFinalHourAsync(Guid workId, int finalWorkHour, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<WorkDto>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default)
         {
-            var work = await _unitOfWork.Repository<Work>().GetByIdAsync(workId);
-            if (work == null)
-                throw new Exception("Công trình không tồn tại");
-
-            work.FinalWorkHour = finalWorkHour;
-            await _unitOfWork.Repository<Work>().UpdateAsync(work);
-
-            var authors = await _unitOfWork.Repository<Author>()
-                .FindAsync(a => a.WorkId == workId);
-            foreach (var author in authors)
-            {
-                var finalAuthorHour = await CalculateFinalAuthorHour(finalWorkHour, work.TotalAuthors ?? 0,
-                    work.TotalMainAuthors ?? 0, author.AuthorRoleId);
-                author.FinalAuthorHour = finalAuthorHour;
-                author.IsNotMatch = author.TempAuthorHour != finalAuthorHour;
-                author.ModifiedDate = DateTime.UtcNow;
-                await _unitOfWork.Repository<Author>().UpdateAsync(author);
-            }
-
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await SafeInvalidateCacheAsync(workId);
+            var works = await _workRepository.GetWorksByDepartmentIdAsync(departmentId, cancellationToken);
+            return _mapper.MapToDtos(works);
         }
 
         public async Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default)
@@ -274,21 +232,6 @@ namespace Application.Works
             await SafeInvalidateCacheAsync(author.WorkId);
         }
 
-        private async Task<int> CalculateFinalAuthorHour(int finalWorkHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
-        {
-            if (totalAuthors == 0 || totalMainAuthors == 0)
-                return 0;
-
-            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
-            if (authorRole == null)
-                throw new Exception("Không tìm thấy vai trò tác giả");
-
-            if (authorRole.IsMainAuthor)
-                return (int)((1.0 / 3) * (finalWorkHour / totalMainAuthors) +
-                             (2.0 / 3) * (finalWorkHour / totalAuthors));
-            return (int)((2.0 / 3) * (finalWorkHour / totalAuthors));
-        }
-
         private async Task<int> GetMaxAllowedForScoring(Guid workTypeId, Guid? workLevelId, ScoreLevel? scoreLevel, CancellationToken cancellationToken = default)
         {
             var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(workTypeId);
@@ -312,9 +255,22 @@ namespace Application.Works
             if (work == null)
                 throw new Exception("Công trình không tồn tại");
 
+            // Cập nhật finalWorkHour và proofStatus
             work.FinalWorkHour = request.FinalWorkHour;
-            work.ProofStatus = request.ProofStatus;
+            work.ProofStatus = request.ProofStatus; // Giữ nguyên nếu không cung cấp
             work.ModifiedDate = DateTime.UtcNow;
+
+            // Tính toán lại finalAuthorHour cho tất cả tác giả
+            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == workId);
+            foreach (var author in authors)
+            {
+                var finalAuthorHour = await CalculateFinalAuthorHour(work.FinalWorkHour, work.TotalAuthors ?? 0,
+                    work.TotalMainAuthors ?? 0, author.AuthorRoleId);
+                author.FinalAuthorHour = finalAuthorHour;
+                author.IsNotMatch = author.TempAuthorHour != finalAuthorHour;
+                author.ModifiedDate = DateTime.UtcNow;
+                await _unitOfWork.Repository<Author>().UpdateAsync(author);
+            }
 
             await _unitOfWork.Repository<Work>().UpdateAsync(work);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -322,6 +278,41 @@ namespace Application.Works
             await SafeInvalidateCacheAsync(workId);
 
             return _mapper.MapToDto(work);
+        }
+
+        private int CalculateTempWorkHour(ScoreLevel? scoreLevel, Factor factor)
+        {
+            return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
+        }
+
+        private async Task<int> CalculateFinalAuthorHour(int finalWorkHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
+        {
+            if (totalAuthors == 0 || totalMainAuthors == 0)
+                return 0;
+
+            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
+            if (authorRole == null)
+                throw new Exception("Không tìm thấy vai trò tác giả");
+
+            if (authorRole.IsMainAuthor)
+                return (int)((1.0 / 3) * (finalWorkHour / totalMainAuthors) +
+                             (2.0 / 3) * (finalWorkHour / totalAuthors));
+            return (int)((2.0 / 3) * (finalWorkHour / totalAuthors));
+        }
+
+        private async Task<int> CalculateTempAuthorHour(int tempWorkHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
+        {
+            if (totalAuthors == 0 || totalMainAuthors == 0)
+                return 0;
+
+            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
+            if (authorRole == null)
+                throw new Exception("Không tìm thấy vai trò tác giả");
+
+            if (authorRole.IsMainAuthor)
+                return (int)((1.0 / 3) * (tempWorkHour / totalMainAuthors) +
+                             (2.0 / 3) * (tempWorkHour / totalAuthors));
+            return (int)((2.0 / 3) * (tempWorkHour / totalAuthors));
         }
     }
 }

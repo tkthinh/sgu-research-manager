@@ -2,8 +2,6 @@
 using Application.Works;
 using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 
 namespace WebApi.Controllers
 {
@@ -38,7 +36,6 @@ namespace WebApi.Controllers
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
-
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> GetWork([FromRoute] Guid id)
@@ -108,45 +105,6 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> UpdateWork([FromRoute] Guid id, [FromBody] UpdateWorkRequestDto request)
-        {
-            try
-            {
-                var existingWork = await _workService.GetByIdAsync(id);
-                if (existingWork == null)
-                {
-                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy công trình"));
-                }
-
-                var workDto = new WorkDto
-                {
-                    Id = id,
-                    Title = request.Title,
-                    TimePublished = request.TimePublished,
-                    TotalAuthors = request.TotalAuthors,
-                    TotalMainAuthors = request.TotalMainAuthors,
-                    Note = request.Note,
-                    Details = request.Details,
-                    Source = request.Source,
-                    WorkTypeId = request.WorkTypeId,
-                    WorkLevelId = request.WorkLevelId,
-                    SCImagoFieldId = request.SCImagoFieldId,
-                    ScoringFieldId = request.ScoringFieldId,
-                    CreatedDate = existingWork.CreatedDate,
-                    ModifiedDate = DateTime.UtcNow
-                };
-
-                await _workService.UpdateAsync(workDto);
-                return Ok(new ApiResponse<object>(true, "Cập nhật công trình thành công"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi cập nhật công trình");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
-        }
-
         [HttpDelete("{id}")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteWork([FromRoute] Guid id)
         {
@@ -187,22 +145,26 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPut("{workId}/final-hour")]
-        public async Task<ActionResult<ApiResponse<object>>> UpdateWorkFinalHour([FromRoute] Guid workId, [FromBody] int finalWorkHour)
+        [HttpGet("department/{departmentId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorksByDepartmentId([FromRoute] Guid departmentId)
         {
             try
             {
-                await _workService.UpdateWorkFinalHourAsync(workId, finalWorkHour);
-                return Ok(new ApiResponse<object>(true, "Cập nhật giờ chính thức thành công"));
+                var works = await _workService.GetWorksByDepartmentIdAsync(departmentId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình theo phòng ban thành công",
+                    works
+                ));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi cập nhật giờ chính thức");
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo phòng ban");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
 
-        [HttpPut("authors/{authorId}/mark")]
+        [HttpPatch("authors/{authorId}/mark")]
         public async Task<ActionResult<ApiResponse<object>>> SetMarkedForScoring([FromRoute] Guid authorId, [FromBody] bool marked)
         {
             try
@@ -218,7 +180,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPatch("{workId}/admin-update")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> AdminUpdateWork(
             [FromRoute] Guid workId,
             [FromBody] AdminUpdateWorkRequestDto request)

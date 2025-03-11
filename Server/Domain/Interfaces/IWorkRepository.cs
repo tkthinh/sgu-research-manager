@@ -6,5 +6,7 @@ namespace Domain.Interfaces
     {
         Task<IEnumerable<Work>> GetWorksWithAuthorsAsync();
         Task<Work?> GetWorkWithAuthorsByIdAsync(Guid id);
+        Task<IEnumerable<Work>> FindWorksWithAuthorsAsync(string title);
+        Task<IEnumerable<Work>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default);
     }
 }

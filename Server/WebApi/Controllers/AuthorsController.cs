@@ -1,106 +1,67 @@
 ﻿using Application.Authors;
 using Application.Shared.Response;
-using Application.Works;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Serilog;
 
 namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class AuthorsController : ControllerBase
     {
-        private readonly IWorkService _workService;
-        private readonly ILogger<AuthorsController> _logger;
+        private readonly IAuthorService authorService;
+        private readonly ILogger<AuthorsController> logger;
 
-        public AuthorsController(IWorkService workService, ILogger<AuthorsController> logger)
+        public AuthorsController(IAuthorService authorService, ILogger<AuthorsController> logger)
         {
-            _workService = workService;
-            _logger = logger;
+            this.authorService = authorService;
+            this.logger = logger;
         }
 
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<AuthorDto>>>> GetAuthors()
         {
-            try
-            {
-                var works = await _workService.GetAllWorksWithAuthorsAsync();
-                var authors = works.SelectMany(w => w.Authors ?? new List<AuthorDto>());
-                return Ok(new ApiResponse<IEnumerable<AuthorDto>>(true, "Lấy dữ liệu tác giả thành công", authors));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi lấy danh sách tác giả");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
+            var authors = await authorService.GetAllAsync();
+            return Ok(new ApiResponse<IEnumerable<AuthorDto>>(
+                true,
+                "Lấy dữ liệu phân công thành công",
+                authors
+            ));
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<AuthorDto>>> GetAuthor([FromRoute] Guid id)
         {
-            try
+            var author = await authorService.GetByIdAsync(id);
+            if (author == null)
             {
-                var works = await _workService.GetAllWorksWithAuthorsAsync();
-                var author = works.SelectMany(w => w.Authors ?? new List<AuthorDto>())
-                    .FirstOrDefault(a => a.Id == id);
-                if (author == null)
-                {
-                    return NotFound(new ApiResponse<AuthorDto>(false, "Không tìm thấy tác giả"));
-                }
-                return Ok(new ApiResponse<AuthorDto>(true, "Lấy dữ liệu tác giả thành công", author));
+                return NotFound(new ApiResponse<AuthorDto>(false, "Không tìm thấy phân công"));
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi lấy thông tin tác giả");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
-        }
-
-        [HttpPost]
-        [Authorize(Roles = "Admin,Staff")]
-        public async Task<ActionResult<ApiResponse<AuthorDto>>> CreateAuthor([FromBody] CreateAuthorRequestDto requestDto)
-        {
-            try
-            {
-                if (!Request.Query.TryGetValue("workId", out var workIdValue) || !Guid.TryParse(workIdValue, out var workId))
-                {
-                    return BadRequest(new ApiResponse<object>(false, "WorkId không hợp lệ"));
-                }
-
-                var author = await _workService.AddAuthorToWorkAsync(workId, requestDto);
-                var response = new ApiResponse<AuthorDto>(true, "Tạo tác giả thành công", author);
-                return CreatedAtAction(nameof(GetAuthor), new { id = author.Id }, response);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi tạo tác giả");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
+            return Ok(new ApiResponse<AuthorDto>(
+                true,
+                "Lấy dữ liệu phân công thành công",
+                author
+            ));
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteAuthor([FromRoute] Guid id)
         {
             try
             {
-                var works = await _workService.GetAllAsync();
-                var existingAuthor = works.SelectMany(w => w.Authors ?? new List<AuthorDto>())
-                    .FirstOrDefault(a => a.Id == id);
+                var existingAuthor = await authorService.GetByIdAsync(id);
                 if (existingAuthor == null)
                 {
-                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy tác giả"));
+                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy phân công"));
                 }
 
-                await _workService.DeleteAuthorAsync(id);
-                return Ok(new ApiResponse<object>(true, "Xóa tác giả thành công"));
+                await authorService.DeleteAsync(id);
+                return Ok(new ApiResponse<object>(true, "Xóa phân công thành công"));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xóa tác giả");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
+                logger.LogError(ex, "Error deleting author");
+                return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
             }
         }
     }
