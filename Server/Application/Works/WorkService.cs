@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Domain.Enums;
 using Application.SystemConfigs;
+using System.Security.Claims;
 
 namespace Application.Works
 {
@@ -371,6 +372,55 @@ namespace Application.Works
                 return (int)((1.0 / 3) * (tempWorkHour / totalMainAuthors) +
                              (2.0 / 3) * (tempWorkHour / totalAuthors));
             return (int)((2.0 / 3) * (tempWorkHour / totalAuthors));
+        }
+
+        public async Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
+        {
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
+            if (work == null)
+                throw new Exception("Công trình không tồn tại");
+
+            var isAuthor = await _unitOfWork.Repository<Author>()
+                .AnyAsync(a => a.WorkId == workId && a.UserId == userId, cancellationToken);
+            if (!isAuthor)
+                throw new UnauthorizedAccessException("Bạn không phải tác giả của công trình này");
+
+            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+            {
+                if (work.ProofStatus != ProofStatus.KhongHopLe)
+                    throw new Exception("Hệ thống đã đóng. Chỉ được chỉnh sửa công trình không hợp lệ.");
+            }
+
+            work.Title = request.WorkRequest.Title ?? work.Title;
+            work.TimePublished = request.WorkRequest.TimePublished ?? work.TimePublished;
+            work.TotalAuthors = request.WorkRequest.TotalAuthors ?? work.TotalAuthors;
+            work.TotalMainAuthors = request.WorkRequest.TotalMainAuthors ?? work.TotalMainAuthors;
+            work.Note = request.WorkRequest.Note ?? work.Note;
+            work.Details = request.WorkRequest.Details ?? work.Details;
+            work.Source = request.WorkRequest.Source;
+            work.WorkTypeId = request.WorkRequest.WorkTypeId;
+            work.WorkLevelId = request.WorkRequest.WorkLevelId ?? work.WorkLevelId;
+            work.SCImagoFieldId = request.WorkRequest.SCImagoFieldId ?? work.SCImagoFieldId;
+            work.ScoringFieldId = request.WorkRequest.ScoringFieldId ?? work.ScoringFieldId;
+            work.ModifiedDate = DateTime.UtcNow;
+
+            var author = await _unitOfWork.Repository<Author>()
+                .FirstOrDefaultAsync(a => a.WorkId == workId && a.UserId == userId, cancellationToken);
+            if (author == null)
+                throw new Exception("Không tìm thấy thông tin tác giả trong công trình");
+
+            author.Position = request.AuthorRequest.Position ?? author.Position;
+            author.PurposeId = request.AuthorRequest.PurposeId ?? author.PurposeId;
+            author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
+            author.CoAuthors = request.AuthorRequest.CoAuthors ?? author.CoAuthors;
+
+            await _unitOfWork.Repository<Work>().UpdateAsync(work);
+            await _unitOfWork.Repository<Author>().UpdateAsync(author);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            logger.LogInformation("User {UserId} updated work {WorkId} and author info", userId, workId);
+
+            return _mapper.MapToDto(work);
         }
     }
 }

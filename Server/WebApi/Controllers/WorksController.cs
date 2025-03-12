@@ -4,6 +4,8 @@ using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using WebApi.Hubs;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApi.Controllers
 {
@@ -213,6 +215,36 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi cập nhật công trình");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpPatch("{workId}/update-by-author")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAuthor(
+            [FromRoute] Guid workId,
+            [FromBody] UpdateWorkByAuthorRequestDto request)
+        {
+            try
+            {
+                _logger.LogInformation("User Claims: {Claims}", string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}")));
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+                var userId = Guid.Parse(userIdClaim.Value);
+
+                var work = await _workService.UpdateWorkByAuthorAsync(workId, request, userId);
+                return Ok(new ApiResponse<WorkDto>(
+                    true,
+                    "Cập nhật thông tin công trình và tác giả thành công",
+                    work
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi tác giả cập nhật công trình và thông tin tác giả");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
