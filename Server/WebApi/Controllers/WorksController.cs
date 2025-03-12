@@ -2,6 +2,8 @@
 using Application.Works;
 using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using WebApi.Hubs;
 
 namespace WebApi.Controllers
 {
@@ -11,11 +13,13 @@ namespace WebApi.Controllers
     {
         private readonly IWorkService _workService;
         private readonly ILogger<WorksController> _logger;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
-        public WorksController(IWorkService workService, ILogger<WorksController> logger)
+        public WorksController(IWorkService workService, ILogger<WorksController> logger, IHubContext<NotificationHub> hubContext)
         {
             _workService = workService;
             _logger = logger;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -192,6 +196,21 @@ namespace WebApi.Controllers
                     return NotFound(new ApiResponse<WorkDto>(false, "Công trình không tồn tại"));
 
                 var workEntity = await _workService.UpdateWorkAdminAsync(workId, request);
+
+                if (workEntity.Authors != null && workEntity.Authors.Any())
+                {
+                    // Lấy danh sách UserId (đã convert sang string vì SignalR sử dụng chuỗi làm định danh người dùng)
+                    var authorUserIds = workEntity.Authors
+                        .Select(a => a.UserId.ToString())
+                        .Distinct()
+                        .ToList();
+
+                    var notificationMessage = $"Công trình '{workEntity.Title}' đã được admin chấm.";
+
+                    // Gửi thông báo đến những user có UserId tương ứng
+                    await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
+                }
+
                 return Ok(new ApiResponse<WorkDto>(
                     true,
                     "Cập nhật công trình thành công",

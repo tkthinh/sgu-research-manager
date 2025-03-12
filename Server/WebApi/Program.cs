@@ -1,8 +1,6 @@
-using Infrastructure;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.Extensions.Options;
+﻿using Infrastructure;
 using Serilog;
+using WebApi.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +51,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Đăng ký endpoint cho SignalR Hub
+app.MapHub<NotificationHub>("/notificationHub");
 
 await AuthDbInitializer.SeedDataAsync(app.Services);
 
