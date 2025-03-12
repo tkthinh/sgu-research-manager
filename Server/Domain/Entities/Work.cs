@@ -8,8 +8,8 @@ namespace Domain.Entities
         public DateOnly? TimePublished { get; set; }
         public int? TotalAuthors { get; set; }
         public int? TotalMainAuthors { get; set; }
-        public int FinalWorkHour { get; set; }
-        public ProofStatus ProofStatus { get; set; }
+        public int FinalWorkHour { get; set; } = 0;
+        public ProofStatus ProofStatus { get; set; } = ProofStatus.ChuaXuLy;
         public string? Note { get; set; }
         public Dictionary<string, string>? Details { get; set; }
         public WorkSource Source { get; set; }
@@ -20,10 +20,10 @@ namespace Domain.Entities
         public Guid? ScoringFieldId { get; set; }
 
 
-      // (Tuỳ chọn) Navigation properties đến các entity khác
-      public virtual WorkType? WorkType { get; set; }
-      public virtual WorkLevel? WorkLevel { get; set; }
-      public virtual Field? FieldForScoring { get; set; }
-      public virtual ICollection<Author>? Authors { get; set; }
-   }
+        // (Tuỳ chọn) Navigation properties đến các entity khác
+        public virtual WorkType? WorkType { get; set; }
+        public virtual WorkLevel? WorkLevel { get; set; }
+        public virtual Field? ScoringField { get; set; }
+        public virtual ICollection<Author>? Authors { get; set; }
+    }
 }

@@ -88,7 +88,7 @@ namespace Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Work>()
-                .HasOne(w => w.FieldForScoring)
+                .HasOne(w => w.ScoringField)
                 .WithMany()
                 .HasForeignKey(w => w.ScoringFieldId)
                 .OnDelete(DeleteBehavior.Restrict);

@@ -2,7 +2,7 @@
 
 namespace Application.Works
 {
-    public class UpdateWorkWithAuthorRequestDto
+    public class AddCoAuthorRequestDto
     {
         public UpdateWorkRequestDto WorkRequest { get; set; }
         public CreateAuthorRequestDto AuthorRequest { get; set; }

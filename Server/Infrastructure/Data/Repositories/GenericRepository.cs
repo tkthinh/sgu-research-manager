@@ -64,9 +64,14 @@ namespace Infrastructure.Data.Repositories
             return await dbSet.Where(predicate).ToListAsync();
         }
 
-        public virtual async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate)
+        public virtual async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
         {
-            return await dbSet.FirstOrDefaultAsync(predicate);
+            return await dbSet.FirstOrDefaultAsync(predicate, cancellationToken);
+        }
+
+        public virtual async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
+        {
+            return await dbSet.AnyAsync(predicate, cancellationToken);
         }
     }
 }

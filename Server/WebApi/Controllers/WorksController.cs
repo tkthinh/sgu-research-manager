@@ -90,12 +90,12 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPost("{workId}/co-author-declare")]
-        public async Task<ActionResult<ApiResponse<WorkDto>>> CoAuthorDeclare([FromRoute] Guid workId,[FromBody] UpdateWorkWithAuthorRequestDto request)
+        [HttpPost("{workId}/add-co-author")]
+        public async Task<ActionResult<ApiResponse<WorkDto>>> AddCoAuthor([FromRoute] Guid workId, [FromBody] AddCoAuthorRequestDto request)
         {
             try
             {
-                var work = await _workService.CoAuthorDeclaredAsync(workId, request.WorkRequest, request.AuthorRequest);
+                var work = await _workService.AddCoAuthorAsync(workId, request);
                 return Ok(new ApiResponse<WorkDto>(
                     true,
                     "Đồng tác giả kê khai công trình thành công",
