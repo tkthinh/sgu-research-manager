@@ -5,6 +5,7 @@ using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Domain.Enums;
+using Application.SystemConfigs;
 
 namespace Application.Works
 {
@@ -16,6 +17,7 @@ namespace Application.Works
         private readonly IGenericRepository<AuthorRole> _authorRoleRepository;
         private readonly IGenericRepository<Factor> _factorRepository;
         private readonly IWorkRepository _workRepository;
+        private readonly ISystemConfigService _systemConfigService;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -23,7 +25,8 @@ namespace Application.Works
             IGenericMapper<AuthorDto, Author> authorMapper,
             IDistributedCache cache,
             ILogger<WorkService> logger,
-            IWorkRepository workRepository)
+            IWorkRepository workRepository,
+            ISystemConfigService systemConfigService)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
@@ -32,6 +35,7 @@ namespace Application.Works
             _authorRoleRepository = unitOfWork.Repository<AuthorRole>();
             _factorRepository = unitOfWork.Repository<Factor>();
             _workRepository = workRepository;
+            _systemConfigService = systemConfigService;
         }
         public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
         {
@@ -56,6 +60,10 @@ namespace Application.Works
 
         public async Task<WorkDto> CreateWorkWithAuthorAsync(CreateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
+            // Kiểm tra trạng thái hệ thống
+            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+                throw new Exception("Hệ thống đã đóng. Không thể tạo công trình mới.");
+
             var existingWork = (await _unitOfWork.Repository<Work>()
                 .FindAsync(w => w.Title == request.Title))
                 .FirstOrDefault();
@@ -70,7 +78,7 @@ namespace Application.Works
                 TotalAuthors = request.TotalAuthors,
                 TotalMainAuthors = request.TotalMainAuthors,
                 FinalWorkHour = 0,
-                ProofStatus = request.ProofStatus,
+                ProofStatus = ProofStatus.ChuaXuLy,
                 Note = request.Note,
                 Details = request.Details,
                 Source = request.Source,
@@ -111,7 +119,6 @@ namespace Application.Works
             var tempAuthorHour = await CalculateTempAuthorHour(tempWorkHour, request.TotalAuthors ?? 0,
                 request.TotalMainAuthors ?? 0, request.Author.AuthorRoleId);
             author.TempAuthorHour = tempAuthorHour;
-            author.IsNotMatch = tempAuthorHour != 0;
             author.MarkedForScoring = false;
 
             await _unitOfWork.Repository<Author>().CreateAsync(author);
@@ -129,11 +136,19 @@ namespace Application.Works
             if (work == null)
                 throw new Exception("Công trình không tồn tại");
 
+            // Kiểm tra trạng thái hệ thống
+            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+            {
+                // Nếu hệ thống đóng, chỉ cho phép chỉnh sửa nếu ProofStatus là KhongHopLe
+                if (work.ProofStatus != ProofStatus.KhongHopLe)
+                    throw new Exception("Hệ thống đã đóng. Chỉ được chỉnh sửa công trình không hợp lệ.");
 
-            //// Thêm kiểm tra quyền (giả định lấy currentUserId từ IHttpContextAccessor)
-            //var currentUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            //if (string.IsNullOrEmpty(currentUserId) || !work.Authors.Any(a => a.UserId.ToString() == currentUserId))
-            //    throw new Exception("Bạn không có quyền kê khai công trình này");
+                // Xác minh userId là tác giả của công trình
+                var isAuthor = await _unitOfWork.Repository<Author>()
+                    .FindAsync(a => a.WorkId == workId && a.UserId == authorRequest.UserId) != null;
+                if (!isAuthor)
+                    throw new Exception("Bạn không phải tác giả của công trình này.");
+            }
 
             // Cập nhật thông tin công trình
             work.Title = workRequest.Title ?? work.Title;
@@ -179,7 +194,6 @@ namespace Application.Works
             var tempAuthorHour = await CalculateTempAuthorHour(tempWorkHour, work.TotalAuthors ?? 0,
                 work.TotalMainAuthors ?? 0, author.AuthorRoleId);
             author.TempAuthorHour = tempAuthorHour;
-            author.IsNotMatch = tempAuthorHour != 0;
             author.MarkedForScoring = false;
 
             // Lưu thay đổi vào database
@@ -209,6 +223,10 @@ namespace Application.Works
 
         public async Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default)
         {
+            // Kiểm tra trạng thái hệ thống
+            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+                throw new Exception("Hệ thống đã đóng. Không thể tạo công trình mới.");
+
             var author = await _unitOfWork.Repository<Author>().GetByIdAsync(authorId);
             if (author == null)
                 throw new Exception("Không tìm thấy tác giả");
@@ -288,7 +306,6 @@ namespace Application.Works
                 var finalAuthorHour = await CalculateFinalAuthorHour(work.FinalWorkHour, work.TotalAuthors ?? 0,
                     work.TotalMainAuthors ?? 0, author.AuthorRoleId);
                 author.FinalAuthorHour = finalAuthorHour;
-                author.IsNotMatch = author.TempAuthorHour != finalAuthorHour;
                 author.ModifiedDate = DateTime.UtcNow;
                 await _unitOfWork.Repository<Author>().UpdateAsync(author);
             }
@@ -299,6 +316,32 @@ namespace Application.Works
             await SafeInvalidateCacheAsync(workId);
 
             return _mapper.MapToDto(work);
+        }
+
+        public async Task DeleteWorkAsync(Guid workId, CancellationToken cancellationToken = default)
+        {
+            // Kiểm tra công trình có tồn tại không
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
+            if (work == null)
+                throw new Exception("Công trình không tồn tại");
+
+            // Kiểm tra trạng thái hệ thống
+            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+                throw new Exception("Hệ thống đã đóng. Không thể xóa công trình");
+
+            // Xóa các tác giả liên quan
+            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == workId);
+            foreach (var author in authors)
+            {
+                await _unitOfWork.Repository<Author>().DeleteAsync(author.Id); // Truyền ID thay vì đối tượng
+            }
+
+            // Xóa công trình
+            await _unitOfWork.Repository<Work>().DeleteAsync(work.Id); // Truyền ID thay vì đối tượng
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Invalidate cache
+            await SafeInvalidateCacheAsync(workId);
         }
 
         private int CalculateTempWorkHour(ScoreLevel? scoreLevel, Factor factor)

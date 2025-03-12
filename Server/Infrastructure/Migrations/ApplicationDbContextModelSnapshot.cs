@@ -67,9 +67,6 @@ namespace Infrastructure.Migrations
                     b.Property<int>("FinalAuthorHour")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsNotMatch")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("MarkedForScoring")
                         .HasColumnType("bit");
 
@@ -1072,7 +1069,6 @@ namespace Infrastructure.Migrations
                             Id = new Guid("3236b11f-a2ac-4e51-85d1-fcc5594455b6"),
                             ConvertHour = 34,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            MaxAllowed = 2,
                             Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 0.5",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 3,
@@ -1084,6 +1080,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("fcd3b42b-7151-4100-8f08-0019c14a764c"),
                             ConvertHour = 80,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
                             Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ - Score 0.5",
                             PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
                             ScoreLevel = 3,
@@ -2172,6 +2169,32 @@ namespace Infrastructure.Migrations
                             Name = "Analytical Chemistry",
                             WorkTypeId = new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c")
                         });
+                });
+
+            modelBuilder.Entity("Domain.Entities.SystemConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemConfigs");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>

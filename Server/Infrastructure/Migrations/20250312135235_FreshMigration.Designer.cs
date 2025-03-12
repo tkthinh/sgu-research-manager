@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250310125007_Update-Database")]
-    partial class UpdateDatabase
+    [Migration("20250312135235_FreshMigration")]
+    partial class FreshMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -69,9 +69,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<int>("FinalAuthorHour")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsNotMatch")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("MarkedForScoring")
                         .HasColumnType("bit");
@@ -579,6 +576,9 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("MaxAllowed")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
@@ -646,6 +646,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("146e3c5e-7bee-41a6-9f1b-8f00ee2a4eb7"),
                             ConvertHour = 54,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 1,
                             Name = "Báo cáo khoa học - Bộ/Ngành - Quy đổi vượt định mức",
                             PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
                             WorkLevelId = new Guid("250662c1-1c69-4ef0-a21d-7077cafd1d06"),
@@ -656,6 +657,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("3c39ab6a-8c61-4321-b498-4a3a469ea1cc"),
                             ConvertHour = 54,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 1,
                             Name = "Báo cáo khoa học - Quốc gia - Quy đổi vượt định mức",
                             PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
                             WorkLevelId = new Guid("740e8212-f47b-4080-b57a-839b8b90056c"),
@@ -676,6 +678,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("4f163c6f-ad7b-4f38-8125-0584678164b6"),
                             ConvertHour = 76,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
                             Name = "Báo cáo khoa học - Quốc tế - Quy đổi vượt định mức",
                             PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
                             WorkLevelId = new Guid("db324190-d1ed-4712-b3db-94a6e043bf1e"),
@@ -696,6 +699,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("415d12ed-7551-48fd-8a5c-87e02fee0dd3"),
                             ConvertHour = 120,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 6,
                             Name = "Báo cáo khoa học - WoS - Quy đổi vượt định mức",
                             PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
                             WorkLevelId = new Guid("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),
@@ -716,6 +720,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("31673044-6195-4d65-a1f0-453cee604604"),
                             ConvertHour = 120,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 6,
                             Name = "Báo cáo khoa học - Scopus - Quy đổi vượt định mức",
                             PurposeId = new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
                             WorkLevelId = new Guid("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),
@@ -770,6 +775,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("43454113-745b-4eee-b266-ff515ed9027b"),
                             ConvertHour = 240,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 8,
                             Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 50",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 6,
@@ -792,6 +798,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("b0a80a7a-9703-4af2-b154-bb4a5bd9c315"),
                             ConvertHour = 120,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 6,
                             Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 100",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 7,
@@ -858,6 +865,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("85f22829-055a-4314-a8dc-649a14346610"),
                             ConvertHour = 240,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 8,
                             Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 50",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 6,
@@ -880,6 +888,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("9c4ed0a6-b71a-46ea-a27f-02b38bd0c544"),
                             ConvertHour = 120,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 6,
                             Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 100",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 7,
@@ -902,6 +911,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("92f2fdef-e1cf-4062-aa96-f01c1820bb98"),
                             ConvertHour = 76,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 4,
                             Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 1",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 1,
@@ -924,6 +934,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("decaf6cd-fb66-440c-9cc3-155036dfc775"),
                             ConvertHour = 76,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 4,
                             Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 1",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 1,
@@ -946,6 +957,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("8695bc4f-992a-4b44-ad3e-a373f88672f4"),
                             ConvertHour = 76,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 4,
                             Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 1",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 1,
@@ -968,6 +980,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("5a01f52c-999f-447e-bb2d-2fb4c9161d25"),
                             ConvertHour = 54,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
                             Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 0.75",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 2,
@@ -990,6 +1003,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("d473791e-fb18-409a-be03-a0b60c75912c"),
                             ConvertHour = 54,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
                             Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 0.75",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 2,
@@ -1012,6 +1026,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("54740838-3d63-43b4-a498-9c5152dd7528"),
                             ConvertHour = 54,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
                             Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 0.75",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 2,
@@ -1034,6 +1049,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("5386b122-9311-453e-ab70-de37d9673ef5"),
                             ConvertHour = 34,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
                             Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 0.5",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 3,
@@ -1067,6 +1083,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("fcd3b42b-7151-4100-8f08-0019c14a764c"),
                             ConvertHour = 80,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
                             Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ - Score 0.5",
                             PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
                             ScoreLevel = 3,
@@ -1078,6 +1095,7 @@ namespace Infrastructure.Migrations
                             Id = new Guid("ce72ef2c-a629-40ea-9bab-d77b87421fdf"),
                             ConvertHour = 34,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
                             Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 0.5",
                             PurposeId = new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
                             ScoreLevel = 3,
@@ -2228,10 +2246,10 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("SCImagoFieldId")
+                    b.Property<Guid?>("SCImagoFieldId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ScoringFieldId")
+                    b.Property<Guid?>("ScoringFieldId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Source")
@@ -2251,7 +2269,7 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("TotalMainAuthors")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("WorkLevelId")
+                    b.Property<Guid?>("WorkLevelId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("WorkTypeId")
@@ -2765,14 +2783,12 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.Field", "FieldForScoring")
                         .WithMany()
                         .HasForeignKey("ScoringFieldId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
                         .WithMany()
                         .HasForeignKey("WorkLevelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Entities.WorkType", "WorkType")
                         .WithMany()

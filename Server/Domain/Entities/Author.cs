@@ -13,7 +13,6 @@ namespace Domain.Entities
         public int FinalAuthorHour { get; set; }    // Giờ chính thức do admin chấm
         public int TempAuthorHour { get; set; }     // Giờ dự kiến
         public int TempWorkHour { get; set; }       // Giờ dự kiến của công trình (tính từ DeclaredScore)
-        public bool IsNotMatch { get; set; }        // Cờ kiểm tra TempAuthorHour và FinalAuthorHour
         public bool MarkedForScoring { get; set; }  // Cờ đánh dấu công trình được chọn để quy đổi
         public string? CoAuthors { get; set; }
 

@@ -108,25 +108,18 @@ namespace WebApi.Controllers
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
-
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteWork([FromRoute] Guid id)
+        public async Task<ActionResult<ApiResponse<bool>>> DeleteWork(Guid id)
         {
             try
             {
-                var existingWork = await _workService.GetByIdAsync(id);
-                if (existingWork == null)
-                {
-                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy công trình"));
-                }
-
-                await _workService.DeleteAsync(id);
-                return Ok(new ApiResponse<object>(true, "Xóa công trình thành công"));
+                await _workService.DeleteWorkAsync(id);
+                return Ok(new ApiResponse<bool>(true, "Xóa công trình thành công", true));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xóa công trình");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
+                _logger.LogError(ex, "Error deleting work with ID {WorkId}", id);
+                return BadRequest(new ApiResponse<bool>(false, "Có lỗi xảy ra khi xóa công trình: " + ex.Message));
             }
         }
 

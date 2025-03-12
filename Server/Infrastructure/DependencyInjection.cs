@@ -23,6 +23,7 @@ using Application.Works;
 using Application.SCImagoFields;
 using Infrastructure.Data.Repositories;
 using Application.Users;
+using Application.SystemConfigs;
 
 namespace Infrastructure
 {
@@ -99,6 +100,7 @@ namespace Infrastructure
             services.AddScoped<IWorkService, WorkService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
+            services.AddScoped<ISystemConfigService, SystemConfigService>();
 
             // Đăng ký các mapper
             services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
@@ -113,7 +115,7 @@ namespace Infrastructure
             services.AddScoped<IGenericMapper<WorkDto, Work>, WorkMapper>();
             services.AddScoped<IGenericMapper<UserDto, User>, UserMapper>();
             services.AddScoped<IGenericMapper<SCImagoFieldDto, SCImagoField>, SCImagoFieldMapper>();
-
+            services.AddScoped<IGenericMapper<SystemConfigDto, SystemConfig>, SystemConfigMapper>();
 
 
 

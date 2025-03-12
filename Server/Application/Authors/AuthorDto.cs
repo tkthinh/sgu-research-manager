@@ -14,7 +14,6 @@ namespace Application.Authors
         public int FinalAuthorHour { get; set; }
         public int TempAuthorHour { get; set; }
         public int TempWorkHour { get; set; }
-        public bool IsNotMatch { get; set; }
         public bool MarkedForScoring { get; set; }
         public string? CoAuthors { get; set; }
         public DateTime CreatedDate { get; set; }
