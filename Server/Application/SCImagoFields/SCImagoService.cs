@@ -20,10 +20,20 @@ namespace Application.SCImagoFields
 
         public async Task<IEnumerable<SCImagoFieldDto>> GetSCImagoFieldsByWorkTypeIdAsync(Guid workTypeId)
         {
-            var workLevels = await unitOfWork.Repository<SCImagoField>()
-                .FindAsync(wl => wl.WorkTypeId == workTypeId);
+            if (workTypeId == Guid.Empty)
+            {
+                throw new ArgumentException("WorkTypeId không hợp lệ", nameof(workTypeId));
+            }
 
-            return mapper.MapToDtos(workLevels);
+            var scImagoFields = await unitOfWork.Repository<SCImagoField>()
+                .FindAsync(sf => sf.WorkTypeId == workTypeId);
+
+            if (scImagoFields == null)
+            {
+                return Enumerable.Empty<SCImagoFieldDto>();
+            }
+
+            return mapper.MapToDtos(scImagoFields);
         }
 
     }

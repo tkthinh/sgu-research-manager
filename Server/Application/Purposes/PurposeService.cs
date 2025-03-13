@@ -16,14 +16,25 @@ namespace Application.Purposes
           )
           : base(unitOfWork, mapper, cache, logger)
       {
+
       }
 
-      public async Task<IEnumerable<PurposeDto>> GetPurposesByWorkTypeIdAsync(Guid workTypeId)
-      {
-         var workLevels = await unitOfWork.Repository<Purpose>()
-             .FindAsync(wl => wl.WorkTypeId == workTypeId);
+        public async Task<IEnumerable<PurposeDto>> GetPurposesByWorkTypeIdAsync(Guid workTypeId)
+        {
+            if (workTypeId == Guid.Empty)
+            {
+                throw new ArgumentException("WorkTypeId không hợp lệ", nameof(workTypeId));
+            }
 
-         return mapper.MapToDtos(workLevels);
-      }
-   }
+            var purposes = await unitOfWork.Repository<Purpose>()
+                .FindAsync(p => p.WorkTypeId == workTypeId);
+
+            if (purposes == null)
+            {
+                return Enumerable.Empty<PurposeDto>();
+            }
+
+            return mapper.MapToDtos(purposes);
+        }
+    }
 }

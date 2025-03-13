@@ -47,11 +47,25 @@ namespace WebApi.Controllers
         [HttpGet("by-worktype/{workTypeId}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<SCImagoFieldDto>>>> GetSCImagoFieldsByWorkTypeId([FromRoute] Guid workTypeId)
         {
-            var fields = await scImagoFieldService.GetSCImagoFieldsByWorkTypeIdAsync(workTypeId);
+            if (workTypeId == Guid.Empty)
+            {
+                return BadRequest(new ApiResponse<IEnumerable<SCImagoFieldDto>>(false, "WorkTypeId không hợp lệ"));
+            }
+
+            var scImagoFields = await scImagoFieldService.GetSCImagoFieldsByWorkTypeIdAsync(workTypeId);
+            if (scImagoFields == null || !scImagoFields.Any())
+            {
+                return Ok(new ApiResponse<IEnumerable<SCImagoFieldDto>>(
+                    true,
+                    "Không tìm thấy lĩnh vực SCImago cho loại công trình này",
+                    Enumerable.Empty<SCImagoFieldDto>()
+                ));
+            }
+
             return Ok(new ApiResponse<IEnumerable<SCImagoFieldDto>>(
                 true,
-                "Lấy dữ liệu SCImago Fields theo WorkTypeId thành công",
-                fields
+                "Lấy dữ liệu lĩnh vực SCImago theo loại công trình thành công",
+                scImagoFields
             ));
         }
 

@@ -19,8 +19,18 @@ public class AuthorRoleService : GenericCachedService<AuthorRoleDto, AuthorRole>
 
     public async Task<IEnumerable<AuthorRoleDto>> GetByWorkTypeIdAsync(Guid workTypeId)
     {
+        if (workTypeId == Guid.Empty)
+        {
+            throw new ArgumentException("WorkTypeId không hợp lệ", nameof(workTypeId));
+        }
+
         var authorRoles = await unitOfWork.Repository<AuthorRole>()
             .FindAsync(ar => ar.WorkTypeId == workTypeId);
+
+        if (authorRoles == null)
+        {
+            return Enumerable.Empty<AuthorRoleDto>();
+        }
 
         return mapper.MapToDtos(authorRoles);
     }

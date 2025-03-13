@@ -51,7 +51,21 @@ namespace WebApi.Controllers
         [HttpGet("by-worktype/{workTypeId}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<WorkLevelDto>>>> GetWorkLevelsByWorkTypeId([FromRoute] Guid workTypeId)
         {
+            if (workTypeId == Guid.Empty)
+            {
+                return BadRequest(new ApiResponse<IEnumerable<WorkLevelDto>>(false, "WorkTypeId không hợp lệ"));
+            }
+
             var workLevels = await workLevelService.GetWorkLevelsByWorkTypeIdAsync(workTypeId);
+            if (workLevels == null || !workLevels.Any())
+            {
+                return Ok(new ApiResponse<IEnumerable<WorkLevelDto>>(
+                    true,
+                    "Không tìm thấy cấp công trình cho loại công trình này",
+                    Enumerable.Empty<WorkLevelDto>() // Trả về danh sách rỗng thay vì null
+                ));
+            }
+
             return Ok(new ApiResponse<IEnumerable<WorkLevelDto>>(
                 true,
                 "Lấy dữ liệu cấp công trình theo loại công trình thành công",

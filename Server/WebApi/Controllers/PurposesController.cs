@@ -46,11 +46,25 @@ namespace WebApi.Controllers
         [HttpGet("by-worktype/{workTypeId}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<PurposeDto>>>> GetPurposesByWorkTypeId([FromRoute] Guid workTypeId)
         {
+            if (workTypeId == Guid.Empty)
+            {
+                return BadRequest(new ApiResponse<IEnumerable<PurposeDto>>(false, "WorkTypeId không hợp lệ"));
+            }
+
             var purposes = await purposeService.GetPurposesByWorkTypeIdAsync(workTypeId);
+            if (purposes == null || !purposes.Any())
+            {
+                return Ok(new ApiResponse<IEnumerable<PurposeDto>>(
+                    true,
+                    "Không tìm thấy mục đích cho loại công trình này",
+                    Enumerable.Empty<PurposeDto>()
+                ));
+            }
+
             return Ok(new ApiResponse<IEnumerable<PurposeDto>>(
-                   true,
-                   "Lấy dữ liệu trạng thái công việc theo loại công trình thành công",
-                   purposes
+                true,
+                "Lấy dữ liệu mục đích theo loại công trình thành công",
+                purposes
             ));
         }
 

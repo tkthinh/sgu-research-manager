@@ -2,8 +2,9 @@
 
 namespace Application.Users
 {
-   public interface IUserService : IGenericService<UserDto>
-   {
-      Task<UserDto?> GetUserByIdentityIdAsync(string IdentityId);
-   }
+    public interface IUserService : IGenericService<UserDto>
+    {
+        Task<UserDto?> GetUserByIdentityIdAsync(string IdentityId);
+        Task<UserConversionResultRequestDto> GetUserConversionResultAsync(Guid userId);
+    }
 }

@@ -18,13 +18,23 @@ namespace Application.WorkLevels
       {
       }
 
-      public async Task<IEnumerable<WorkLevelDto>> GetWorkLevelsByWorkTypeIdAsync(Guid workTypeId)
-      {
-         var workLevels = await unitOfWork.Repository<WorkLevel>()
-             .FindAsync(wl => wl.WorkTypeId == workTypeId);
+        public async Task<IEnumerable<WorkLevelDto>> GetWorkLevelsByWorkTypeIdAsync(Guid workTypeId)
+        {
+            if (workTypeId == Guid.Empty)
+            {
+                throw new ArgumentException("WorkTypeId không hợp lệ", nameof(workTypeId));
+            }
 
-         return mapper.MapToDtos(workLevels);
-      }
+            var workLevels = await unitOfWork.Repository<WorkLevel>()
+                .FindAsync(wl => wl.WorkTypeId == workTypeId);
 
-   }
+            if (workLevels == null)
+            {
+                return Enumerable.Empty<WorkLevelDto>(); // Trả về danh sách rỗng thay vì null
+            }
+
+            return mapper.MapToDtos(workLevels);
+        }
+
+    }
 }
