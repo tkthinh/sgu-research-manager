@@ -228,14 +228,28 @@ namespace WebApi.Controllers
             try
             {
                 _logger.LogInformation("User Claims: {Claims}", string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}")));
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
+
+                var userNameClaim = User.FindFirst(ClaimTypes.Name);
+                if (userNameClaim == null)
                 {
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
                 }
-                var userId = Guid.Parse(userIdClaim.Value);
+                var userId = await _workService.GetUserIdFromUserNameAsync(userNameClaim.Value);
 
                 var work = await _workService.UpdateWorkByAuthorAsync(workId, request, userId);
+
+                // Gửi thông báo đến tất cả các tác giả của công trình
+                if (work.Authors != null && work.Authors.Any())
+                {
+                    var authorUserIds = work.Authors
+                        .Select(a => a.UserId.ToString())
+                        .Distinct()
+                        .ToList();
+
+                    var notificationMessage = $"Công trình '{work.Title}' đã được cập nhật bởi {userId}.";
+                    await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
+                }
+
                 return Ok(new ApiResponse<WorkDto>(
                     true,
                     "Cập nhật thông tin công trình và tác giả thành công",

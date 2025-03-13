@@ -19,5 +19,7 @@ namespace Application.Works
         Task DeleteWorkAsync(Guid workId, CancellationToken cancellationToken = default);
 
         Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
+
+        Task<Guid> GetUserIdFromUserNameAsync(string userName);
     }
 }

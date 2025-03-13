@@ -422,5 +422,16 @@ namespace Application.Works
 
             return _mapper.MapToDto(work);
         }
+
+        public async Task<Guid> GetUserIdFromUserNameAsync(string userName)
+        {
+            var user = await _unitOfWork.Repository<User>()
+                .FirstOrDefaultAsync(u => u.UserName == userName);
+            if (user == null)
+            {
+                throw new Exception($"Không tìm thấy người dùng với UserName: {userName}");
+            }
+            return user.Id; // Giả định User có thuộc tính Id (Guid)
+        }
     }
 }
