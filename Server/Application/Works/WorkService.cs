@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Domain.Enums;
 using Application.SystemConfigs;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Works
 {
@@ -19,6 +20,7 @@ namespace Application.Works
         private readonly IGenericRepository<Factor> _factorRepository;
         private readonly IWorkRepository _workRepository;
         private readonly ISystemConfigService _systemConfigService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -27,7 +29,8 @@ namespace Application.Works
             IDistributedCache cache,
             ILogger<WorkService> logger,
             IWorkRepository workRepository,
-            ISystemConfigService systemConfigService)
+            ISystemConfigService systemConfigService,
+            IHttpContextAccessor httpContextAccessor)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
@@ -37,7 +40,9 @@ namespace Application.Works
             _factorRepository = unitOfWork.Repository<Factor>();
             _workRepository = workRepository;
             _systemConfigService = systemConfigService;
+            _httpContextAccessor = httpContextAccessor;
         }
+
         public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
         {
             var works = await _workRepository.GetWorksWithAuthorsAsync();
@@ -102,11 +107,19 @@ namespace Application.Works
 
             await _unitOfWork.Repository<Work>().CreateAsync(work);
 
+            // Lấy UserId
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id")?.Value; 
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                throw new Exception("Không thể xác định UserId của người dùng hiện tại.");
+            }
+
             var author = new Author
             {
                 Id = Guid.NewGuid(),
                 WorkId = work.Id,
-                UserId = request.Author.UserId,
+                UserId = userId,
                 AuthorRoleId = request.Author.AuthorRoleId,
                 PurposeId = request.Author.PurposeId,
                 Position = request.Author.Position,
@@ -129,7 +142,7 @@ namespace Application.Works
             return _mapper.MapToDto(work);
         }
 
-        public async Task<WorkDto> AddCoAuthorAsync(Guid workId, AddCoAuthorRequestDto request, CancellationToken cancellationToken = default)
+        public async Task<WorkDto> AddCoAuthorAsync(Guid workId, AddCoAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
         {
             // Kiểm tra công trình có tồn tại không
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
@@ -141,13 +154,7 @@ namespace Application.Works
             {
                 // Nếu hệ thống đóng, chỉ cho phép chỉnh sửa nếu ProofStatus là KhongHopLe
                 if (work.ProofStatus != ProofStatus.KhongHopLe)
-                    throw new Exception("Hệ thống đã đóng. Chỉ được chỉnh sửa công trình không hợp lệ.");
-
-                // Xác minh userId là tác giả của công trình
-                var isAuthor = await _unitOfWork.Repository<Author>()
-                    .AnyAsync(a => a.WorkId == workId && a.UserId == request.AuthorRequest.UserId, cancellationToken);
-                if (!isAuthor)
-                    throw new Exception("Bạn không phải tác giả của công trình này.");
+                    throw new Exception("Hệ thống đã đóng.");
             }
 
             // Cập nhật thông tin công trình
@@ -180,7 +187,7 @@ namespace Application.Works
             {
                 Id = Guid.NewGuid(),
                 WorkId = workId,
-                UserId = request.AuthorRequest.UserId,
+                UserId = userId,
                 AuthorRoleId = request.AuthorRequest.AuthorRoleId,
                 PurposeId = request.AuthorRequest.PurposeId,
                 Position = request.AuthorRequest.Position,
@@ -197,8 +204,6 @@ namespace Application.Works
             await _unitOfWork.Repository<Work>().UpdateAsync(work);
             await _unitOfWork.Repository<Author>().CreateAsync(author);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            logger.LogInformation("Added co-author {UserId} to work {WorkId}", request.AuthorRequest.UserId, workId);
 
             return _mapper.MapToDto(work);
         }
@@ -282,7 +287,6 @@ namespace Application.Works
             return 1;
         }
 
-
         public async Task<WorkDto> UpdateWorkAdminAsync(Guid workId, AdminUpdateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
@@ -313,7 +317,7 @@ namespace Application.Works
             return _mapper.MapToDto(work);
         }
 
-        public async Task DeleteWorkAsync(Guid workId, CancellationToken cancellationToken = default)
+        public async Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default)
         {
             // Kiểm tra công trình có tồn tại không
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
@@ -421,17 +425,6 @@ namespace Application.Works
             logger.LogInformation("User {UserId} updated work {WorkId} and author info", userId, workId);
 
             return _mapper.MapToDto(work);
-        }
-
-        public async Task<Guid> GetUserIdFromUserNameAsync(string userName)
-        {
-            var user = await _unitOfWork.Repository<User>()
-                .FirstOrDefaultAsync(u => u.UserName == userName);
-            if (user == null)
-            {
-                throw new Exception($"Không tìm thấy người dùng với UserName: {userName}");
-            }
-            return user.Id; // Giả định User có thuộc tính Id (Guid)
         }
     }
 }

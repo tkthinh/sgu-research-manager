@@ -13,13 +13,10 @@ namespace Application.Works
         Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default);
         Task<WorkDto?> GetWorkByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default);
 
-        Task<WorkDto> AddCoAuthorAsync(Guid workId, AddCoAuthorRequestDto request, CancellationToken cancellationToken = default); 
+        Task<WorkDto> AddCoAuthorAsync(Guid workId, AddCoAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
         Task<WorkDto> UpdateWorkAdminAsync(Guid workId, AdminUpdateWorkRequestDto request, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> SearchWorksAsync(string title, CancellationToken cancellationToken = default);
-        Task DeleteWorkAsync(Guid workId, CancellationToken cancellationToken = default);
-
+        Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default);
         Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
-
-        Task<Guid> GetUserIdFromUserNameAsync(string userName);
     }
 }

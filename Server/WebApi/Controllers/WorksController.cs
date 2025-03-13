@@ -77,6 +77,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> CreateWork([FromBody] CreateWorkRequestDto request)
         {
             try
@@ -93,15 +94,44 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("{workId}/add-co-author")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> AddCoAuthor([FromRoute] Guid workId, [FromBody] AddCoAuthorRequestDto request)
         {
             try
             {
-                var work = await _workService.AddCoAuthorAsync(workId, request);
+                // Lấy UserId từ token
+                var userIdClaim = User.FindFirst("id")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                // Lấy userName để hiển thị trong thông báo
+                var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
+
+                // Gọi service để thêm đồng tác giả
+                var updatedWork = await _workService.AddCoAuthorAsync(workId, request, userId);
+
+                // Gửi thông báo đến các tác giả khác
+                if (updatedWork.Authors != null && updatedWork.Authors.Any())
+                {
+                    var authorUserIds = updatedWork.Authors
+                        .Where(a => a.UserId != userId)
+                        .Select(a => a.UserId.ToString())
+                        .Distinct()
+                        .ToList();
+
+                    if (authorUserIds.Any())
+                    {
+                        var notificationMessage = $"Công trình '{updatedWork.Title}' đã được thêm đồng tác giả bởi {userName}.";
+                        await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
+                    }
+                }
+
                 return Ok(new ApiResponse<WorkDto>(
                     true,
                     "Đồng tác giả kê khai công trình thành công",
-                    work
+                    updatedWork
                 ));
             }
             catch (Exception ex)
@@ -110,12 +140,55 @@ namespace WebApi.Controllers
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
+
         [HttpDelete("{id}")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteWork(Guid id)
         {
             try
             {
-                await _workService.DeleteWorkAsync(id);
+                // Lấy UserId từ token
+                var userIdClaim = User.FindFirst("id")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                // Lấy userName để log (tùy chọn)
+                var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
+
+                // Kiểm tra xem userId có phải là tác giả của công trình không
+                var work = await _workService.GetWorkByIdWithAuthorsAsync(id);
+                if (work == null)
+                {
+                    return NotFound(new ApiResponse<object>(false, "Công trình không tồn tại"));
+                }
+
+                var isAuthor = work.Authors?.Any(a => a.UserId == userId) ?? false;
+                if (!isAuthor)
+                {
+                    return StatusCode(403, new ApiResponse<object>(false, "Bạn không có quyền xóa công trình này"));
+                }
+
+                // Gọi service để xóa công trình
+                await _workService.DeleteWorkAsync(id, userId);
+
+                // Gửi thông báo đến các tác giả khác (tùy chọn, có thể bỏ nếu không cần)
+                if (work.Authors != null && work.Authors.Any())
+                {
+                    var authorUserIds = work.Authors
+                        .Where(a => a.UserId != userId)
+                        .Select(a => a.UserId.ToString())
+                        .Distinct()
+                        .ToList();
+
+                    if (authorUserIds.Any())
+                    {
+                        var notificationMessage = $"Công trình '{work.Title}' đã bị xóa bởi {userName}.";
+                        await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
+                    }
+                }
+
                 return Ok(new ApiResponse<bool>(true, "Xóa công trình thành công", true));
             }
             catch (Exception ex)
@@ -227,33 +300,53 @@ namespace WebApi.Controllers
         {
             try
             {
-                _logger.LogInformation("User Claims: {Claims}", string.Join(", ", User.Claims.Select(c => $"{c.Type}: {c.Value}")));
-
-                var userNameClaim = User.FindFirst(ClaimTypes.Name);
-                if (userNameClaim == null)
+                // Lấy UserId từ token
+                var userIdClaim = User.FindFirst("id")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
                 {
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
                 }
-                var userId = await _workService.GetUserIdFromUserNameAsync(userNameClaim.Value);
 
-                var work = await _workService.UpdateWorkByAuthorAsync(workId, request, userId);
+                // Lấy userName để hiển thị trong thông báo
+                var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
 
-                // Gửi thông báo đến tất cả các tác giả của công trình
-                if (work.Authors != null && work.Authors.Any())
+                // Kiểm tra xem userId có phải là tác giả của công trình không
+                var work = await _workService.GetWorkByIdWithAuthorsAsync(workId);
+
+                if (work == null)
                 {
-                    var authorUserIds = work.Authors
+                    return NotFound(new ApiResponse<object>(false, "Công trình không tồn tại"));
+                }
+
+                var isAuthor = work.Authors?.Any(a => a.UserId == userId) ?? false;
+                if (!isAuthor)
+                {
+                    return StatusCode(403, new ApiResponse<object>(false, "Bạn không có quyền cập nhật công trình này"));
+                }
+
+                // Cập nhật công trình
+                var updatedWork = await _workService.UpdateWorkByAuthorAsync(workId, request, userId);
+
+                // Gửi thông báo đến các tác giả khác
+                if (updatedWork.Authors != null && updatedWork.Authors.Any())
+                {
+                    var authorUserIds = updatedWork.Authors
+                        .Where(a => a.UserId != userId)
                         .Select(a => a.UserId.ToString())
                         .Distinct()
                         .ToList();
 
-                    var notificationMessage = $"Công trình '{work.Title}' đã được cập nhật bởi {userId}.";
-                    await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
+                    if (authorUserIds.Any())
+                    {
+                        var notificationMessage = $"Công trình '{updatedWork.Title}' đã được cập nhật bởi {userName}.";
+                        await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
+                    }
                 }
 
                 return Ok(new ApiResponse<WorkDto>(
                     true,
                     "Cập nhật thông tin công trình và tác giả thành công",
-                    work
+                    updatedWork
                 ));
             }
             catch (Exception ex)

@@ -13,125 +13,126 @@ using Application.Shared.Response;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-   private readonly UserManager<IdentityUser> userManager;
-   private readonly IUserService userService;
-   private readonly IConfiguration configuration;
+    private readonly UserManager<IdentityUser> userManager;
+    private readonly IUserService userService;
+    private readonly IConfiguration configuration;
 
-   public AuthController(
-      UserManager<IdentityUser> userManager,
-      IUserService userService,
-      IConfiguration configuration
-      )
-   {
-      this.userManager = userManager;
-      this.userService = userService;
-      this.configuration = configuration;
-   }
+    public AuthController(
+       UserManager<IdentityUser> userManager,
+       IUserService userService,
+       IConfiguration configuration
+       )
+    {
+        this.userManager = userManager;
+        this.userService = userService;
+        this.configuration = configuration;
+    }
 
-   [HttpPost("login")]
-   public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
-   {
-      var identityUser = await userManager.FindByNameAsync(model.Username);
-      if (identityUser != null && await userManager.CheckPasswordAsync(identityUser, model.Password))
-      {
-         // Create user claims
-         var authClaims = new List<Claim>
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
+    {
+        var identityUser = await userManager.FindByNameAsync(model.Username);
+        if (identityUser != null && await userManager.CheckPasswordAsync(identityUser, model.Password))
+        {
+            // Create user claims
+            var authClaims = new List<Claim>
          {
             new Claim(ClaimTypes.Name, identityUser.UserName!),
             new Claim(ClaimTypes.Email, identityUser.Email!),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
          };
 
-         // Optionally, add roles as claims:
-         var userRoles = await userManager.GetRolesAsync(identityUser);
-         authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
+            // Optionally, add roles as claims:
+            var userRoles = await userManager.GetRolesAsync(identityUser);
+            authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-         var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
-         if (user is not null)
-         {
-            user.Role = userRoles.Any() ? userRoles.First() : "No Role";
-         }
-
-         // Generate the token
-         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
-
-         var token = new JwtSecurityToken(
-             issuer: configuration["Jwt:Issuer"],
-             audience: configuration["Jwt:Audience"],
-             expires: DateTime.Now.AddHours(3),
-             claims: authClaims,
-             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-         );
-
-         var response = new ApiResponse<object>(
-            true,
-            "Đăng nhập thành công",
-            new
+            var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
+            if (user is not null)
             {
-               token = new JwtSecurityTokenHandler().WriteToken(token),
-               expiration = token.ValidTo,
-               user
-            });
+                user.Role = userRoles.Any() ? userRoles.First() : "No Role";
+                authClaims.Add(new Claim("id", user.Id.ToString())); // Thêm UserId vào token
+            }
 
-         return Ok(response);
-      }
-      return Unauthorized();
-   }
+            // Generate the token
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
 
-   [HttpPost("register")]
-   public async Task<ActionResult<UserDto>> Register([FromBody] RegisterRequestDto request)
-   {
-      try
-      {
-         // Check if username is already taken
-         var existingUser = await userManager.FindByNameAsync(request.UserName);
-         if (existingUser != null)
-         {
-            return BadRequest(new ApiResponse<object>(false, "Tên người dùng đã tồn tại"));
-         }
+            var token = new JwtSecurityToken(
+                issuer: configuration["Jwt:Issuer"],
+                audience: configuration["Jwt:Audience"],
+                expires: DateTime.Now.AddHours(3),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+            );
 
-         // Create the Identity user with the provided username.
-         var identityUser = new IdentityUser
-         {
-            UserName = request.UserName,
-            Email = request.Email
-         };
-         var identityResult = await userManager.CreateAsync(identityUser, request.Password);
-         if (!identityResult.Succeeded)
-         {
-            var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
-            return BadRequest(new ApiResponse<object>(false, $"Lỗi khi đăng ký: {errors}"));
-         }
+            var response = new ApiResponse<object>(
+               true,
+               "Đăng nhập thành công",
+               new
+               {
+                   token = new JwtSecurityTokenHandler().WriteToken(token),
+                   expiration = token.ValidTo,
+                   user
+               });
 
-         // Add the "User" role to the newly registered user.
-         var roleResult = await userManager.AddToRoleAsync(identityUser, "User");
-         if (!roleResult.Succeeded)
-         {
-            var roleErrors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-            return BadRequest(new ApiResponse<object>(false, $"Lỗi khi đăng ký: {roleErrors}"));
-         }
+            return Ok(response);
+        }
+        return Unauthorized();
+    }
 
-         // Map to your domain user DTO.
-         var userDto = new UserDto
-         {
-            FullName = request.FullName,
-            UserName = identityUser.UserName,
-            IdentityId = identityUser.Id,
-            AcademicTitle = request.AcademicTitle,
-            OfficerRank = request.OfficerRank,
-            DepartmentId = request.DepartmentId,
-            FieldId = request.FieldId,
-            Role = "User"
-         };
+    [HttpPost("register")]
+    public async Task<ActionResult<UserDto>> Register([FromBody] RegisterRequestDto request)
+    {
+        try
+        {
+            // Check if username is already taken
+            var existingUser = await userManager.FindByNameAsync(request.UserName);
+            if (existingUser != null)
+            {
+                return BadRequest(new ApiResponse<object>(false, "Tên người dùng đã tồn tại"));
+            }
 
-         // Create the domain user.
-         var user = await userService.CreateAsync(userDto);
+            // Create the Identity user with the provided username.
+            var identityUser = new IdentityUser
+            {
+                UserName = request.UserName,
+                Email = request.Email
+            };
+            var identityResult = await userManager.CreateAsync(identityUser, request.Password);
+            if (!identityResult.Succeeded)
+            {
+                var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+                return BadRequest(new ApiResponse<object>(false, $"Lỗi khi đăng ký: {errors}"));
+            }
 
-         return Ok(new ApiResponse<UserDto>(true, "Đăng ký tài khoản thành công", userDto));
-      }
-      catch (Exception ex)
-      {
-         return StatusCode(500, new ApiResponse<object>(false, "Lỗi khi đăng ký", ex.Message));
-      }
-   }
+            // Add the "User" role to the newly registered user.
+            var roleResult = await userManager.AddToRoleAsync(identityUser, "User");
+            if (!roleResult.Succeeded)
+            {
+                var roleErrors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                return BadRequest(new ApiResponse<object>(false, $"Lỗi khi đăng ký: {roleErrors}"));
+            }
+
+            // Map to your domain user DTO.
+            var userDto = new UserDto
+            {
+                FullName = request.FullName,
+                UserName = identityUser.UserName,
+                IdentityId = identityUser.Id,
+                AcademicTitle = request.AcademicTitle,
+                OfficerRank = request.OfficerRank,
+                DepartmentId = request.DepartmentId,
+                FieldId = request.FieldId,
+                Role = "User"
+            };
+
+            // Create the domain user.
+            var user = await userService.CreateAsync(userDto);
+
+            return Ok(new ApiResponse<UserDto>(true, "Đăng ký tài khoản thành công", userDto));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new ApiResponse<object>(false, "Lỗi khi đăng ký", ex.Message));
+        }
+    }
 }
