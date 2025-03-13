@@ -45,5 +45,12 @@ namespace Infrastructure.Data.Repositories
                 .ToListAsync(cancellationToken);
         }
 
+        public async Task<IEnumerable<Work>> GetWorksWithAuthorsByIdsAsync(IEnumerable<Guid> workIds, CancellationToken cancellationToken = default)
+        {
+            return await context.Set<Work>()
+                .Include(w => w.Authors)
+                .Where(w => workIds.Contains(w.Id))
+                .ToListAsync(cancellationToken);
+        }
     }
 }

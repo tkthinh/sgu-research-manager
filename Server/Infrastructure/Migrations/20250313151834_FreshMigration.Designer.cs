@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250312135235_FreshMigration")]
+    [Migration("20250313151834_FreshMigration")]
     partial class FreshMigration
     {
         /// <inheritdoc />
@@ -103,10 +103,10 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("PurposeId");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
-                    b.HasIndex("WorkId");
+                    b.HasIndex("WorkId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("Authors");
                 });
@@ -2174,6 +2174,32 @@ namespace Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Domain.Entities.SystemConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemConfigs");
+                });
+
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2674,8 +2700,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Domain.Entities.Author", "UserId")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -2780,7 +2806,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
-                    b.HasOne("Domain.Entities.Field", "FieldForScoring")
+                    b.HasOne("Domain.Entities.Field", "ScoringField")
                         .WithMany()
                         .HasForeignKey("ScoringFieldId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -2796,7 +2822,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("FieldForScoring");
+                    b.Navigation("ScoringField");
 
                     b.Navigation("WorkLevel");
 

@@ -100,10 +100,10 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("PurposeId");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
-                    b.HasIndex("WorkId");
+                    b.HasIndex("WorkId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("Authors");
                 });
@@ -2697,8 +2697,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.User", "User")
-                        .WithOne()
-                        .HasForeignKey("Domain.Entities.Author", "UserId")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 

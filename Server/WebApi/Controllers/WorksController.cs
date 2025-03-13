@@ -252,7 +252,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPatch("{workId}/admin-update")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> AdminUpdateWork(
             [FromRoute] Guid workId,
             [FromBody] AdminUpdateWorkRequestDto request)
@@ -352,6 +352,35 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi tác giả cập nhật công trình và thông tin tác giả");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("my-works")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyWorks()
+        {
+            try
+            {
+                // Lấy UserId từ token
+                var userIdClaim = User.FindFirst("id")?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                // Lấy danh sách công trình mà user đã kê khai
+                var works = await _workService.GetWorksByCurrentUserAsync(userId);
+
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình của người dùng hiện tại thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình của người dùng hiện tại");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }

@@ -426,5 +426,39 @@ namespace Application.Works
 
             return _mapper.MapToDto(work);
         }
+
+        public async Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            // Lấy danh sách các Author liên quan đến userId
+            var authors = await _unitOfWork.Repository<Author>()
+                .FindAsync(a => a.UserId == userId);
+
+            if (!authors.Any())
+            {
+                return Enumerable.Empty<WorkDto>();
+            }
+
+            // Lấy danh sách WorkId từ các Author
+            var workIds = authors.Select(a => a.WorkId).Distinct();
+
+            // Lấy thông tin đầy đủ của các công trình
+            var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(workIds, cancellationToken);
+
+            // Lọc để chỉ giữ thông tin tác giả của user hiện tại trong mỗi công trình
+            var filteredWorks = works.Select(work =>
+            {
+                var userAuthor = authors.FirstOrDefault(a => a.WorkId == work.Id);
+                if (userAuthor != null)
+                {
+                    // Tạo một bản sao của work với Authors chỉ chứa thông tin của user hiện tại
+                    var filteredWork = _mapper.MapToDto(work);
+                    filteredWork.Authors = new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) };
+                    return filteredWork;
+                }
+                return null;
+            }).Where(w => w != null);
+
+            return filteredWorks;
+        }
     }
 }

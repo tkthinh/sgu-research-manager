@@ -102,8 +102,8 @@ namespace Infrastructure.Data
 
             builder.Entity<Author>()
                 .HasOne(a => a.User)
-                .WithOne()
-                .HasForeignKey<Author>(a => a.UserId)
+                .WithMany() // User không có navigation property ngược lại
+                .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Author>()
@@ -119,6 +119,10 @@ namespace Infrastructure.Data
                 .HasForeignKey(a => a.PurposeId)
                 .HasPrincipalKey(p => p.Id)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Author>()
+                .HasIndex(a => new { a.WorkId, a.UserId })
+                .IsUnique();
 
             // AuthorRole
             builder.Entity<AuthorRole>()
