@@ -20,7 +20,7 @@ namespace Domain.Entities
         public string? Note { get; set; }
 
         public virtual Field? ScoringField { get; set; }
-        public virtual Field? SCImagoField { get; set; }
+        public virtual SCImagoField? SCImagoField { get; set; }
         public virtual User? User { get; set; }
         public virtual AuthorRole? AuthorRole { get; set; }
         public virtual Work? Work { get; set; }

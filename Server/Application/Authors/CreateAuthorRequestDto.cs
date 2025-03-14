@@ -10,6 +10,5 @@ namespace Application.Authors
         public Guid? ScoringFieldId { get; set; }
         public int? Position { get; set; }
         public ScoreLevel? ScoreLevel { get; set; }
-        public string? CoAuthors { get; set; }
     }
 }

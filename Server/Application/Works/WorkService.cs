@@ -159,9 +159,9 @@ namespace Application.Works
             if (work == null)
                 throw new Exception("Công trình không tồn tại");
 
-            // Kiểm tra người dùng hiện tại có phải là tác giả của công trình không
-            var isAuthor = await _unitOfWork.Repository<Author>()
-                .AnyAsync(a => a.WorkId == workId && a.UserId == userId, cancellationToken);
+            // Kiểm tra người dùng hiện tại có phải là tác giả hoặc đồng tác giả của công trình không
+            var isAuthor = await _unitOfWork.Repository<WorkAuthor>()
+                .AnyAsync(wa => wa.WorkId == workId && wa.UserId == userId, cancellationToken);
             if (!isAuthor)
                 throw new UnauthorizedAccessException("Bạn không phải tác giả của công trình này");
 
