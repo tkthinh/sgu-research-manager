@@ -55,17 +55,14 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("AuthorHour")
+                        .HasColumnType("int");
+
                     b.Property<Guid>("AuthorRoleId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("CoAuthors")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("FinalAuthorHour")
-                        .HasColumnType("int");
 
                     b.Property<bool>("MarkedForScoring")
                         .HasColumnType("bit");
@@ -73,23 +70,33 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("Position")
                         .HasColumnType("int");
 
+                    b.Property<string>("ProofStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid>("PurposeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SCImagoFieldId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("ScoreLevel")
                         .HasColumnType("int");
 
-                    b.Property<int>("TempAuthorHour")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TempWorkHour")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("ScoringFieldId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("WorkHour")
+                        .HasColumnType("int");
 
                     b.Property<Guid>("WorkId")
                         .HasColumnType("uniqueidentifier");
@@ -99,6 +106,10 @@ namespace Infrastructure.Migrations
                     b.HasIndex("AuthorRoleId");
 
                     b.HasIndex("PurposeId");
+
+                    b.HasIndex("SCImagoFieldId");
+
+                    b.HasIndex("ScoringFieldId");
 
                     b.HasIndex("UserId");
 
@@ -2256,24 +2267,8 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("FinalWorkHour")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProofStatus")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("SCImagoFieldId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ScoringFieldId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Source")
                         .IsRequired()
@@ -2300,13 +2295,40 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ScoringFieldId");
-
                     b.HasIndex("WorkLevelId");
 
                     b.HasIndex("WorkTypeId");
 
                     b.ToTable("Works");
+                });
+
+            modelBuilder.Entity("Domain.Entities.WorkAuthor", b =>
+                {
+                    b.Property<Guid>("WorkId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AuthorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("WorkId", "UserId");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("WorkAuthors");
                 });
 
             modelBuilder.Entity("Domain.Entities.WorkLevel", b =>
@@ -2696,6 +2718,16 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Field", "SCImagoField")
+                        .WithMany()
+                        .HasForeignKey("SCImagoFieldId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.Field", "ScoringField")
+                        .WithMany()
+                        .HasForeignKey("ScoringFieldId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Domain.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -2711,6 +2743,10 @@ namespace Infrastructure.Migrations
                     b.Navigation("AuthorRole");
 
                     b.Navigation("Purpose");
+
+                    b.Navigation("SCImagoField");
+
+                    b.Navigation("ScoringField");
 
                     b.Navigation("User");
 
@@ -2803,11 +2839,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
-                    b.HasOne("Domain.Entities.Field", "ScoringField")
-                        .WithMany()
-                        .HasForeignKey("ScoringFieldId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
                         .WithMany()
                         .HasForeignKey("WorkLevelId")
@@ -2819,11 +2850,32 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("ScoringField");
-
                     b.Navigation("WorkLevel");
 
                     b.Navigation("WorkType");
+                });
+
+            modelBuilder.Entity("Domain.Entities.WorkAuthor", b =>
+                {
+                    b.HasOne("Domain.Entities.Author", null)
+                        .WithMany("WorkAuthors")
+                        .HasForeignKey("AuthorId");
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Work", "Work")
+                        .WithMany("WorkAuthors")
+                        .HasForeignKey("WorkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("Work");
                 });
 
             modelBuilder.Entity("Domain.Entities.WorkLevel", b =>
@@ -2835,6 +2887,11 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("WorkType");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Author", b =>
+                {
+                    b.Navigation("WorkAuthors");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -2866,6 +2923,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
                     b.Navigation("Authors");
+
+                    b.Navigation("WorkAuthors");
                 });
 
             modelBuilder.Entity("Domain.Entities.WorkLevel", b =>

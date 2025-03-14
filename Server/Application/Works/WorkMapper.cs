@@ -1,6 +1,7 @@
-﻿using Application.Authors;
-using Domain.Entities;
+﻿using Domain.Entities;
 using Domain.Interfaces;
+using System.Linq;
+using Application.Authors;
 
 namespace Application.Works
 {
@@ -22,18 +23,13 @@ namespace Application.Works
                 TimePublished = entity.TimePublished,
                 TotalAuthors = entity.TotalAuthors,
                 TotalMainAuthors = entity.TotalMainAuthors,
-                FinalWorkHour = entity.FinalWorkHour,
-                ProofStatus = entity.ProofStatus,
-                Note = entity.Note,
                 Details = entity.Details,
                 Source = entity.Source,
                 WorkTypeId = entity.WorkTypeId,
                 WorkLevelId = entity.WorkLevelId,
-                SCImagoFieldId = entity.SCImagoFieldId,
-                ScoringFieldId = entity.ScoringFieldId,
+                Authors = entity.Authors != null ? _authorMapper.MapToDtos(entity.Authors) : null,
                 CreatedDate = entity.CreatedDate,
-                ModifiedDate = entity.ModifiedDate,
-                Authors = entity.Authors != null ? _authorMapper.MapToDtos(entity.Authors).ToList() : null
+                ModifiedDate = entity.ModifiedDate
             };
         }
 
@@ -46,18 +42,13 @@ namespace Application.Works
                 TimePublished = dto.TimePublished,
                 TotalAuthors = dto.TotalAuthors,
                 TotalMainAuthors = dto.TotalMainAuthors,
-                FinalWorkHour = dto.FinalWorkHour,
-                ProofStatus = dto.ProofStatus,
-                Note = dto.Note,
                 Details = dto.Details,
                 Source = dto.Source,
                 WorkTypeId = dto.WorkTypeId,
                 WorkLevelId = dto.WorkLevelId,
-                SCImagoFieldId = dto.SCImagoFieldId,
-                ScoringFieldId = dto.ScoringFieldId,
+                Authors = dto.Authors != null ? _authorMapper.MapToEntities(dto.Authors).ToList() : null,
                 CreatedDate = dto.CreatedDate,
-                ModifiedDate = dto.ModifiedDate,
-                Authors = dto.Authors != null ? _authorMapper.MapToEntities(dto.Authors).ToList() : null
+                ModifiedDate = dto.ModifiedDate
             };
         }
 

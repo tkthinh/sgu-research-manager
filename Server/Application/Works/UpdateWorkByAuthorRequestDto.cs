@@ -4,7 +4,7 @@ namespace Application.Works
 {
     public class UpdateWorkByAuthorRequestDto
     {
-        public UpdateWorkRequestDto WorkRequest { get; set; }
-        public UpdateAuthorRequestDto AuthorRequest { get; set; }
+        public UpdateWorkRequestDto? WorkRequest { get; set; }
+        public UpdateAuthorByAuthorRequestDto? AuthorRequest { get; set; }
     }
 }

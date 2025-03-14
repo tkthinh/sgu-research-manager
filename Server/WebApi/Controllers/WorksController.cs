@@ -251,11 +251,12 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPatch("{workId}/admin-update")]
+        [HttpPatch("{workId}/admin-update/{userId}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<WorkDto>>> AdminUpdateWork(
+        public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAdmin(
             [FromRoute] Guid workId,
-            [FromBody] AdminUpdateWorkRequestDto request)
+            [FromRoute] Guid userId,
+            [FromBody] UpdateWorkByAdminRequestDto request)
         {
             try
             {
@@ -263,26 +264,24 @@ namespace WebApi.Controllers
                 if (work == null)
                     return NotFound(new ApiResponse<WorkDto>(false, "Công trình không tồn tại"));
 
-                var workEntity = await _workService.UpdateWorkAdminAsync(workId, request);
+                var updatedWork = await _workService.UpdateWorkByAdminAsync(workId, userId, request);
 
-                if (workEntity.Authors != null && workEntity.Authors.Any())
+                if (updatedWork.Authors != null && updatedWork.Authors.Any())
                 {
-                    // Lấy danh sách UserId (đã convert sang string vì SignalR sử dụng chuỗi làm định danh người dùng)
-                    var authorUserIds = workEntity.Authors
+                    var authorUserIds = updatedWork.Authors
+                        .Where(a => a.UserId == userId)
                         .Select(a => a.UserId.ToString())
                         .Distinct()
                         .ToList();
 
-                    var notificationMessage = $"Công trình '{workEntity.Title}' đã được admin chấm.";
-
-                    // Gửi thông báo đến những user có UserId tương ứng
+                    var notificationMessage = $"Công trình '{updatedWork.Title}' đã được admin chấm.";
                     await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
                 }
 
                 return Ok(new ApiResponse<WorkDto>(
                     true,
                     "Cập nhật công trình thành công",
-                    workEntity
+                    updatedWork
                 ));
             }
             catch (Exception ex)

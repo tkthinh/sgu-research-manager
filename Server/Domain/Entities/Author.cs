@@ -8,17 +8,24 @@ namespace Domain.Entities
         public Guid UserId { get; set; }
         public Guid AuthorRoleId { get; set; }
         public Guid PurposeId { get; set; }
+        public Guid? SCImagoFieldId { get; set; }
+        public Guid? ScoringFieldId { get; set; }
+
         public int? Position { get; set; }
         public ScoreLevel? ScoreLevel { get; set; } // Mức điểm do người dùng chọn
-        public int FinalAuthorHour { get; set; }    // Giờ chính thức do admin chấm
-        public int TempAuthorHour { get; set; }     // Giờ dự kiến
-        public int TempWorkHour { get; set; }       // Giờ dự kiến của công trình (tính từ DeclaredScore)
+        public int AuthorHour { get; set; }     // Giờ quy đổi mà tác giả nhận được
+        public int WorkHour { get; set; }       // Giờ của công trình mà tác giả kê khai theo ScoreLevel
         public bool MarkedForScoring { get; set; }  // Cờ đánh dấu công trình được chọn để quy đổi
-        public string? CoAuthors { get; set; }
+        public ProofStatus ProofStatus { get; set; } = ProofStatus.ChuaXuLy;
+        public string? Note { get; set; }
 
+        public virtual Field? ScoringField { get; set; }
+        public virtual Field? SCImagoField { get; set; }
         public virtual User? User { get; set; }
         public virtual AuthorRole? AuthorRole { get; set; }
         public virtual Work? Work { get; set; }
         public virtual Purpose? Purpose { get; set; }
+
+        public virtual ICollection<WorkAuthor>? WorkAuthors { get; set; }
     }
 }

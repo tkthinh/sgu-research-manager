@@ -8,22 +8,15 @@ namespace Domain.Entities
         public DateOnly? TimePublished { get; set; }
         public int? TotalAuthors { get; set; }
         public int? TotalMainAuthors { get; set; }
-        public int FinalWorkHour { get; set; } = 0;
-        public ProofStatus ProofStatus { get; set; } = ProofStatus.ChuaXuLy;
-        public string? Note { get; set; }
         public Dictionary<string, string>? Details { get; set; }
         public WorkSource Source { get; set; }
 
         public Guid WorkTypeId { get; set; }
         public Guid? WorkLevelId { get; set; }
-        public Guid? SCImagoFieldId { get; set; }
-        public Guid? ScoringFieldId { get; set; }
 
-
-        // (Tuỳ chọn) Navigation properties đến các entity khác
         public virtual WorkType? WorkType { get; set; }
         public virtual WorkLevel? WorkLevel { get; set; }
-        public virtual Field? ScoringField { get; set; }
         public virtual ICollection<Author>? Authors { get; set; }
+        public virtual ICollection<WorkAuthor>? WorkAuthors { get; set; }
     }
 }

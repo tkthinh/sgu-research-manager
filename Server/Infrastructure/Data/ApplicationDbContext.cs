@@ -25,7 +25,7 @@ namespace Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<SCImagoField> SCImagoFields { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
-
+        public DbSet<WorkAuthor> WorkAuthors { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -87,12 +87,6 @@ namespace Infrastructure.Data
                 .HasForeignKey(w => w.WorkLevelId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<Work>()
-                .HasOne(w => w.ScoringField)
-                .WithMany()
-                .HasForeignKey(w => w.ScoringFieldId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             // Author Relationships
             builder.Entity<Author>()
                 .HasOne(a => a.Work)
@@ -102,7 +96,7 @@ namespace Infrastructure.Data
 
             builder.Entity<Author>()
                 .HasOne(a => a.User)
-                .WithMany() // User không có navigation property ngược lại
+                .WithMany()
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -121,8 +115,40 @@ namespace Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Author>()
+                .Property(a => a.ProofStatus)
+                .HasConversion<string>();
+
+            builder.Entity<Author>()
+                .HasOne(a => a.SCImagoField)
+                .WithMany()
+                .HasForeignKey(a => a.SCImagoFieldId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Author>()
+                .HasOne(a => a.ScoringField)
+                .WithMany()
+                .HasForeignKey(a => a.ScoringFieldId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Author>()
                 .HasIndex(a => new { a.WorkId, a.UserId })
                 .IsUnique();
+
+            // WorkAuthor
+            builder.Entity<WorkAuthor>()
+                .HasKey(wa => new { wa.WorkId, wa.UserId });
+
+            builder.Entity<WorkAuthor>()
+                .HasOne(wa => wa.Work)
+                .WithMany(w => w.WorkAuthors)
+                .HasForeignKey(wa => wa.WorkId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<WorkAuthor>()
+                .HasOne(wa => wa.User)
+                .WithMany()
+                .HasForeignKey(wa => wa.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // AuthorRole
             builder.Entity<AuthorRole>()
@@ -170,10 +196,6 @@ namespace Infrastructure.Data
                 .Property(w => w.Source)
                 .HasConversion<string>();
 
-            builder.Entity<Work>()
-                .Property(w => w.ProofStatus)
-                .HasConversion<string>();
-
             builder.Entity<User>()
                .Property(e => e.AcademicTitle)
                .HasConversion<string>();
@@ -181,7 +203,6 @@ namespace Infrastructure.Data
             builder.Entity<User>()
                .Property(e => e.OfficerRank)
                .HasConversion<string>();
-
 
             // Seed Data
             builder.ApplyConfiguration(new FieldSeeding());

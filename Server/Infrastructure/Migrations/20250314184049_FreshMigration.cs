@@ -268,27 +268,16 @@ namespace Infrastructure.Migrations
                     TimePublished = table.Column<DateOnly>(type: "date", nullable: true),
                     TotalAuthors = table.Column<int>(type: "int", nullable: true),
                     TotalMainAuthors = table.Column<int>(type: "int", nullable: true),
-                    FinalWorkHour = table.Column<int>(type: "int", nullable: false),
-                    ProofStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Details = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Source = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     WorkTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     WorkLevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    SCImagoFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ScoringFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Works", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Works_Fields_ScoringFieldId",
-                        column: x => x.ScoringFieldId,
-                        principalTable: "Fields",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Works_WorkLevels_WorkLevelId",
                         column: x => x.WorkLevelId,
@@ -312,13 +301,15 @@ namespace Infrastructure.Migrations
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AuthorRoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PurposeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SCImagoFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ScoringFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Position = table.Column<int>(type: "int", nullable: true),
                     ScoreLevel = table.Column<int>(type: "int", nullable: true),
-                    FinalAuthorHour = table.Column<int>(type: "int", nullable: false),
-                    TempAuthorHour = table.Column<int>(type: "int", nullable: false),
-                    TempWorkHour = table.Column<int>(type: "int", nullable: false),
+                    AuthorHour = table.Column<int>(type: "int", nullable: false),
+                    WorkHour = table.Column<int>(type: "int", nullable: false),
                     MarkedForScoring = table.Column<bool>(type: "bit", nullable: false),
-                    CoAuthors = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ProofStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -329,6 +320,18 @@ namespace Infrastructure.Migrations
                         name: "FK_Authors_AuthorRoles_AuthorRoleId",
                         column: x => x.AuthorRoleId,
                         principalTable: "AuthorRoles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Authors_Fields_SCImagoFieldId",
+                        column: x => x.SCImagoFieldId,
+                        principalTable: "Fields",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Authors_Fields_ScoringFieldId",
+                        column: x => x.ScoringFieldId,
+                        principalTable: "Fields",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -345,6 +348,39 @@ namespace Infrastructure.Migrations
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Authors_Works_WorkId",
+                        column: x => x.WorkId,
+                        principalTable: "Works",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WorkAuthors",
+                columns: table => new
+                {
+                    WorkId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AuthorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkAuthors", x => new { x.WorkId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_WorkAuthors_Authors_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "Authors",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_WorkAuthors_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_WorkAuthors_Works_WorkId",
                         column: x => x.WorkId,
                         principalTable: "Works",
                         principalColumn: "Id",
@@ -723,6 +759,16 @@ namespace Infrastructure.Migrations
                 column: "PurposeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Authors_SCImagoFieldId",
+                table: "Authors",
+                column: "SCImagoFieldId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Authors_ScoringFieldId",
+                table: "Authors",
+                column: "ScoringFieldId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Authors_UserId",
                 table: "Authors",
                 column: "UserId");
@@ -774,14 +820,19 @@ namespace Infrastructure.Migrations
                 column: "FieldId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_WorkAuthors_AuthorId",
+                table: "WorkAuthors",
+                column: "AuthorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkAuthors_UserId",
+                table: "WorkAuthors",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_WorkLevels_WorkTypeId",
                 table: "WorkLevels",
                 column: "WorkTypeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Works_ScoringFieldId",
-                table: "Works",
-                column: "ScoringFieldId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Works_WorkLevelId",
@@ -801,9 +852,6 @@ namespace Infrastructure.Migrations
                 name: "Assignments");
 
             migrationBuilder.DropTable(
-                name: "Authors");
-
-            migrationBuilder.DropTable(
                 name: "Factors");
 
             migrationBuilder.DropTable(
@@ -813,16 +861,22 @@ namespace Infrastructure.Migrations
                 name: "SystemConfigs");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "WorkAuthors");
 
             migrationBuilder.DropTable(
-                name: "Works");
+                name: "Authors");
 
             migrationBuilder.DropTable(
                 name: "AuthorRoles");
 
             migrationBuilder.DropTable(
                 name: "Purposes");
+
+            migrationBuilder.DropTable(
+                name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Works");
 
             migrationBuilder.DropTable(
                 name: "Departments");

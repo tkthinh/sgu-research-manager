@@ -6,7 +6,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Domain.Enums;
 using Application.SystemConfigs;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Works
@@ -82,15 +81,10 @@ namespace Application.Works
                 TimePublished = request.TimePublished,
                 TotalAuthors = request.TotalAuthors,
                 TotalMainAuthors = request.TotalMainAuthors,
-                FinalWorkHour = 0,
-                ProofStatus = ProofStatus.ChuaXuLy,
-                Note = request.Note,
                 Details = request.Details,
                 Source = request.Source,
                 WorkTypeId = request.WorkTypeId,
                 WorkLevelId = request.WorkLevelId,
-                SCImagoFieldId = request.SCImagoFieldId,
-                ScoringFieldId = request.ScoringFieldId,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -103,7 +97,7 @@ namespace Application.Works
             if (factor == null)
                 throw new Exception("Không tìm thấy Factor phù hợp");
 
-            var tempWorkHour = CalculateTempWorkHour(request.Author.ScoreLevel, factor);
+            var workHour = CalculateWorkHour(request.Author.ScoreLevel, factor);
 
             await _unitOfWork.Repository<Work>().CreateAsync(work);
 
@@ -124,15 +118,31 @@ namespace Application.Works
                 PurposeId = request.Author.PurposeId,
                 Position = request.Author.Position,
                 ScoreLevel = request.Author.ScoreLevel,
-                CoAuthors = request.Author.CoAuthors,
-                TempWorkHour = tempWorkHour,
+                WorkHour = workHour,
+                SCImagoFieldId = request.Author.SCImagoFieldId,
+                ScoringFieldId = request.Author.ScoringFieldId,
+                ProofStatus = ProofStatus.ChuaXuLy,
                 CreatedDate = DateTime.UtcNow
             };
 
-            var tempAuthorHour = await CalculateTempAuthorHour(tempWorkHour, request.TotalAuthors ?? 0,
+            var authorHour = await CalculateAuthorHour(workHour, request.TotalAuthors ?? 0,
                 request.TotalMainAuthors ?? 0, request.Author.AuthorRoleId);
-            author.TempAuthorHour = tempAuthorHour;
+            author.AuthorHour = authorHour; 
             author.MarkedForScoring = false;
+
+            // Lưu thông tin đồng tác giả vào WorkAuthor
+            foreach (var coAuthorUserId in request.CoAuthorUserIds)
+            {
+                var workAuthor = new WorkAuthor
+                {
+                    Id = Guid.NewGuid(),
+                    WorkId = work.Id,
+                    UserId = coAuthorUserId
+                };
+                await _unitOfWork.Repository<WorkAuthor>().CreateAsync(workAuthor);
+            }
+
+
 
             await _unitOfWork.Repository<Author>().CreateAsync(author);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -149,29 +159,36 @@ namespace Application.Works
             if (work == null)
                 throw new Exception("Công trình không tồn tại");
 
+            // Kiểm tra người dùng hiện tại có phải là tác giả của công trình không
+            var isAuthor = await _unitOfWork.Repository<Author>()
+                .AnyAsync(a => a.WorkId == workId && a.UserId == userId, cancellationToken);
+            if (!isAuthor)
+                throw new UnauthorizedAccessException("Bạn không phải tác giả của công trình này");
+
             // Kiểm tra trạng thái hệ thống
+            var currentAuthor = await _unitOfWork.Repository<Author>()
+                .FirstOrDefaultAsync(a => a.WorkId == workId && a.UserId == userId, cancellationToken);
             if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
             {
-                // Nếu hệ thống đóng, chỉ cho phép chỉnh sửa nếu ProofStatus là KhongHopLe
-                if (work.ProofStatus != ProofStatus.KhongHopLe)
-                    throw new Exception("Hệ thống đã đóng.");
+                if (currentAuthor == null || currentAuthor.ProofStatus != ProofStatus.KhongHopLe)
+                    throw new Exception("Hệ thống đã đóng. Chỉ được chỉnh sửa công trình không hợp lệ.");
             }
 
             // Cập nhật thông tin công trình
-            work.Title = request.WorkRequest.Title ?? work.Title;
-            work.TimePublished = request.WorkRequest.TimePublished ?? work.TimePublished;
-            work.TotalAuthors = request.WorkRequest.TotalAuthors ?? work.TotalAuthors;
-            work.TotalMainAuthors = request.WorkRequest.TotalMainAuthors ?? work.TotalMainAuthors;
-            work.Note = request.WorkRequest.Note ?? work.Note;
-            work.Details = request.WorkRequest.Details ?? work.Details;
-            work.Source = request.WorkRequest.Source;
-            work.WorkTypeId = request.WorkRequest.WorkTypeId;
-            work.WorkLevelId = request.WorkRequest.WorkLevelId ?? work.WorkLevelId;
-            work.SCImagoFieldId = request.WorkRequest.SCImagoFieldId ?? work.SCImagoFieldId;
-            work.ScoringFieldId = request.WorkRequest.ScoringFieldId ?? work.ScoringFieldId;
-            work.ModifiedDate = DateTime.UtcNow;
+            if (request.WorkRequest != null)
+            {
+                work.Title = request.WorkRequest.Title ?? work.Title;
+                work.TimePublished = request.WorkRequest.TimePublished ?? work.TimePublished;
+                work.TotalAuthors = request.WorkRequest.TotalAuthors ?? work.TotalAuthors;
+                work.TotalMainAuthors = request.WorkRequest.TotalMainAuthors ?? work.TotalMainAuthors;
+                work.Details = request.WorkRequest.Details ?? work.Details;
+                work.Source = request.WorkRequest.Source != default ? request.WorkRequest.Source : work.Source;
+                work.WorkTypeId = request.WorkRequest.WorkTypeId ?? work.WorkTypeId;
+                work.WorkLevelId = request.WorkRequest.WorkLevelId ?? work.WorkLevelId;
+                work.ModifiedDate = DateTime.UtcNow;
+            }
 
-            // Tính toán giờ làm việc tạm thời cho tác giả mới
+            // Tính toán giờ làm việc cho tác giả mới
             var factor = await _factorRepository.FirstOrDefaultAsync(f =>
                 f.WorkTypeId == work.WorkTypeId &&
                 f.WorkLevelId == work.WorkLevelId &&
@@ -180,7 +197,12 @@ namespace Application.Works
             if (factor == null)
                 throw new Exception("Không tìm thấy Factor phù hợp");
 
-            var tempWorkHour = CalculateTempWorkHour(request.AuthorRequest.ScoreLevel, factor);
+            var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
+            var authorHour = await CalculateAuthorHour(
+                workHour,
+                work.TotalAuthors ?? 0,
+                work.TotalMainAuthors ?? 0,
+                request.AuthorRequest.AuthorRoleId);
 
             // Tạo mới tác giả
             var author = new Author
@@ -190,20 +212,25 @@ namespace Application.Works
                 UserId = userId,
                 AuthorRoleId = request.AuthorRequest.AuthorRoleId,
                 PurposeId = request.AuthorRequest.PurposeId,
+                SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
+                ScoringFieldId = request.AuthorRequest.ScoringFieldId,
                 Position = request.AuthorRequest.Position,
                 ScoreLevel = request.AuthorRequest.ScoreLevel,
-                CoAuthors = request.AuthorRequest.CoAuthors,
-                TempWorkHour = tempWorkHour,
-                CreatedDate = DateTime.UtcNow,
-                TempAuthorHour = await CalculateTempAuthorHour(tempWorkHour, work.TotalAuthors ?? 0,
-                    work.TotalMainAuthors ?? 0, request.AuthorRequest.AuthorRoleId),
-                MarkedForScoring = false
+                WorkHour = workHour,
+                AuthorHour = authorHour,
+                MarkedForScoring = false,
+                ProofStatus = ProofStatus.ChuaXuLy, // Mặc định khi tạo mới
+                CreatedDate = DateTime.UtcNow
             };
 
             // Lưu thay đổi vào database
             await _unitOfWork.Repository<Work>().UpdateAsync(work);
             await _unitOfWork.Repository<Author>().CreateAsync(author);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Log và invalidate cache
+            logger.LogInformation("User {UserId} added as co-author to work {WorkId}", userId, workId);
+            await SafeInvalidateCacheAsync(workId);
 
             return _mapper.MapToDto(work);
         }
@@ -287,95 +314,93 @@ namespace Application.Works
             return 1;
         }
 
-        public async Task<WorkDto> UpdateWorkAdminAsync(Guid workId, AdminUpdateWorkRequestDto request, CancellationToken cancellationToken = default)
+        public async Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkByAdminRequestDto request, CancellationToken cancellationToken = default)
         {
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
-            if (work == null)
-                throw new Exception("Công trình không tồn tại");
+            if (work == null) throw new Exception("Công trình không tồn tại");
 
-            // Cập nhật finalWorkHour và proofStatus
-            work.FinalWorkHour = request.FinalWorkHour;
-            work.ProofStatus = request.ProofStatus; // Giữ nguyên nếu không cung cấp
-            work.ModifiedDate = DateTime.UtcNow;
+            // Tìm Author tương ứng với UserId và WorkId
+            var author = await _unitOfWork.Repository<Author>()
+                .FirstOrDefaultAsync(a => a.WorkId == workId && a.UserId == userId, cancellationToken);
+            if (author == null) throw new Exception("Không tìm thấy thông tin tác giả trong công trình này");
 
-            // Tính toán lại finalAuthorHour cho tất cả tác giả
-            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == workId);
-            foreach (var author in authors)
+            // Cập nhật thông tin công trình (Work) nếu có WorkRequest
+            if (request.WorkRequest != null)
             {
-                var finalAuthorHour = await CalculateFinalAuthorHour(work.FinalWorkHour, work.TotalAuthors ?? 0,
-                    work.TotalMainAuthors ?? 0, author.AuthorRoleId);
-                author.FinalAuthorHour = finalAuthorHour;
+                work.Title = request.WorkRequest.Title ?? work.Title;
+                work.TimePublished = request.WorkRequest.TimePublished ?? work.TimePublished;
+                work.TotalAuthors = request.WorkRequest.TotalAuthors ?? work.TotalAuthors;
+                work.TotalMainAuthors = request.WorkRequest.TotalMainAuthors ?? work.TotalMainAuthors;
+                work.Details = request.WorkRequest.Details ?? work.Details;
+                work.Source = request.WorkRequest.Source != default ? request.WorkRequest.Source : work.Source;
+                work.WorkTypeId = request.WorkRequest.WorkTypeId ?? work.WorkTypeId;
+                work.WorkLevelId = request.WorkRequest.WorkLevelId ?? work.WorkLevelId;
+                work.ModifiedDate = DateTime.UtcNow;
+            }
+
+            // Cập nhật thông tin tác giả (Author) nếu có AuthorRequest
+            if (request.AuthorRequest != null)
+            {
+                author.AuthorRoleId = request.AuthorRequest.AuthorRoleId ?? author.AuthorRoleId;
+                author.PurposeId = request.AuthorRequest.PurposeId ?? author.PurposeId;
+                author.Position = request.AuthorRequest.Position ?? author.Position;
+                author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
+                author.SCImagoFieldId = request.AuthorRequest.SCImagoFieldId ?? author.SCImagoFieldId;
+                author.ScoringFieldId = request.AuthorRequest.ScoringFieldId ?? author.ScoringFieldId;
+
+                // Tính lại WorkHour và AuthorHour nếu có thay đổi liên quan
+                if (request.AuthorRequest.ScoreLevel.HasValue ||
+                    (request.WorkRequest != null && (request.WorkRequest.TotalAuthors.HasValue || request.WorkRequest.TotalMainAuthors.HasValue)))
+                {
+                    var factor = (await _factorRepository.FindAsync(f =>
+                        f.WorkTypeId == work.WorkTypeId &&
+                        f.WorkLevelId == work.WorkLevelId &&
+                        f.PurposeId == author.PurposeId &&
+                        f.ScoreLevel == (request.AuthorRequest.ScoreLevel ?? author.ScoreLevel)))
+                        .FirstOrDefault();
+                    if (factor == null)
+                        throw new Exception("Không tìm thấy Factor phù hợp");
+
+                    author.WorkHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel ?? author.ScoreLevel, factor);
+                    author.AuthorHour = await CalculateAuthorHour(
+                        author.WorkHour,
+                        request.WorkRequest?.TotalAuthors ?? work.TotalAuthors ?? 0,
+                        request.WorkRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0,
+                        author.AuthorRoleId);
+                }
+
+                // Xử lý ProofStatus và Note
+                if (request.AuthorRequest.ProofStatus.HasValue)
+                {
+                    if (request.AuthorRequest.ProofStatus == ProofStatus.HopLe)
+                    {
+                        author.ProofStatus = ProofStatus.HopLe;
+                        author.Note = request.AuthorRequest.Note ?? author.Note;
+                    }
+                    else if (request.AuthorRequest.ProofStatus == ProofStatus.KhongHopLe)
+                    {
+                        author.ProofStatus = ProofStatus.KhongHopLe;
+                        author.Note = request.AuthorRequest.Note ?? author.Note;
+                    }
+                    else
+                    {
+                        author.ProofStatus = request.AuthorRequest.ProofStatus.Value;
+                        author.Note = request.AuthorRequest.Note ?? author.Note;
+                    }
+                }
+
                 author.ModifiedDate = DateTime.UtcNow;
-                await _unitOfWork.Repository<Author>().UpdateAsync(author);
             }
 
+            // Lưu thay đổi vào database
             await _unitOfWork.Repository<Work>().UpdateAsync(work);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            await SafeInvalidateCacheAsync(workId);
-
-            return _mapper.MapToDto(work);
-        }
-
-        public async Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default)
-        {
-            // Kiểm tra công trình có tồn tại không
-            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
-            if (work == null)
-                throw new Exception("Công trình không tồn tại");
-
-            // Kiểm tra trạng thái hệ thống
-            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
-                throw new Exception("Hệ thống đã đóng. Không thể xóa công trình");
-
-            // Xóa các tác giả liên quan
-            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == workId);
-            foreach (var author in authors)
-            {
-                await _unitOfWork.Repository<Author>().DeleteAsync(author.Id); // Truyền ID thay vì đối tượng
-            }
-
-            // Xóa công trình
-            await _unitOfWork.Repository<Work>().DeleteAsync(work.Id); // Truyền ID thay vì đối tượng
+            await _unitOfWork.Repository<Author>().UpdateAsync(author);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             // Invalidate cache
             await SafeInvalidateCacheAsync(workId);
-        }
 
-        private int CalculateTempWorkHour(ScoreLevel? scoreLevel, Factor factor)
-        {
-            return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
-        }
-
-        private async Task<int> CalculateFinalAuthorHour(int finalWorkHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
-        {
-            if (totalAuthors == 0 || totalMainAuthors == 0)
-                return 0;
-
-            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
-            if (authorRole == null)
-                throw new Exception("Không tìm thấy vai trò tác giả");
-
-            if (authorRole.IsMainAuthor)
-                return (int)((1.0 / 3) * (finalWorkHour / totalMainAuthors) +
-                             (2.0 / 3) * (finalWorkHour / totalAuthors));
-            return (int)((2.0 / 3) * (finalWorkHour / totalAuthors));
-        }
-
-        private async Task<int> CalculateTempAuthorHour(int tempWorkHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
-        {
-            if (totalAuthors == 0 || totalMainAuthors == 0)
-                return 0;
-
-            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
-            if (authorRole == null)
-                throw new Exception("Không tìm thấy vai trò tác giả");
-
-            if (authorRole.IsMainAuthor)
-                return (int)((1.0 / 3) * (tempWorkHour / totalMainAuthors) +
-                             (2.0 / 3) * (tempWorkHour / totalAuthors));
-            return (int)((2.0 / 3) * (tempWorkHour / totalAuthors));
+            return _mapper.MapToDto(work);
         }
 
         public async Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
@@ -389,40 +414,67 @@ namespace Application.Works
             if (!isAuthor)
                 throw new UnauthorizedAccessException("Bạn không phải tác giả của công trình này");
 
+            var author = await _unitOfWork.Repository<Author>()
+                .FirstOrDefaultAsync(a => a.WorkId == workId && a.UserId == userId, cancellationToken);
+
             if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
             {
-                if (work.ProofStatus != ProofStatus.KhongHopLe)
+                if (author == null || author.ProofStatus != ProofStatus.KhongHopLe)
                     throw new Exception("Hệ thống đã đóng. Chỉ được chỉnh sửa công trình không hợp lệ.");
             }
 
-            work.Title = request.WorkRequest.Title ?? work.Title;
-            work.TimePublished = request.WorkRequest.TimePublished ?? work.TimePublished;
-            work.TotalAuthors = request.WorkRequest.TotalAuthors ?? work.TotalAuthors;
-            work.TotalMainAuthors = request.WorkRequest.TotalMainAuthors ?? work.TotalMainAuthors;
-            work.Note = request.WorkRequest.Note ?? work.Note;
-            work.Details = request.WorkRequest.Details ?? work.Details;
-            work.Source = request.WorkRequest.Source;
-            work.WorkTypeId = request.WorkRequest.WorkTypeId;
-            work.WorkLevelId = request.WorkRequest.WorkLevelId ?? work.WorkLevelId;
-            work.SCImagoFieldId = request.WorkRequest.SCImagoFieldId ?? work.SCImagoFieldId;
-            work.ScoringFieldId = request.WorkRequest.ScoringFieldId ?? work.ScoringFieldId;
-            work.ModifiedDate = DateTime.UtcNow;
-
-            var author = await _unitOfWork.Repository<Author>()
-                .FirstOrDefaultAsync(a => a.WorkId == workId && a.UserId == userId, cancellationToken);
             if (author == null)
                 throw new Exception("Không tìm thấy thông tin tác giả trong công trình");
 
-            author.Position = request.AuthorRequest.Position ?? author.Position;
-            author.PurposeId = request.AuthorRequest.PurposeId ?? author.PurposeId;
-            author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
-            author.CoAuthors = request.AuthorRequest.CoAuthors ?? author.CoAuthors;
+            work.Title = request.WorkRequest?.Title ?? work.Title;
+            work.TimePublished = request.WorkRequest?.TimePublished ?? work.TimePublished;
+            work.TotalAuthors = request.WorkRequest?.TotalAuthors ?? work.TotalAuthors;
+            work.TotalMainAuthors = request.WorkRequest?.TotalMainAuthors ?? work.TotalMainAuthors;
+            work.Details = request.WorkRequest?.Details ?? work.Details;
+            work.Source = request.WorkRequest?.Source ?? work.Source;
+            work.WorkTypeId = request.WorkRequest?.WorkTypeId ?? work.WorkTypeId;
+            work.WorkLevelId = request.WorkRequest?.WorkLevelId ?? work.WorkLevelId;
+            work.ModifiedDate = DateTime.UtcNow;
+
+            if (request.AuthorRequest != null)
+            {
+                author.AuthorRoleId = request.AuthorRequest.AuthorRoleId ?? author.AuthorRoleId;
+                author.PurposeId = request.AuthorRequest.PurposeId ?? author.PurposeId;
+                author.Position = request.AuthorRequest.Position ?? author.Position;
+                author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
+                author.SCImagoFieldId = request.AuthorRequest.SCImagoFieldId ?? author.SCImagoFieldId;
+                author.ScoringFieldId = request.AuthorRequest.ScoringFieldId ?? author.ScoringFieldId;
+
+                if (request.AuthorRequest.ScoreLevel.HasValue ||
+                    request.WorkRequest?.TotalAuthors.HasValue == true ||
+                    request.WorkRequest?.TotalMainAuthors.HasValue == true)
+                {
+                    var factor = (await _factorRepository.FindAsync(f =>
+                        f.WorkTypeId == work.WorkTypeId &&
+                        f.WorkLevelId == work.WorkLevelId &&
+                        f.PurposeId == author.PurposeId &&
+                        f.ScoreLevel == (request.AuthorRequest.ScoreLevel ?? author.ScoreLevel)))
+                        .FirstOrDefault();
+                    if (factor == null)
+                        throw new Exception("Không tìm thấy Factor phù hợp");
+
+                    author.WorkHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel ?? author.ScoreLevel, factor);
+                    author.AuthorHour = await CalculateAuthorHour(
+                        author.WorkHour,
+                        request.WorkRequest?.TotalAuthors ?? work.TotalAuthors ?? 0,
+                        request.WorkRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0,
+                        author.AuthorRoleId);
+                }
+
+                author.ModifiedDate = DateTime.UtcNow;
+            }
 
             await _unitOfWork.Repository<Work>().UpdateAsync(work);
             await _unitOfWork.Repository<Author>().UpdateAsync(author);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            logger.LogInformation("User {UserId} updated work {WorkId} and author info", userId, workId);
+            logger.LogInformation("User {UserId} updated work {WorkId} by author", userId, workId);
+            await SafeInvalidateCacheAsync(workId);
 
             return _mapper.MapToDto(work);
         }
@@ -459,6 +511,52 @@ namespace Application.Works
             }).Where(w => w != null);
 
             return filteredWorks;
+        }
+
+        private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
+        {
+            return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
+        }
+
+        private async Task<int> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
+        {
+            if (totalAuthors == 0 || totalMainAuthors == 0)
+                return 0;
+
+            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
+            if (authorRole == null)
+                throw new Exception("Không tìm thấy vai trò tác giả");
+
+            if (authorRole.IsMainAuthor)
+                return (int)((1.0 / 3) * (workHour / totalMainAuthors) +
+                             (2.0 / 3) * (workHour / totalAuthors));
+            return (int)((2.0 / 3) * (workHour / totalAuthors));
+        }
+
+        public async Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default)
+        {
+            // Kiểm tra công trình có tồn tại không
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
+            if (work == null)
+                throw new Exception("Công trình không tồn tại");
+
+            // Kiểm tra trạng thái hệ thống
+            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+                throw new Exception("Hệ thống đã đóng. Không thể xóa công trình");
+
+            // Xóa các tác giả liên quan
+            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == workId);
+            foreach (var author in authors)
+            {
+                await _unitOfWork.Repository<Author>().DeleteAsync(author.Id); // Truyền ID thay vì đối tượng
+            }
+
+            // Xóa công trình
+            await _unitOfWork.Repository<Work>().DeleteAsync(work.Id); // Truyền ID thay vì đối tượng
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // Invalidate cache
+            await SafeInvalidateCacheAsync(workId);
         }
     }
 }

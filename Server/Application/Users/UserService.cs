@@ -31,6 +31,7 @@ namespace Application.Users
 
             return null;
         }
+
         public async Task<UserConversionResultRequestDto> GetUserConversionResultAsync(Guid userId)
         {
             if (userId == Guid.Empty)
@@ -53,11 +54,11 @@ namespace Application.Users
                 .Select(p => p.Id)
                 .ToList();
 
-            // Lấy danh sách Author của user
-            var allAuthors = await unitOfWork.Repository<Author>()
-                .FindAsync(a => a.UserId == userId);
+            // Lấy danh sách Author của user với ProofStatus = HopLe
+            var authors = await unitOfWork.Repository<Author>()
+                .FindAsync(a => a.UserId == userId && a.ProofStatus == ProofStatus.HopLe);
 
-            if (allAuthors == null || !allAuthors.Any())
+            if (authors == null || !authors.Any())
             {
                 return new UserConversionResultRequestDto
                 {
@@ -74,49 +75,36 @@ namespace Application.Users
                 };
             }
 
-            // Lấy danh sách WorkId từ các Author
-            var workIds = allAuthors.Select(a => a.WorkId).Distinct().ToList();
+            // Lấy danh sách WorkId duy nhất từ các Author
+            var workIds = authors.Select(a => a.WorkId).Distinct().ToList();
 
-            // Lấy danh sách Work có ProofStatus = HopLe
+            // Lấy danh sách Work tương ứng
             var works = await unitOfWork.Repository<Work>()
-                .FindAsync(w => workIds.Contains(w.Id) && w.ProofStatus == ProofStatus.HopLe);
+                .FindAsync(w => workIds.Contains(w.Id));
 
-            // Lọc các Author có Work thỏa mãn điều kiện ProofStatus = HopLe
-            var validWorkIds = works.Select(w => w.Id).ToList();
-            var authors = allAuthors.Where(a => validWorkIds.Contains(a.WorkId)).ToList();
-
-            if (!authors.Any())
-            {
-                return new UserConversionResultRequestDto
-                {
-                    UserId = userId,
-                    UserName = await GetUserNameAsync(userId),
-                    ConversionResults = new ConversionDetailsRequestDto
-                    {
-                        DutyHourConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
-                        OverLimitConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
-                        ResearchProductConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
-                        TotalWorks = 0,
-                        TotalCalculatedHours = 0
-                    }
-                };
-            }
-
-            // Lọc theo mục đích
+            // Lọc các Author theo mục đích
             var dutyAuthors = authors.Where(a => dutyPurposeIds.Contains(a.PurposeId)).ToList();
             var overLimitAuthors = authors.Where(a => overLimitPurposeIds.Contains(a.PurposeId)).ToList();
             var overLimitMarkedAuthors = overLimitAuthors.Where(a => a.MarkedForScoring).ToList();
             var researchAuthors = authors.Where(a => researchPurposeIds.Contains(a.PurposeId)).ToList();
 
-            // Tính toán
-            var dutyConvertedHours = dutyAuthors.Sum(a => a.FinalAuthorHour);
-            var dutyCalculatedHours = Math.Min(dutyConvertedHours, 80);
+            // Tính số lượng công trình (Work) duy nhất cho từng mục đích
+            var dutyWorkIds = dutyAuthors.Select(a => a.WorkId).Distinct().ToList();
+            var overLimitWorkIds = overLimitAuthors.Select(a => a.WorkId).Distinct().ToList();
+            var researchWorkIds = researchAuthors.Select(a => a.WorkId).Distinct().ToList();
 
-            var overLimitConvertedHours = overLimitAuthors.Sum(a => a.FinalAuthorHour);
-            var overLimitCalculatedHours = overLimitMarkedAuthors.Sum(a => a.FinalAuthorHour);
+            // Tính toán giờ
+            var dutyConvertedHours = dutyAuthors.Sum(a => a.AuthorHour);
+            var dutyCalculatedHours = Math.Min(dutyConvertedHours, 80); // Giới hạn 80 giờ cho quy đổi giờ nghĩa vụ
+
+            var overLimitConvertedHours = overLimitAuthors.Sum(a => a.AuthorHour);
+            var overLimitCalculatedHours = overLimitMarkedAuthors.Sum(a => a.AuthorHour);
 
             var researchConvertedHours = 0; // Mặc định = 0 cho Sản phẩm NCKH
             var researchCalculatedHours = 0;
+
+            // Tổng số công trình duy nhất
+            var allWorkIds = authors.Select(a => a.WorkId).Distinct().ToList();
 
             var result = new UserConversionResultRequestDto
             {
@@ -126,23 +114,23 @@ namespace Application.Users
                 {
                     DutyHourConversion = new ConversionItemRequestDto
                     {
-                        TotalWorks = dutyAuthors.Count(),
+                        TotalWorks = dutyWorkIds.Count,
                         TotalConvertedHours = dutyConvertedHours,
                         TotalCalculatedHours = dutyCalculatedHours
                     },
                     OverLimitConversion = new ConversionItemRequestDto
                     {
-                        TotalWorks = overLimitAuthors.Count(),
+                        TotalWorks = overLimitWorkIds.Count,
                         TotalConvertedHours = overLimitConvertedHours,
                         TotalCalculatedHours = overLimitCalculatedHours
                     },
                     ResearchProductConversion = new ConversionItemRequestDto
                     {
-                        TotalWorks = researchAuthors.Count(),
+                        TotalWorks = researchWorkIds.Count,
                         TotalConvertedHours = researchConvertedHours,
                         TotalCalculatedHours = researchCalculatedHours
                     },
-                    TotalWorks = dutyAuthors.Count() + overLimitAuthors.Count() + researchAuthors.Count(),
+                    TotalWorks = allWorkIds.Count,
                     TotalCalculatedHours = dutyCalculatedHours + overLimitCalculatedHours + researchCalculatedHours
                 }
             };
