@@ -66,11 +66,11 @@ namespace Application.Users
                     UserName = await GetUserNameAsync(userId),
                     ConversionResults = new ConversionDetailsRequestDto
                     {
-                        DutyHourConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
-                        OverLimitConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
-                        ResearchProductConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
+                        DutyHourConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0m, TotalCalculatedHours = 0m },
+                        OverLimitConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0m, TotalCalculatedHours = 0m },
+                        ResearchProductConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0m, TotalCalculatedHours = 0m },
                         TotalWorks = 0,
-                        TotalCalculatedHours = 0
+                        TotalCalculatedHours = 0m
                     }
                 };
             }
@@ -93,15 +93,15 @@ namespace Application.Users
             var overLimitWorkIds = overLimitAuthors.Select(a => a.WorkId).Distinct().ToList();
             var researchWorkIds = researchAuthors.Select(a => a.WorkId).Distinct().ToList();
 
-            // Tính toán giờ
-            var dutyConvertedHours = dutyAuthors.Sum(a => a.AuthorHour);
-            var dutyCalculatedHours = Math.Min(dutyConvertedHours, 80); // Giới hạn 80 giờ cho quy đổi giờ nghĩa vụ
+            // Tính toán giờ (sử dụng decimal)
+            var dutyConvertedHours = dutyAuthors.Sum(a => a.AuthorHour); // AuthorHour giờ là decimal
+            var dutyCalculatedHours = Math.Min(dutyConvertedHours, 80m); // Giới hạn 80 giờ, sử dụng 80m (decimal)
 
             var overLimitConvertedHours = overLimitAuthors.Sum(a => a.AuthorHour);
             var overLimitCalculatedHours = overLimitMarkedAuthors.Sum(a => a.AuthorHour);
 
-            var researchConvertedHours = 0; // Mặc định = 0 cho Sản phẩm NCKH
-            var researchCalculatedHours = 0;
+            var researchConvertedHours = 0m; // Mặc định = 0 cho Sản phẩm NCKH (decimal)
+            var researchCalculatedHours = 0m;
 
             // Tổng số công trình duy nhất
             var allWorkIds = authors.Select(a => a.WorkId).Distinct().ToList();

@@ -518,7 +518,7 @@ namespace Application.Works
             return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
         }
 
-        private async Task<int> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
+        private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
         {
             if (totalAuthors == 0 || totalMainAuthors == 0)
                 return 0;
@@ -527,20 +527,27 @@ namespace Application.Works
             if (authorRole == null)
                 throw new Exception("Không tìm thấy vai trò tác giả");
 
+            decimal authorHour;
             if (authorRole.IsMainAuthor)
-                return (int)((1.0 / 3) * (workHour / totalMainAuthors) +
-                             (2.0 / 3) * (workHour / totalAuthors));
-            return (int)((2.0 / 3) * (workHour / totalAuthors));
+            {
+                authorHour = (decimal)((1.0 / 3) * (workHour / totalMainAuthors) +
+                                      (2.0 / 3) * (workHour / totalAuthors));
+            }
+            else
+            {
+                authorHour = (decimal)((2.0 / 3) * (workHour / totalAuthors));
+            }
+
+            // Làm tròn đến 1 chữ số thập phân
+            return Math.Round(authorHour, 1);
         }
 
         public async Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default)
         {
-            // Kiểm tra công trình có tồn tại không
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
             if (work == null)
                 throw new Exception("Công trình không tồn tại");
 
-            // Kiểm tra trạng thái hệ thống
             if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
                 throw new Exception("Hệ thống đã đóng. Không thể xóa công trình");
 
@@ -548,14 +555,12 @@ namespace Application.Works
             var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == workId);
             foreach (var author in authors)
             {
-                await _unitOfWork.Repository<Author>().DeleteAsync(author.Id); // Truyền ID thay vì đối tượng
+                await _unitOfWork.Repository<Author>().DeleteAsync(author.Id);
             }
 
-            // Xóa công trình
-            await _unitOfWork.Repository<Work>().DeleteAsync(work.Id); // Truyền ID thay vì đối tượng
+            await _unitOfWork.Repository<Work>().DeleteAsync(work.Id);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Invalidate cache
             await SafeInvalidateCacheAsync(workId);
         }
     }

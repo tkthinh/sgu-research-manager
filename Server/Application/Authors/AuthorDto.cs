@@ -14,7 +14,7 @@ namespace Application.Authors
 
         public int? Position { get; set; }
         public ScoreLevel? ScoreLevel { get; set; }
-        public int AuthorHour { get; set; }
+        public decimal AuthorHour { get; set; }
         public int WorkHour { get; set; }
         public bool MarkedForScoring { get; set; }
         public ProofStatus ProofStatus { get; set; }

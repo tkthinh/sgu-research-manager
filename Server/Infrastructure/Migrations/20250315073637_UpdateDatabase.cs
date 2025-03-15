@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class FreshMigration : Migration
+    public partial class UpdateDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -305,7 +305,7 @@ namespace Infrastructure.Migrations
                     ScoringFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Position = table.Column<int>(type: "int", nullable: true),
                     ScoreLevel = table.Column<int>(type: "int", nullable: true),
-                    AuthorHour = table.Column<int>(type: "int", nullable: false),
+                    AuthorHour = table.Column<decimal>(type: "decimal(10,1)", precision: 10, scale: 1, nullable: false),
                     WorkHour = table.Column<int>(type: "int", nullable: false),
                     MarkedForScoring = table.Column<bool>(type: "bit", nullable: false),
                     ProofStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -323,12 +323,6 @@ namespace Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Authors_Fields_SCImagoFieldId",
-                        column: x => x.SCImagoFieldId,
-                        principalTable: "Fields",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_Authors_Fields_ScoringFieldId",
                         column: x => x.ScoringFieldId,
                         principalTable: "Fields",
@@ -338,6 +332,12 @@ namespace Infrastructure.Migrations
                         name: "FK_Authors_Purposes_PurposeId",
                         column: x => x.PurposeId,
                         principalTable: "Purposes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Authors_SCImagoFields_SCImagoFieldId",
+                        column: x => x.SCImagoFieldId,
+                        principalTable: "SCImagoFields",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -855,9 +855,6 @@ namespace Infrastructure.Migrations
                 name: "Factors");
 
             migrationBuilder.DropTable(
-                name: "SCImagoFields");
-
-            migrationBuilder.DropTable(
                 name: "SystemConfigs");
 
             migrationBuilder.DropTable(
@@ -871,6 +868,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Purposes");
+
+            migrationBuilder.DropTable(
+                name: "SCImagoFields");
 
             migrationBuilder.DropTable(
                 name: "Users");

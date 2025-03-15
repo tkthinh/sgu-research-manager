@@ -6,6 +6,6 @@
         public ConversionItemRequestDto OverLimitConversion { get; set; }
         public ConversionItemRequestDto ResearchProductConversion { get; set; }
         public int TotalWorks { get; set; }
-        public int TotalCalculatedHours { get; set; }
+        public decimal TotalCalculatedHours { get; set; }
     }
 }

@@ -55,8 +55,9 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("AuthorHour")
-                        .HasColumnType("int");
+                    b.Property<decimal>("AuthorHour")
+                        .HasPrecision(10, 1)
+                        .HasColumnType("decimal(10,1)");
 
                     b.Property<Guid>("AuthorRoleId")
                         .HasColumnType("uniqueidentifier");

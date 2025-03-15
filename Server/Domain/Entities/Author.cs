@@ -13,7 +13,7 @@ namespace Domain.Entities
 
         public int? Position { get; set; }
         public ScoreLevel? ScoreLevel { get; set; } // Mức điểm do người dùng chọn
-        public int AuthorHour { get; set; }     // Giờ quy đổi mà tác giả nhận được
+        public decimal AuthorHour { get; set; }     // Giờ quy đổi mà tác giả nhận được
         public int WorkHour { get; set; }       // Giờ của công trình mà tác giả kê khai theo ScoreLevel
         public bool MarkedForScoring { get; set; }  // Cờ đánh dấu công trình được chọn để quy đổi
         public ProofStatus ProofStatus { get; set; } = ProofStatus.ChuaXuLy;

@@ -3,6 +3,7 @@ using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Infrastructure.Data.Seeding;
+using System.Reflection.Emit;
 
 namespace Infrastructure.Data
 {
@@ -132,7 +133,11 @@ namespace Infrastructure.Data
 
             builder.Entity<Author>()
                 .HasIndex(a => new { a.WorkId, a.UserId })
-                .IsUnique();
+            .IsUnique();
+
+            builder.Entity<Author>()
+            .Property(a => a.AuthorHour)
+            .HasPrecision(10, 1); // Precision = 10, Scale = 1 (1 chữ số thập phân)
 
             // WorkAuthor
             builder.Entity<WorkAuthor>()
