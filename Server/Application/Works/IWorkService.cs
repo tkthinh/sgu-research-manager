@@ -1,5 +1,6 @@
 ﻿using Application.Authors;
-using Application.Shared.Services;
+using Domain.Entities;
+using Domain.Enums;
 using Domain.Interfaces;
 
 namespace Application.Works
@@ -18,5 +19,7 @@ namespace Application.Works
         Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default);
         Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
+        int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor);
+        Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default);
     }
 }

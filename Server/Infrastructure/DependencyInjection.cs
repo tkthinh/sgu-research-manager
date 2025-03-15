@@ -24,6 +24,8 @@ using Application.SCImagoFields;
 using Infrastructure.Data.Repositories;
 using Application.Users;
 using Application.SystemConfigs;
+using Application.ExcelOperations;
+using Application.Services;
 
 namespace Infrastructure
 {
@@ -101,6 +103,8 @@ namespace Infrastructure
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
             services.AddScoped<ISystemConfigService, SystemConfigService>();
+
+            services.AddScoped<IExcelService, ExcelService>();
 
             // Đăng ký các mapper
             services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();

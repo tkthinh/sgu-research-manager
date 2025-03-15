@@ -513,17 +513,17 @@ namespace Application.Works
             return filteredWorks;
         }
 
-        private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
+        public int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
         {
             return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
         }
 
-        private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
+        public async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
         {
             if (totalAuthors == 0 || totalMainAuthors == 0)
                 return 0;
 
-            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
+            var authorRole = await _unitOfWork.Repository<AuthorRole>().GetByIdAsync(authorRoleId);
             if (authorRole == null)
                 throw new Exception("Không tìm thấy vai trò tác giả");
 
