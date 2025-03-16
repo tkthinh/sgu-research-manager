@@ -65,6 +65,9 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("FieldId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("MarkedForScoring")
                         .HasColumnType("bit");
 
@@ -90,9 +93,6 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("ScoreLevel")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("ScoringFieldId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -106,11 +106,11 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("AuthorRoleId");
 
+                    b.HasIndex("FieldId");
+
                     b.HasIndex("PurposeId");
 
                     b.HasIndex("SCImagoFieldId");
-
-                    b.HasIndex("ScoringFieldId");
 
                     b.HasIndex("UserId");
 
@@ -2713,6 +2713,11 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Field", "Field")
+                        .WithMany()
+                        .HasForeignKey("FieldId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Domain.Entities.Purpose", "Purpose")
                         .WithMany("Authors")
                         .HasForeignKey("PurposeId")
@@ -2722,11 +2727,6 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.SCImagoField", "SCImagoField")
                         .WithMany()
                         .HasForeignKey("SCImagoFieldId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Domain.Entities.Field", "ScoringField")
-                        .WithMany()
-                        .HasForeignKey("ScoringFieldId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Entities.User", "User")
@@ -2743,11 +2743,11 @@ namespace Infrastructure.Migrations
 
                     b.Navigation("AuthorRole");
 
+                    b.Navigation("Field");
+
                     b.Navigation("Purpose");
 
                     b.Navigation("SCImagoField");
-
-                    b.Navigation("ScoringField");
 
                     b.Navigation("User");
 

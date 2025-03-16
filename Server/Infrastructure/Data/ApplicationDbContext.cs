@@ -126,9 +126,9 @@ namespace Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Author>()
-                .HasOne(a => a.ScoringField)
+                .HasOne(a => a.Field)
                 .WithMany()
-                .HasForeignKey(a => a.ScoringFieldId)
+                .HasForeignKey(a => a.FieldId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Author>()

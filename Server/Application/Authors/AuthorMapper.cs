@@ -1,6 +1,5 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
-using System.Linq;
 
 namespace Application.Authors
 {
@@ -14,9 +13,13 @@ namespace Application.Authors
                 WorkId = entity.WorkId,
                 UserId = entity.UserId,
                 AuthorRoleId = entity.AuthorRoleId,
+                AuthorRoleName = entity.AuthorRole?.Name,
                 PurposeId = entity.PurposeId,
+                PurposeName = entity.Purpose?.Name,
                 SCImagoFieldId = entity.SCImagoFieldId,
-                ScoringFieldId = entity.ScoringFieldId,
+                SCImagoFieldName = entity.SCImagoField?.Name,
+                FieldId = entity.FieldId,
+                FieldName = entity.Field?.Name,
                 Position = entity.Position,
                 ScoreLevel = entity.ScoreLevel,
                 AuthorHour = entity.AuthorHour,
@@ -39,7 +42,7 @@ namespace Application.Authors
                 AuthorRoleId = dto.AuthorRoleId,
                 PurposeId = dto.PurposeId,
                 SCImagoFieldId = dto.SCImagoFieldId,
-                ScoringFieldId = dto.ScoringFieldId,
+                FieldId = dto.FieldId,
                 Position = dto.Position,
                 ScoreLevel = dto.ScoreLevel,
                 AuthorHour = dto.AuthorHour,

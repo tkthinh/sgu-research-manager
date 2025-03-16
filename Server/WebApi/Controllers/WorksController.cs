@@ -199,15 +199,15 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<AuthorDto>>>> GetWorksByUserId([FromRoute] Guid userId)
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorksByUserId([FromRoute] Guid userId)
         {
             try
             {
-                var authors = await _workService.GetWorksByUserIdAsync(userId);
-                return Ok(new ApiResponse<IEnumerable<AuthorDto>>(
+                var works = await _workService.GetWorksByUserIdAsync(userId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
                     "Lấy danh sách công trình của user thành công",
-                    authors
+                    works
                 ));
             }
             catch (Exception ex)

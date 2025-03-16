@@ -1,7 +1,6 @@
-﻿using Domain.Entities;
+﻿using Application.Authors;
+using Domain.Entities;
 using Domain.Interfaces;
-using System.Linq;
-using Application.Authors;
 
 namespace Application.Works
 {
@@ -26,7 +25,9 @@ namespace Application.Works
                 Details = entity.Details,
                 Source = entity.Source,
                 WorkTypeId = entity.WorkTypeId,
+                WorkTypeName = entity.WorkType?.Name,
                 WorkLevelId = entity.WorkLevelId,
+                WorkLevelName = entity.WorkLevel?.Name,
                 Authors = entity.Authors != null ? _authorMapper.MapToDtos(entity.Authors) : null,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate

@@ -1,4 +1,4 @@
-using Application.Authors;
+﻿using Application.Authors;
 using Domain.Enums;
 
 namespace Application.Works
@@ -14,7 +14,9 @@ namespace Application.Works
         public WorkSource Source { get; set; }
 
         public Guid WorkTypeId { get; set; }
+        public string? WorkTypeName { get; set; }
         public Guid? WorkLevelId { get; set; }
+        public string? WorkLevelName { get; set; }
 
         public IEnumerable<AuthorDto>? Authors { get; set; }
 

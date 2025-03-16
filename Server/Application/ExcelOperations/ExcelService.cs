@@ -98,7 +98,7 @@ namespace Application.ExcelOperations
             var authorRoleRepo = _unitOfWork.Repository<AuthorRole>();
             var purposeRepo = _unitOfWork.Repository<Purpose>();
             var scImagoRepo = _unitOfWork.Repository<SCImagoField>();
-            var scoringFieldRepo = _unitOfWork.Repository<Field>();
+            var fieldRepo = _unitOfWork.Repository<Field>();
             var workRepo = _unitOfWork.Repository<Work>();
             var workTypeRepo = _unitOfWork.Repository<WorkType>();
             var workLevelRepo = _unitOfWork.Repository<WorkLevel>();
@@ -176,10 +176,10 @@ namespace Application.ExcelOperations
                         s.Name.ToLower() == dto.SCImagoFieldName.ToLower());
                 }
 
-                Field? scoringField = null;
+                Field? field = null;
                 if (!string.IsNullOrWhiteSpace(dto.ScoringFieldName))
                 {
-                    scoringField = await scoringFieldRepo.FirstOrDefaultAsync(sf =>
+                    field = await fieldRepo.FirstOrDefaultAsync(sf =>
                         sf.Name.ToLower() == dto.ScoringFieldName.ToLower());
                 }
 
@@ -200,7 +200,7 @@ namespace Application.ExcelOperations
                     AuthorRoleId = authorRole.Id,
                     PurposeId = purpose.Id,
                     SCImagoFieldId = scImagoField?.Id,
-                    ScoringFieldId = scoringField?.Id,
+                    FieldId = field?.Id,
                     Position = dto.Position,
                     ScoreLevel = dto.ScoreLevel,
                     MarkedForScoring = false,
@@ -248,7 +248,7 @@ namespace Application.ExcelOperations
         //    var authorRoleRepo = _unitOfWork.Repository<AuthorRole>();
         //    var purposeRepo = _unitOfWork.Repository<Purpose>();
         //    var scImagoRepo = _unitOfWork.Repository<SCImagoField>();
-        //    var scoringFieldRepo = _unitOfWork.Repository<Field>(); // Repository cho ScoringField (hoặc Field)
+        //    var fieldRepo = _unitOfWork.Repository<Field>(); // Repository cho ScoringField (hoặc Field)
         //    var workRepo = _unitOfWork.Repository<Work>();
         //    var workTypeRepo = _unitOfWork.Repository<WorkType>();
         //    var workLevelRepo = _unitOfWork.Repository<WorkLevel>();
@@ -329,10 +329,10 @@ namespace Application.ExcelOperations
         //        }
 
         //        // 8) Tìm ScoringField theo ScoringFieldName (nếu có)
-        //        Field? scoringField = null;
+        //        Field? field = null;
         //        if (!string.IsNullOrWhiteSpace(dto.ScoringFieldName))
         //        {
-        //            scoringField = await scoringFieldRepo.FirstOrDefaultAsync(sf =>
+        //            field = await fieldRepo.FirstOrDefaultAsync(sf =>
         //                sf.Name.ToLower() == dto.ScoringFieldName.ToLower());
         //        }
 
@@ -349,7 +349,7 @@ namespace Application.ExcelOperations
         //                AuthorRoleId = authorRole.Id,
         //                PurposeId = purpose.Id,
         //                SCImagoFieldId = scImagoField?.Id,
-        //                ScoringFieldId = scoringField?.Id,
+        //                ScoringFieldId = field?.Id,
         //                Position = dto.Position,
         //                ScoreLevel = dto.ScoreLevel,
         //                MarkedForScoring = false,

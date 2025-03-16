@@ -1,55 +1,100 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
+using Infrastructure.Data;
+using Infrastructure.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Data.Repositories
+namespace Infrastructure.Repositories
 {
     public class WorkRepository : GenericRepository<Work>, IWorkRepository
     {
-        public WorkRepository(ApplicationDbContext context) : base(context)
+        private readonly DbContext _dbContext;
+
+        public WorkRepository(ApplicationDbContext dbContext) : base(dbContext)
         {
+            _dbContext = dbContext;
         }
 
-        public async Task<IEnumerable<Work>> GetWorksWithAuthorsAsync()
+        public async Task<IEnumerable<Work>> GetWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
         {
-            return await context.Set<Work>()
+            return await _dbContext.Set<Work>()
+                .Include(w => w.WorkType)
+                .Include(w => w.WorkLevel)
                 .Include(w => w.Authors)
-                .ToListAsync();
+                    .ThenInclude(a => a.AuthorRole)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Purpose)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.SCImagoField)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Field)
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<Work?> GetWorkWithAuthorsByIdAsync(Guid id)
+        public async Task<Work?> GetWorkWithAuthorsByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await context.Set<Work>()
+            return await _dbContext.Set<Work>()
+                .Include(w => w.WorkType)
+                .Include(w => w.WorkLevel)
                 .Include(w => w.Authors)
-                .FirstOrDefaultAsync(w => w.Id == id);
+                    .ThenInclude(a => a.AuthorRole)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Purpose)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.SCImagoField)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Field)
+                .FirstOrDefaultAsync(w => w.Id == id, cancellationToken);
         }
 
-        public async Task<IEnumerable<Work>> FindWorksWithAuthorsAsync(string title)
+        public async Task<IEnumerable<Work>> FindWorksWithAuthorsAsync(string title, CancellationToken cancellationToken = default)
         {
-            return await context.Set<Work>()
-                .Include(w => w.Authors)
+            return await _dbContext.Set<Work>()
                 .Where(w => w.Title.Contains(title))
-                .ToListAsync();
+                .Include(w => w.WorkType)
+                .Include(w => w.WorkLevel)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.AuthorRole)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Purpose)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.SCImagoField)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Field)
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Work>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default)
         {
-            return await context.Works
-                .Include(w => w.Authors) // Bao gồm thông tin Authors để trả về đầy đủ WorkDto
-                .Where(w => w.Authors.Any(a =>
-                    context.Users
-                        .Where(u => u.DepartmentId == departmentId)
-                        .Select(u => u.Id)
-                        .Contains(a.UserId)))
-                .Distinct()
+            return await _dbContext.Set<Work>()
+                .Include(w => w.WorkType)
+                .Include(w => w.WorkLevel)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.AuthorRole)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Purpose)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.SCImagoField)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Field)
+                .Where(w => w.Authors.Any(a => a.User.DepartmentId == departmentId))
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Work>> GetWorksWithAuthorsByIdsAsync(IEnumerable<Guid> workIds, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Work>> GetWorksWithAuthorsByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
         {
-            return await context.Set<Work>()
+            return await _dbContext.Set<Work>()
+                .Where(w => ids.Contains(w.Id))
+                .Include(w => w.WorkType)
+                .Include(w => w.WorkLevel)
                 .Include(w => w.Authors)
-                .Where(w => workIds.Contains(w.Id))
+                    .ThenInclude(a => a.AuthorRole)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Purpose)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.SCImagoField)
+                .Include(w => w.Authors)
+                    .ThenInclude(a => a.Field)
                 .ToListAsync(cancellationToken);
         }
     }

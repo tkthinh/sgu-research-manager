@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateDatabase : Migration
+    public partial class FreshMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -302,7 +302,7 @@ namespace Infrastructure.Migrations
                     AuthorRoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PurposeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SCImagoFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ScoringFieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    FieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Position = table.Column<int>(type: "int", nullable: true),
                     ScoreLevel = table.Column<int>(type: "int", nullable: true),
                     AuthorHour = table.Column<decimal>(type: "decimal(10,1)", precision: 10, scale: 1, nullable: false),
@@ -323,8 +323,8 @@ namespace Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Authors_Fields_ScoringFieldId",
-                        column: x => x.ScoringFieldId,
+                        name: "FK_Authors_Fields_FieldId",
+                        column: x => x.FieldId,
                         principalTable: "Fields",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -754,6 +754,11 @@ namespace Infrastructure.Migrations
                 column: "AuthorRoleId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Authors_FieldId",
+                table: "Authors",
+                column: "FieldId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Authors_PurposeId",
                 table: "Authors",
                 column: "PurposeId");
@@ -762,11 +767,6 @@ namespace Infrastructure.Migrations
                 name: "IX_Authors_SCImagoFieldId",
                 table: "Authors",
                 column: "SCImagoFieldId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Authors_ScoringFieldId",
-                table: "Authors",
-                column: "ScoringFieldId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Authors_UserId",

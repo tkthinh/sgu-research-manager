@@ -8,9 +8,13 @@ namespace Application.Authors
         public Guid WorkId { get; set; }
         public Guid UserId { get; set; }
         public Guid AuthorRoleId { get; set; }
+        public string? AuthorRoleName { get; set; }
         public Guid PurposeId { get; set; }
+        public string? PurposeName { get; set; }
         public Guid? SCImagoFieldId { get; set; }
-        public Guid? ScoringFieldId { get; set; }
+        public string? SCImagoFieldName { get; set; }
+        public Guid? FieldId { get; set; }
+        public string? FieldName { get; set; }
 
         public int? Position { get; set; }
         public ScoreLevel? ScoreLevel { get; set; }

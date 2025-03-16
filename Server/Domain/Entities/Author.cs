@@ -9,7 +9,7 @@ namespace Domain.Entities
         public Guid AuthorRoleId { get; set; }
         public Guid PurposeId { get; set; }
         public Guid? SCImagoFieldId { get; set; }
-        public Guid? ScoringFieldId { get; set; }
+        public Guid? FieldId { get; set; }
 
         public int? Position { get; set; }
         public ScoreLevel? ScoreLevel { get; set; } // Mức điểm do người dùng chọn
@@ -19,7 +19,7 @@ namespace Domain.Entities
         public ProofStatus ProofStatus { get; set; } = ProofStatus.ChuaXuLy;
         public string? Note { get; set; }
 
-        public virtual Field? ScoringField { get; set; }
+        public virtual Field? Field { get; set; }
         public virtual SCImagoField? SCImagoField { get; set; }
         public virtual User? User { get; set; }
         public virtual AuthorRole? AuthorRole { get; set; }

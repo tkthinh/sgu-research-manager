@@ -102,7 +102,7 @@ namespace Application.Works
             await _unitOfWork.Repository<Work>().CreateAsync(work);
 
             // Lấy UserId
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id")?.Value; 
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id")?.Value;
 
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
             {
@@ -120,14 +120,14 @@ namespace Application.Works
                 ScoreLevel = request.Author.ScoreLevel,
                 WorkHour = workHour,
                 SCImagoFieldId = request.Author.SCImagoFieldId,
-                ScoringFieldId = request.Author.ScoringFieldId,
+                FieldId = request.Author.FieldId,
                 ProofStatus = ProofStatus.ChuaXuLy,
                 CreatedDate = DateTime.UtcNow
             };
 
             var authorHour = await CalculateAuthorHour(workHour, request.TotalAuthors ?? 0,
                 request.TotalMainAuthors ?? 0, request.Author.AuthorRoleId);
-            author.AuthorHour = authorHour; 
+            author.AuthorHour = authorHour;
             author.MarkedForScoring = false;
 
             // Lưu thông tin đồng tác giả vào WorkAuthor
@@ -213,7 +213,7 @@ namespace Application.Works
                 AuthorRoleId = request.AuthorRequest.AuthorRoleId,
                 PurposeId = request.AuthorRequest.PurposeId,
                 SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
-                ScoringFieldId = request.AuthorRequest.ScoringFieldId,
+                FieldId = request.AuthorRequest.FieldId,
                 Position = request.AuthorRequest.Position,
                 ScoreLevel = request.AuthorRequest.ScoreLevel,
                 WorkHour = workHour,
@@ -235,11 +235,38 @@ namespace Application.Works
             return _mapper.MapToDto(work);
         }
 
-        public async Task<IEnumerable<AuthorDto>> GetWorksByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<WorkDto>> GetWorksByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
         {
+            // Lấy danh sách các Author liên quan đến userId
             var authors = await _unitOfWork.Repository<Author>()
                 .FindAsync(a => a.UserId == userId);
-            return _authorMapper.MapToDtos(authors);
+
+            if (!authors.Any())
+            {
+                return Enumerable.Empty<WorkDto>();
+            }
+
+            // Lấy danh sách WorkId từ các Author
+            var workIds = authors.Select(a => a.WorkId).Distinct();
+
+            // Lấy thông tin đầy đủ của các công trình
+            var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(workIds, cancellationToken);
+
+            // Lọc để chỉ giữ thông tin tác giả của userId trong mỗi công trình
+            var filteredWorks = works.Select(work =>
+            {
+                var userAuthor = authors.FirstOrDefault(a => a.WorkId == work.Id);
+                if (userAuthor != null)
+                {
+                    // Tạo một bản sao của work với Authors chỉ chứa thông tin của userId
+                    var filteredWork = _mapper.MapToDto(work);
+                    filteredWork.Authors = new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) };
+                    return filteredWork;
+                }
+                return null;
+            }).Where(w => w != null);
+
+            return filteredWorks;
         }
 
         public async Task<IEnumerable<WorkDto>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default)
@@ -346,7 +373,7 @@ namespace Application.Works
                 author.Position = request.AuthorRequest.Position ?? author.Position;
                 author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
                 author.SCImagoFieldId = request.AuthorRequest.SCImagoFieldId ?? author.SCImagoFieldId;
-                author.ScoringFieldId = request.AuthorRequest.ScoringFieldId ?? author.ScoringFieldId;
+                author.FieldId = request.AuthorRequest.FieldId ?? author.FieldId;
 
                 // Tính lại WorkHour và AuthorHour nếu có thay đổi liên quan
                 if (request.AuthorRequest.ScoreLevel.HasValue ||
@@ -443,7 +470,7 @@ namespace Application.Works
                 author.Position = request.AuthorRequest.Position ?? author.Position;
                 author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
                 author.SCImagoFieldId = request.AuthorRequest.SCImagoFieldId ?? author.SCImagoFieldId;
-                author.ScoringFieldId = request.AuthorRequest.ScoringFieldId ?? author.ScoringFieldId;
+                author.FieldId = request.AuthorRequest.FieldId ?? author.FieldId;
 
                 if (request.AuthorRequest.ScoreLevel.HasValue ||
                     request.WorkRequest?.TotalAuthors.HasValue == true ||
@@ -513,17 +540,17 @@ namespace Application.Works
             return filteredWorks;
         }
 
-        public int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
+        private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
         {
             return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
         }
 
-        public async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
+        private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
         {
             if (totalAuthors == 0 || totalMainAuthors == 0)
                 return 0;
 
-            var authorRole = await _unitOfWork.Repository<AuthorRole>().GetByIdAsync(authorRoleId);
+            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
             if (authorRole == null)
                 throw new Exception("Không tìm thấy vai trò tác giả");
 

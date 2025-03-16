@@ -1,6 +1,4 @@
 ﻿using Application.Authors;
-using Domain.Entities;
-using Domain.Enums;
 using Domain.Interfaces;
 
 namespace Application.Works
@@ -8,7 +6,7 @@ namespace Application.Works
     public interface IWorkService : IGenericService<WorkDto>
     {
         Task<WorkDto> CreateWorkWithAuthorAsync(CreateWorkRequestDto request, CancellationToken cancellationToken = default);
-        Task<IEnumerable<AuthorDto>> GetWorksByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<WorkDto>> GetWorksByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default);
         Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default);
@@ -19,7 +17,5 @@ namespace Application.Works
         Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default);
         Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
-        int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor);
-        Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default);
     }
 }

@@ -7,7 +7,7 @@ namespace Application.Authors
         public Guid AuthorRoleId { get; set; }
         public Guid PurposeId { get; set; }
         public Guid? SCImagoFieldId { get; set; }
-        public Guid? ScoringFieldId { get; set; }
+        public Guid? FieldId { get; set; }
         public int? Position { get; set; }
         public ScoreLevel? ScoreLevel { get; set; }
     }
