@@ -215,5 +215,28 @@ namespace WebApi.Controllers
             ));
         }
 
+        [HttpGet("search")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<UserSearchDto>>>> SearchUsers([FromQuery] string searchTerm)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(searchTerm))
+                {
+                    return BadRequest(new ApiResponse<object>(false, "Từ khóa tìm kiếm không được để trống"));
+                }
+
+                var users = await userService.SearchUsersAsync(searchTerm);
+                return Ok(new ApiResponse<IEnumerable<UserSearchDto>>(
+                    true,
+                    "Tìm kiếm người dùng thành công",
+                    users
+                ));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Lỗi khi tìm kiếm người dùng");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
     }
 }

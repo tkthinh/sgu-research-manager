@@ -2,6 +2,7 @@
 using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
+using Domain.Enums;
 
 namespace WebApi.Controllers
 {
@@ -27,6 +28,42 @@ namespace WebApi.Controllers
                 "Lấy dữ liệu hệ số thành công",
                 factors
             ));
+        }
+
+        [HttpGet("find")]
+        public async Task<ActionResult<ApiResponse<FactorDto>>> FindFactor(
+            [FromQuery] Guid workTypeId,
+            [FromQuery] Guid? workLevelId,
+            [FromQuery] Guid purposeId,
+            [FromQuery] Guid? authorRoleId,
+            [FromQuery] ScoreLevel? scoreLevel)
+        {
+            try
+            {
+                var factors = await factorService.GetAllAsync();
+                var factor = factors.FirstOrDefault(f =>
+                    f.WorkTypeId == workTypeId &&
+                    f.WorkLevelId == workLevelId &&
+                    f.PurposeId == purposeId &&
+                    f.AuthorRoleId == authorRoleId &&
+                    f.ScoreLevel == scoreLevel);
+
+                if (factor == null)
+                {
+                    return NotFound(new ApiResponse<FactorDto>(false, "Không tìm thấy Factor phù hợp"));
+                }
+
+                return Ok(new ApiResponse<FactorDto>(
+                    true,
+                    "Tìm thấy Factor phù hợp",
+                    factor
+                ));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Lỗi khi tìm Factor phù hợp");
+                return BadRequest(new ApiResponse<FactorDto>(false, "Có lỗi xảy ra khi tìm Factor phù hợp"));
+            }
         }
 
         [HttpGet("{id}")]

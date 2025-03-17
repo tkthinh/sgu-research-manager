@@ -78,7 +78,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "User")]
+        //[Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> CreateWork([FromBody] CreateWorkRequestDto request)
         {
             try
@@ -95,7 +95,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "User")]
+        //[Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteWork(Guid id)
         {
             try
@@ -246,7 +246,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPatch("{workId}/update-by-author")]
-        [Authorize(Roles = "User")]
+        //[Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAuthor(
               [FromRoute] Guid workId,
               [FromBody] UpdateWorkByAuthorRequestDto request)
@@ -317,26 +317,33 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("my-works")]
-        [Authorize(Roles = "User")]
+        //[Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyWorks()
         {
             try
             {
-                // Lấy UserId từ token
-                var userIdClaim = User.FindFirst("id")?.Value;
-                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-                {
-                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
-                }
-
-                // Lấy danh sách công trình mà user đã kê khai
-                var works = await _workService.GetWorksByCurrentUserAsync(userId);
+                var works = await _workService.GetAllWorksWithAuthorsAsync();
 
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
-                    "Lấy danh sách công trình của người dùng hiện tại thành công",
+                    "Lấy danh sách công trình thành công",
                     works
                 ));
+                // // Lấy UserId từ token
+                // var userIdClaim = User.FindFirst("id")?.Value;
+                // if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                // {
+                //     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                // }
+
+                // // Lấy danh sách công trình mà user đã kê khai
+                // var works = await _workService.GetWorksByCurrentUserAsync(userId);
+
+                // return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                //     true,
+                //     "Lấy danh sách công trình của người dùng hiện tại thành công",
+                //     works
+                // ));
             }
             catch (Exception ex)
             {

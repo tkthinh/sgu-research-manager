@@ -143,5 +143,22 @@ namespace Application.Users
             var user = await unitOfWork.Repository<User>().FirstOrDefaultAsync(u => u.Id == userId);
             return user?.UserName ?? "Unknown";
         }
+
+        public async Task<IEnumerable<UserSearchDto>> SearchUsersAsync(string searchTerm, CancellationToken cancellationToken = default)
+        {
+            var normalizedSearchTerm = searchTerm.ToLower();
+            
+            var users = await unitOfWork.Repository<User>().FindAsync(u =>
+                u.FullName.ToLower().Contains(normalizedSearchTerm) ||
+                u.UserName.ToLower().Contains(normalizedSearchTerm));
+
+            return users.Select(u => new UserSearchDto
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                UserName = u.UserName,
+                DepartmentName = u.Department?.Name ?? "Chưa có phòng ban"
+            });
+        }
     }
 }

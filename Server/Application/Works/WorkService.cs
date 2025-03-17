@@ -163,8 +163,8 @@ namespace Application.Works
             if (existingWorkAuthor == null) // Chỉ thêm nếu chưa tồn tại
             {
                 var workAuthor = new WorkAuthor
-                {
-                    Id = Guid.NewGuid(),
+            {
+                Id = Guid.NewGuid(),
                     WorkId = work.Id,
                     UserId = userId
                 };
@@ -248,7 +248,7 @@ namespace Application.Works
                 var maxAllowed = await GetMaxAllowedForScoring(work.WorkTypeId, work.WorkLevelId, author.ScoreLevel, cancellationToken);
 
                 // Đếm số lượng công trình đã được đánh dấu của người dùng với cùng ScoreLevel
-                var markedAuthors = await _unitOfWork.Repository<Author>()
+            var markedAuthors = await _unitOfWork.Repository<Author>()
                     .FindAsync(a => a.UserId == author.UserId &&
                                    a.MarkedForScoring &&
                                    a.ScoreLevel == author.ScoreLevel);
@@ -409,7 +409,7 @@ namespace Application.Works
                 work.Source = request.WorkRequest.Source != default ? request.WorkRequest.Source : work.Source;
                 work.WorkTypeId = request.WorkRequest.WorkTypeId ?? work.WorkTypeId;
                 work.WorkLevelId = request.WorkRequest.WorkLevelId ?? work.WorkLevelId;
-                work.ModifiedDate = DateTime.UtcNow;
+            work.ModifiedDate = DateTime.UtcNow;
             }
 
             // Kiểm tra xem user đã có thông tin tác giả chưa
@@ -495,7 +495,7 @@ namespace Application.Works
                             author.AuthorRoleId);
                     }
 
-                    author.ModifiedDate = DateTime.UtcNow;
+                author.ModifiedDate = DateTime.UtcNow;
                 }
 
                 await _unitOfWork.Repository<Author>().UpdateAsync(author);

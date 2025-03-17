@@ -6,5 +6,6 @@ namespace Application.Users
     {
         Task<UserDto?> GetUserByIdentityIdAsync(string IdentityId);
         Task<UserConversionResultRequestDto> GetUserConversionResultAsync(Guid userId);
+        Task<IEnumerable<UserSearchDto>> SearchUsersAsync(string searchTerm, CancellationToken cancellationToken = default);
     }
 }
