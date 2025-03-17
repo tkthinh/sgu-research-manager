@@ -63,6 +63,7 @@ namespace WebApi.Controllers
 
 
         [HttpGet("search")]
+        //[Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> SearchWorks([FromQuery] string title)
         {
             if (string.IsNullOrEmpty(title))
@@ -89,54 +90,6 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi tạo công trình và tác giả");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
-        }
-
-        [HttpPost("{workId}/add-co-author")]
-        [Authorize(Roles = "User")]
-        public async Task<ActionResult<ApiResponse<WorkDto>>> AddCoAuthor([FromRoute] Guid workId, [FromBody] AddCoAuthorRequestDto request)
-        {
-            try
-            {
-                // Lấy UserId từ token
-                var userIdClaim = User.FindFirst("id")?.Value;
-                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-                {
-                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
-                }
-
-                // Lấy userName để hiển thị trong thông báo
-                var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
-
-                // Gọi service để thêm đồng tác giả
-                var updatedWork = await _workService.AddCoAuthorAsync(workId, request, userId);
-
-                // Gửi thông báo đến các tác giả khác
-                if (updatedWork.Authors != null && updatedWork.Authors.Any())
-                {
-                    var authorUserIds = updatedWork.Authors
-                        .Where(a => a.UserId != userId)
-                        .Select(a => a.UserId.ToString())
-                        .Distinct()
-                        .ToList();
-
-                    if (authorUserIds.Any())
-                    {
-                        var notificationMessage = $"Công trình '{updatedWork.Title}' đã được thêm đồng tác giả bởi {userName}.";
-                        await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
-                    }
-                }
-
-                return Ok(new ApiResponse<WorkDto>(
-                    true,
-                    "Đồng tác giả kê khai công trình thành công",
-                    updatedWork
-                ));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi đồng tác giả kê khai công trình");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
@@ -237,6 +190,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPatch("authors/{authorId}/mark")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<object>>> SetMarkedForScoring([FromRoute] Guid authorId, [FromBody] bool marked)
         {
             try
@@ -252,7 +206,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPatch("{workId}/admin-update/{userId}")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAdmin(
             [FromRoute] Guid workId,
             [FromRoute] Guid userId,
@@ -294,8 +248,8 @@ namespace WebApi.Controllers
         [HttpPatch("{workId}/update-by-author")]
         [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAuthor(
-            [FromRoute] Guid workId,
-            [FromBody] UpdateWorkByAuthorRequestDto request)
+              [FromRoute] Guid workId,
+              [FromBody] UpdateWorkByAuthorRequestDto request)
         {
             try
             {
@@ -309,7 +263,7 @@ namespace WebApi.Controllers
                 // Lấy userName để hiển thị trong thông báo
                 var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
 
-                // Kiểm tra xem userId có phải là tác giả của công trình không
+                // Kiểm tra xem userId có phải là tác giả hoặc đồng tác giả của công trình không
                 var work = await _workService.GetWorkByIdWithAuthorsAsync(workId);
 
                 if (work == null)
@@ -318,7 +272,8 @@ namespace WebApi.Controllers
                 }
 
                 var isAuthor = work.Authors?.Any(a => a.UserId == userId) ?? false;
-                if (!isAuthor)
+                var isCoAuthor = work.CoAuthorUserIds?.Contains(userId) ?? false;
+                if (!isAuthor && !isCoAuthor)
                 {
                     return StatusCode(403, new ApiResponse<object>(false, "Bạn không có quyền cập nhật công trình này"));
                 }
@@ -334,6 +289,12 @@ namespace WebApi.Controllers
                         .Select(a => a.UserId.ToString())
                         .Distinct()
                         .ToList();
+                    var coAuthorUserIds = updatedWork.CoAuthorUserIds
+                        .Where(uid => uid != userId)
+                        .Select(uid => uid.ToString())
+                        .Distinct()
+                        .ToList();
+                    authorUserIds.AddRange(coAuthorUserIds);
 
                     if (authorUserIds.Any())
                     {

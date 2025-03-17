@@ -19,6 +19,7 @@ namespace Application.Works
         public string? WorkLevelName { get; set; }
 
         public IEnumerable<AuthorDto>? Authors { get; set; }
+        public List<Guid> CoAuthorUserIds { get; set; } = new List<Guid>();
 
         public DateTime CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }
