@@ -4,32 +4,32 @@ import { ScoreLevel } from "../types/enums/ScoreLevel";
 import apiClient from "./api";
 
 export const getFactors = async (): Promise<ApiResponse<Factor[]>> => {
-  const response = await apiClient.get<ApiResponse<Factor[]>>("/api/factors");
+  const response = await apiClient.get<ApiResponse<Factor[]>>("/factors");
   return response.data;
 };
 
 export const getFactorsByWorkTypeId = async (workTypeId: string): Promise<ApiResponse<Factor[]>> => {
-  const response = await apiClient.get<ApiResponse<Factor[]>>(`/api/factors/work-type/${workTypeId}`);
+  const response = await apiClient.get<ApiResponse<Factor[]>>(`/factors/work-type/${workTypeId}`);
   return response.data;
 };
 
 export const getFactorById = async (id: string): Promise<ApiResponse<Factor>> => {
-  const response = await apiClient.get<ApiResponse<Factor>>(`/api/factors/${id}`);
+  const response = await apiClient.get<ApiResponse<Factor>>(`/factors/${id}`);
   return response.data;
 };
 
 export const createFactor = async (factorData: Partial<Factor>): Promise<ApiResponse<Factor>> => {
-  const response = await apiClient.post<ApiResponse<Factor>>("/api/factors", factorData);
+  const response = await apiClient.post<ApiResponse<Factor>>("/factors", factorData);
   return response.data;
 };
 
 export const updateFactor = async (id: string, factorData: Partial<Factor>): Promise<ApiResponse<Factor>> => {
-  const response = await apiClient.put<ApiResponse<Factor>>(`/api/factors/${id}`, factorData);
+  const response = await apiClient.put<ApiResponse<Factor>>(`/factors/${id}`, factorData);
   return response.data;
 };
 
 export const deleteFactor = async (id: string): Promise<ApiResponse<boolean>> => {
-  const response = await apiClient.delete<ApiResponse<boolean>>(`/api/factors/${id}`);
+  const response = await apiClient.delete<ApiResponse<boolean>>(`/factors/${id}`);
   return response.data;
 };
 
@@ -50,6 +50,6 @@ export const findFactor = async (params: FindFactorParams): Promise<ApiResponse<
   if (params.scoreLevel !== undefined && params.scoreLevel !== null) 
     queryParams.append("scoreLevel", params.scoreLevel.toString());
 
-  const response = await apiClient.get<ApiResponse<Factor>>(`/api/factors/find?${queryParams.toString()}`);
+  const response = await apiClient.get<ApiResponse<Factor>>(`/factors/find?${queryParams.toString()}`);
   return response.data;
 }; 
