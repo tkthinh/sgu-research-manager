@@ -204,7 +204,11 @@ namespace Application.Works
             var filteredWorks = works.Select(work =>
             {
                 var userAuthor = authors.FirstOrDefault(a => a.WorkId == work.Id);
-                if (userAuthor != null)
+               if (userAuthor == null)
+               {
+                  return null;
+               }
+               if (userAuthor != null)
                 {
                     var filteredWork = _mapper.MapToDto(work);
                     filteredWork.Authors = new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) };
@@ -215,10 +219,10 @@ namespace Application.Works
 
             foreach (var workDto in filteredWorks)
             {
-                await FillCoAuthorUserIdsAsync(workDto, cancellationToken);
+                await FillCoAuthorUserIdsAsync(workDto!, cancellationToken);
             }
 
-            return filteredWorks;
+            return filteredWorks!;
         }
 
         public async Task<IEnumerable<WorkDto>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default)
