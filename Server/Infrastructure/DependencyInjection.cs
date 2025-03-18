@@ -116,6 +116,7 @@ namespace Infrastructure
 
          // Đăng ký custom repository (nếu có)
          services.AddScoped<IWorkTypeRepository, WorkTypeRepository>();
+         services.AddScoped<IUserRepository, UserRepository>();
 
          return services;
       }

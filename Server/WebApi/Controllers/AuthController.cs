@@ -32,51 +32,54 @@ public class AuthController : ControllerBase
    public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
    {
       var identityUser = await userManager.FindByNameAsync(model.Username);
-      if (identityUser != null && await userManager.CheckPasswordAsync(identityUser, model.Password))
+
+      if (identityUser == null || !await userManager.CheckPasswordAsync(identityUser, model.Password))
       {
-         // Create user claims
-         var authClaims = new List<Claim>
-         {
-            new Claim(ClaimTypes.Name, identityUser.UserName!),
-            new Claim(ClaimTypes.Email, identityUser.Email!),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-         };
-
-         // Optionally, add roles as claims:
-         var userRoles = await userManager.GetRolesAsync(identityUser);
-         authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-         var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
-         if (user is not null)
-         {
-            user.Role = userRoles.Any() ? userRoles.First() : "No Role";
-         }
-
-         // Generate the token
-         var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
-
-         var token = new JwtSecurityToken(
-             issuer: configuration["Jwt:Issuer"],
-             audience: configuration["Jwt:Audience"],
-             expires: DateTime.Now.AddHours(3),
-             claims: authClaims,
-             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-         );
-
-         var response = new ApiResponse<object>(
-            true,
-            "Đăng nhập thành công",
-            new
-            {
-               token = new JwtSecurityTokenHandler().WriteToken(token),
-               expiration = token.ValidTo,
-               user
-            });
-
-         return Ok(response);
+         return Unauthorized(new ApiResponse<object>(false, "Sai thông tin đăng nhập", null));
       }
-      return Unauthorized();
+
+      // Create user claims
+      var authClaims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, identityUser.UserName!),
+        new Claim(ClaimTypes.Email, identityUser.Email!),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
+
+      // Optionally, add roles as claims:
+      var userRoles = await userManager.GetRolesAsync(identityUser);
+      authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+      var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
+      if (user is not null)
+      {
+         user.Role = userRoles.Any() ? userRoles.First() : "No Role";
+      }
+
+      // Generate the token
+      var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+
+      var token = new JwtSecurityToken(
+          issuer: configuration["Jwt:Issuer"],
+          audience: configuration["Jwt:Audience"],
+          expires: DateTime.Now.AddHours(3),
+          claims: authClaims,
+          signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+      );
+
+      var response = new ApiResponse<object>(
+          true,
+          "Đăng nhập thành công",
+          new
+          {
+             token = new JwtSecurityTokenHandler().WriteToken(token),
+             expiration = token.ValidTo,
+             user
+          });
+
+      return Ok(response);
    }
+
 
    [HttpPost("register")]
    public async Task<ActionResult<UserDto>> Register([FromBody] RegisterRequestDto request)
@@ -116,6 +119,7 @@ public class AuthController : ControllerBase
          {
             FullName = request.FullName,
             UserName = identityUser.UserName,
+            Email = identityUser.Email,
             IdentityId = identityUser.Id,
             AcademicTitle = request.AcademicTitle,
             OfficerRank = request.OfficerRank,

@@ -12,11 +12,14 @@ public class UserMapper : IGenericMapper<UserDto, User>
          Id = user.Id,
          FullName = user.FullName,
          UserName = user.UserName,
+         Email = user.Email,
          AcademicTitle = user.AcademicTitle.ToString(),
          OfficerRank = user.OfficerRank.ToString(),
          IdentityId = user.IdentityId,
          DepartmentId = user.DepartmentId,
          FieldId = user.FieldId,
+         DepartmentName = user.Department?.Name ?? "Unknown",
+         FieldName = user.Field?.Name ?? "Unknown",
          CreatedDate = user.CreatedDate,
          ModifiedDate = user.ModifiedDate
       };
@@ -28,6 +31,7 @@ public class UserMapper : IGenericMapper<UserDto, User>
       {
          FullName = dto.FullName,
          UserName = dto.UserName,
+         Email = dto.Email,
          AcademicTitle = Enum.Parse<AcademicTitle>(dto.AcademicTitle),
          OfficerRank = Enum.Parse<OfficerRank>(dto.OfficerRank),
          IdentityId = dto.IdentityId,
