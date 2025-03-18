@@ -1,11 +1,11 @@
-const academicTitleMap: Record<number, string> = {
-  1: "Cử nhân",
-  2: "Thạc sĩ",
-  3: "Tiến sĩ",
-  4: "Phó Giáo sư, Tiến sĩ",
-  5: "Giáo sư, Tiến sĩ",
+const academicTitleMap: Record<string, string> = {
+  "CN": "Cử nhân",
+  "ThS": "Thạc sĩ",
+  "TS": "Tiến sĩ",
+  "PGS_TS": "Phó Giáo sư, Tiến sĩ",
+  "GS_TS": "Giáo sư, Tiến sĩ",
 };
 
-export const getAcademicTitle = (value: number): string => {
+export const getAcademicTitle = (value: string): string => {
   return academicTitleMap[value] || "Không xác định";
 };

@@ -5,8 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { AcademicTitle } from "../../lib/types/enums/AcademicTitle";
-import { OfficerRank } from "../../lib/types/enums/OfficerRank";
 import { User } from "../../lib/types/models/User";
 import { NAVIGATION } from "./Navigation";
 
@@ -19,26 +17,8 @@ const BRANDING = {
   title: "SGU - NCKH",
 };
 
-const demoSession: CustomSession = {
-  user: {
-    id: "1",
-    username: "123456",
-    email: "test@sgu.edu.vn",
-    fullname: "Nguyễn Văn A",
-    academicTitle: AcademicTitle.CN,
-    officerRank: OfficerRank.ChuyenVien,
-    departmentId: "KHOA GIÁO DỤC QUỐC PHÒNG - AN NINH VÀ GIÁO DỤC THỂ CHẤT",
-    fieldId: "Điện - Điện tử - Tự động hóa",
-    createdAt: new Date().toISOString(),
-    identityId: "identity01",
-    role: "admin",
-  },
-};
-
 export default function App() {
-  const [customSession, setCustomSession] = useState<CustomSession | null>(
-    demoSession,
-  );
+  const [customSession, setCustomSession] = useState<CustomSession | null>(null);
 
   const queryClient = new QueryClient();
   const location = useLocation();
@@ -47,12 +27,23 @@ export default function App() {
     toast.dismiss();
   }, [location]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      setCustomSession({ user });
+    }
+  }, []);
+
   const authentication = useMemo(() => {
     return {
       signIn: () => {
-        setCustomSession(demoSession);
+        const storedUserData = JSON.parse(localStorage.getItem("user") || "{}");
+        setCustomSession({ user: storedUserData });
       },
       signOut: () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         setCustomSession(null);
       },
     };

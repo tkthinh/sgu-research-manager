@@ -24,13 +24,13 @@ export default function AccountInfo() {
       {session.user && (
         <Stack mb={1}>
           <Typography variant="h6" fontWeight={600}>
-            {session.user.fullname}
+            {session.user.fullName}
+          </Typography>
+          <Typography variant="body2">
+            {session.user.fieldName}
           </Typography>
           <Typography variant="body2" fontWeight={300}>
-            {session.user.fieldId}
-          </Typography>
-          <Typography variant="body2" fontWeight={300}>
-            {session.user.username}
+            {session.user.userName}
           </Typography>
           <Divider sx={{ my: 1 }} />
           <Grid container spacing={2}>
@@ -64,7 +64,7 @@ export default function AccountInfo() {
             </Grid>
             <Grid item xs={6}>
               <Typography variant="body2">
-                {session.user.departmentId}
+                {session.user.departmentName}
               </Typography>
             </Grid>
           </Grid>
