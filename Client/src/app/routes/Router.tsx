@@ -2,6 +2,8 @@ import { createBrowserRouter } from "react-router-dom";
 import App from "../layouts/App";
 import Layout from "../layouts/Layout";
 
+import SignIn from "../../features/auth/SignIn";
+import SignUp from "../../features/auth/SignUp";
 import Dashboard from "../../features/dashboard/Dashboard";
 import DepartmentPage from "../../features/settings/departments/DepartmentPage";
 import FieldPage from "../../features/settings/fields/FieldPage";
@@ -83,5 +85,14 @@ export const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  // ============== ĐĂNG NHẬP/ ĐĂNG KÝ ==============
+  {
+    path: "/dang-ky",
+    element: <SignUp />,
+  },
+  {
+    path: "/dang-nhap",
+    element: <SignIn />,
   },
 ]);
