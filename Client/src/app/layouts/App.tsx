@@ -5,7 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { User } from "../../lib/types/models/User";
 import { NAVIGATION } from "./Navigation";
+
+interface CustomSession extends Session {
+  user: User;
+}
 
 const BRANDING = {
   logo: <img src="/logo.png" alt="SGU" />,
@@ -13,12 +18,7 @@ const BRANDING = {
 };
 
 export default function App() {
-  const [session, setSession] = useState<Session | null>({
-    user: {
-      name: "Nguyễn Văn A",
-      email: "test@sgu.edu.vn",
-    },
-  });
+  const [customSession, setCustomSession] = useState<CustomSession | null>(null);
 
   const queryClient = new QueryClient();
   const location = useLocation();
@@ -27,18 +27,24 @@ export default function App() {
     toast.dismiss();
   }, [location]);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      setCustomSession({ user });
+    }
+  }, []);
+
   const authentication = useMemo(() => {
     return {
       signIn: () => {
-        setSession({
-          user: {
-            name: "Nguyễn Văn A",
-            email: "test@sgu.edu.vn",
-          },
-        });
+        const storedUserData = JSON.parse(localStorage.getItem("user") || "{}");
+        setCustomSession({ user: storedUserData });
       },
       signOut: () => {
-        setSession(null);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setCustomSession(null);
       },
     };
   }, []);
@@ -47,7 +53,7 @@ export default function App() {
     <ReactRouterAppProvider
       navigation={NAVIGATION}
       branding={BRANDING}
-      session={session}
+      session={customSession}
       authentication={authentication}
     >
       <QueryClientProvider client={queryClient}>

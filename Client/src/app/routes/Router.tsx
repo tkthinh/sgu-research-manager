@@ -2,13 +2,12 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 import App from "../layouts/App";
 import Layout from "../layouts/Layout";
 
+import SignIn from "../../features/auth/SignIn";
+import SignUp from "../../features/auth/SignUp";
+import Dashboard from "../../features/dashboard/Dashboard";
 import WorksPage from "../../features/settings/works/WorksPage";
 import FieldsPage from "../../features/settings/fields/FieldPage";
-import AuthorRolePage from "../../features/settings/authorRoles/AuthorRolePage";
-import PurposePage from "../../features/settings/purposes/PurposePage";
-import ScimagoFieldPage from "../../features/settings/scimagoFields/ScimagoFieldPage";
 import DepartmentPage from "../../features/settings/departments/DepartmentPage";
-import FactorPage from "../../features/settings/factors/FactorPage";
 
 export const router = createBrowserRouter([
   {
@@ -99,5 +98,14 @@ export const router = createBrowserRouter([
         ]
       },
     ],
+  },
+  // ============== ĐĂNG NHẬP/ ĐĂNG KÝ ==============
+  {
+    path: "/dang-ky",
+    element: <SignUp />,
+  },
+  {
+    path: "/dang-nhap",
+    element: <SignIn />,
   },
 ]);

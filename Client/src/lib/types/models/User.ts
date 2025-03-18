@@ -1,6 +1,16 @@
 export interface User {
   id: string;
-  fullName: string;
   userName: string;
-  departmentName: string;
-} 
+  email: string;
+  fullName: string;
+  academicTitle: string;
+  officerRank: string;
+  departmentId: string;
+  fieldId: string;
+  departmentName?: string;
+  fieldName?: string;
+  createdAt: string;
+  updatedAt?: string;
+  identityId?: string;
+  role: string;
+}
