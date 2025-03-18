@@ -2,32 +2,27 @@ import { ApiResponse } from "../types/common/ApiResponse";
 import { Department } from "../types/models/Department";
 import apiClient from "./api";
 
-// Fetch all departments
 export const getDepartments = async (): Promise<ApiResponse<Department[]>> => {
-  const response = await apiClient.get<ApiResponse<Department[]>>("/departments");
+  const response = await apiClient.get<ApiResponse<Department[]>>("/api/departments");
   return response.data;
 };
 
-// Fetch department by ID
 export const getDepartmentById = async (id: string): Promise<ApiResponse<Department>> => {
-  const response = await apiClient.get<ApiResponse<Department>>(`/departments/${id}`);
+  const response = await apiClient.get<ApiResponse<Department>>(`/api/departments/${id}`);
   return response.data;
 };
 
-// Create a new department
-export const createDepartment = async (departmentData: Partial<Department>) => {
-  const response = await apiClient.post("/departments", departmentData);
+export const createDepartment = async (data: Partial<Department>): Promise<ApiResponse<Department>> => {
+  const response = await apiClient.post<ApiResponse<Department>>("/api/departments", data);
   return response.data;
 };
 
-// Update a department
-export const updateDepartment = async (id: string, departmentData: Partial<Department>) => {
-  const response = await apiClient.put(`/departments/${id}`, departmentData);
+export const updateDepartment = async (id: string, data: Partial<Department>): Promise<ApiResponse<Department>> => {
+  const response = await apiClient.put<ApiResponse<Department>>(`/api/departments/${id}`, data);
   return response.data;
 };
 
-// Delete a department
-export const deleteDepartment = async (id: string) => {
-  const response = await apiClient.delete(`/departments/${id}`);
-  return response;
+export const deleteDepartment = async (id: string): Promise<ApiResponse<boolean>> => {
+  const response = await apiClient.delete<ApiResponse<boolean>>(`/api/departments/${id}`);
+  return response.data;
 };

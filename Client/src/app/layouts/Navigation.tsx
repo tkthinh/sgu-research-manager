@@ -18,21 +18,12 @@ export const NAVIGATION: Navigation = [
   {
     title: 'Trang chủ',
     icon: <DashboardIcon />,
+    segment: 'dashboard'
   },
   {
     segment: 'cong-trinh',
     title: 'Công trình',
     icon: <ConstructionIcon />,
-  },
-  {
-    segment: 'quy-doi',
-    title: 'Đăng ký quy đổi',
-    icon: <LibraryAddIcon />,
-  },
-  {
-    segment: 'cham-diem',
-    title: 'Chấm điểm công trình',
-    icon: <RateReviewIcon />,
   },
   {
     segment: 'phan-cong',
@@ -68,52 +59,34 @@ export const NAVIGATION: Navigation = [
     icon: <RestorePageIcon />,
   },
   {
-    segment: 'he-thong',
+    segment: 'cai-dat',
     title: 'Cấu hình hệ thống',
     icon: <SettingsIcon />,
     children: [
       {
-        segment: 'he-so-cham-diem',
-        title: 'Hệ số chấm điểm',
+        segment: 'he-so-quy-doi',
+        title: 'Hệ số quy đổi',
       },
       {
         segment: 'vai-tro-tac-gia',
         title: 'Vai trò tác giả',
       },
       {
-        segment: 'muc-dich-quy-doi',
+        segment: 'muc-dich',
         title: 'Mục đích quy đổi',
-      },
-      {
-        segment: 'tinh-trang-minh-chung',
-        title: 'Tình trạng minh chứng',
-      },
-      {
-        kind: 'divider',
-      },
-      {
-        segment: 'loai-cong-trinh',
-        title: 'Loại công trình',
-      },
-      {
-        segment: 'cap-cong-trinh',
-        title: 'Cấp công trình',
-      },
-      {
-        segment: 'tinh-trang-cong-trinh',
-        title: 'Tình trạng công trình',
-      },
-      {
-        kind: 'divider',
       },
       {
         segment: 'nganh',
         title: 'Ngành',
       },
       {
+        segment: 'nganh-scimago',
+        title: 'Ngành SCImago',
+      },
+      {
         segment: 'don-vi',
         title: 'Đơn vị',
-      },
+      }
     ]
   },
 ];

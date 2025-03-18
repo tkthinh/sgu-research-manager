@@ -4,30 +4,30 @@ import apiClient from "./api";
 
 // Fetch all work types
 export const getWorkTypes = async (): Promise<ApiResponse<WorkType[]>> => {
-  const response = await apiClient.get<ApiResponse<WorkType[]>>("/worktypes");
+  const response = await apiClient.get<ApiResponse<WorkType[]>>("/api/worktypes");
   return response.data;
 };
 
 // Fetch work type by ID
 export const getWorkTypeById = async (id: string): Promise<ApiResponse<WorkType>> => {
-  const response = await apiClient.get<ApiResponse<WorkType>>(`/worktypes/${id}`);
+  const response = await apiClient.get<ApiResponse<WorkType>>(`/api/worktypes/${id}`);
   return response.data;
 };
 
 // Create a new work type
-export const createWorkType = async (workTypeData: Partial<WorkType>) => {
-  const response = await apiClient.post("/worktypes", workTypeData);
+export const createWorkType = async (workTypeData: Partial<WorkType>): Promise<ApiResponse<WorkType>> => {
+  const response = await apiClient.post<ApiResponse<WorkType>>("/api/worktypes", workTypeData);
   return response.data;
 };
 
 // Update a work type
-export const updateWorkType = async (id: string, workTypeData: Partial<WorkType>) => {
-  const response = await apiClient.put(`/worktypes/${id}`, workTypeData);
+export const updateWorkType = async (id: string, workTypeData: Partial<WorkType>): Promise<ApiResponse<WorkType>> => {
+  const response = await apiClient.put<ApiResponse<WorkType>>(`/api/worktypes/${id}`, workTypeData);
   return response.data;
 };
 
 // Delete a work type
-export const deleteWorkType = async (id: string) => {
-  const response = await apiClient.delete(`/worktypes/${id}`);
-  return response;
+export const deleteWorkType = async (id: string): Promise<ApiResponse<boolean>> => {
+  const response = await apiClient.delete<ApiResponse<boolean>>(`/api/worktypes/${id}`);
+  return response.data;
 };
