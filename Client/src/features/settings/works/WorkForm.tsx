@@ -9,13 +9,15 @@ import {
   Box,
   Autocomplete,
   Chip,
-  Stack
+  Stack,
+  FormControlLabel,
+  Checkbox
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { vi } from "date-fns/locale";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 import { Work } from "../../../lib/types/models/Work";
@@ -25,7 +27,7 @@ import { getWorkLevelsByWorkTypeId } from "../../../lib/api/workLevelsApi";
 import { getAuthorRolesByWorkTypeId } from "../../../lib/api/authorRolesApi";
 import { getPurposesByWorkTypeId } from "../../../lib/api/purposesApi";
 import { getScimagoFieldsByWorkTypeId } from "../../../lib/api/scimagoFieldsApi";
-import { searchUsers } from "../../../lib/api/usersApi";
+import { searchUsers, getUserById } from "../../../lib/api/usersApi";
 import { User } from "../../../lib/types/models/User";
 import { useQuery } from "@tanstack/react-query";
 
@@ -33,21 +35,21 @@ import { useQuery } from "@tanstack/react-query";
 const schema = z.object({
   title: z.string().min(2, "Tên công trình phải có ít nhất 2 ký tự"),
   timePublished: z.any().optional().nullable(),
-  totalAuthors: z.number().min(1, "Số tác giả phải lớn hơn 0").optional().nullable(),
-  totalMainAuthors: z.number().min(1, "Số tác giả chính phải lớn hơn 0").optional().nullable(),
+  totalAuthors: z.coerce.number().min(1, "Số tác giả phải lớn hơn 0").optional().nullable(),
+  totalMainAuthors: z.coerce.number().min(1, "Số tác giả chính phải lớn hơn 0").optional().nullable(),
   details: z.any().optional(),
   source: z.number(),
-  workTypeId: z.string().min(1, "Vui lòng chọn loại công trình"),
-  workLevelId: z.string().optional().nullable(),
+  workTypeId: z.string().uuid("ID loại công trình không hợp lệ"),
+  workLevelId: z.string().uuid("ID cấp độ công trình không hợp lệ").optional().nullable(),
   author: z.object({
-  authorRoleId: z.string().min(1, "Vui lòng chọn vai trò tác giả"),
-  purposeId: z.string().min(1, "Vui lòng chọn mục đích"),
+    authorRoleId: z.string().uuid("ID vai trò tác giả không hợp lệ"),
+    purposeId: z.string().uuid("ID mục đích không hợp lệ"),
     position: z.number().min(1, "Vị trí tác giả phải lớn hơn 0").optional().nullable(),
     scoreLevel: z.number().min(1, "Vui lòng chọn mức điểm").optional().nullable(),
-    sCImagoFieldId: z.string().optional().nullable(),
-    fieldId: z.string().optional().nullable(),
+    sCImagoFieldId: z.string().uuid("ID lĩnh vực SCImago không hợp lệ").optional().nullable(),
+    fieldId: z.string().uuid("ID lĩnh vực không hợp lệ").optional().nullable(),
   }),
-  coAuthorUserIds: z.array(z.string()).optional().default([]),
+  coAuthorUserIds: z.array(z.string().uuid("ID đồng tác giả không hợp lệ")).optional().default([]),
 });
 
 type WorkFormData = z.infer<typeof schema>;
@@ -79,6 +81,12 @@ export default function WorkForm({
 }: WorkFormProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCoAuthors, setSelectedCoAuthors] = useState<User[]>([]);
+  const [detailsText, setDetailsText] = useState<string>("");
+  const [isLoadingCoAuthors, setIsLoadingCoAuthors] = useState(false);
+  
+  // Lấy userId từ localStorage hoặc context auth nếu có
+  // Trong ứng dụng thực tế, bạn nên sử dụng hook auth chính thức
+  const currentUserId = localStorage.getItem("userId") || "current-user-id";
 
   const {
     control,
@@ -87,6 +95,7 @@ export default function WorkForm({
     reset,
     setValue,
     watch,
+    getValues,
   } = useForm<WorkFormData>({
     resolver: zodResolver(schema),
     defaultValues: initialData 
@@ -103,13 +112,13 @@ export default function WorkForm({
             sCImagoFieldId: initialData.author?.scImagoFieldId || "",
             fieldId: initialData.author?.fieldId || "",
           },
-          coAuthorUserIds: initialData.coAuthorUserIds || [],
+          coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
         }
       : {
           title: "",
           timePublished: null,
-          totalAuthors: 1,
-          totalMainAuthors: 1,
+          totalAuthors: null,
+          totalMainAuthors: null,
           details: {},
           source: WorkSource.NguoiDungKeKhai,
           workTypeId: "",
@@ -154,18 +163,30 @@ export default function WorkForm({
     enabled: !!workTypeId,
   });
 
-  // Fetch danh sách user khi searchTerm thay đổi
-  const { data: usersData } = useQuery({
-    queryKey: ["users", searchTerm],
-    queryFn: () => searchUsers(searchTerm),
+  // Tìm kiếm người dùng
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ["searchUsers", searchTerm],
+    queryFn: async () => {
+      const response = await searchUsers(searchTerm);
+      console.log("Kết quả tìm kiếm người dùng:", response);
+      return response;
+    },
     enabled: searchTerm.length > 0,
-    staleTime: 300,
   });
 
-  // Load dữ liệu ban đầu và thông tin đồng tác giả
+  // Lọc ra người dùng hiện tại khỏi kết quả tìm kiếm
+  const filteredUsers = useMemo(() => {
+    if (!usersData?.data) return [];
+    return usersData.data.filter(user => user.id !== currentUserId);
+  }, [usersData?.data, currentUserId]);
+
+  // Load dữ liệu từ initialData khi nó thay đổi
   useEffect(() => {
     if (initialData) {
-      // Reset form với dữ liệu ban đầu
+      console.log("initialData đã thay đổi:", initialData);
+      console.log("coAuthorUserIds:", initialData.coAuthorUserIds);
+      
+      // Reset form với dữ liệu từ initialData
       reset({
         ...initialData,
         timePublished: initialData.timePublished ? new Date(initialData.timePublished) : null,
@@ -179,23 +200,59 @@ export default function WorkForm({
           sCImagoFieldId: initialData.author?.scImagoFieldId || "",
           fieldId: initialData.author?.fieldId || "",
         },
-        coAuthorUserIds: initialData.coAuthorUserIds || [],
+        // Đảm bảo lọc ra người dùng hiện tại
+        coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
       });
 
-      // Load thông tin đồng tác giả
+      // Xử lý đồng tác giả
       if (initialData.coAuthorUserIds?.length > 0) {
-        Promise.all(
-          initialData.coAuthorUserIds.map(async (id) => {
-            const response = await searchUsers(id);
-            return response.data[0];
-          })
-        ).then((users) => {
-          const validUsers = users.filter((user): user is User => user !== undefined);
-          setSelectedCoAuthors(validUsers);
-        });
+        // Lọc ra người dùng hiện tại trước khi tải thông tin
+        const filteredCoAuthorIds = initialData.coAuthorUserIds
+          .filter(id => id.toString() !== currentUserId);
+        
+        // Tải thông tin đồng tác giả nếu có danh sách ID đã lọc
+        if (filteredCoAuthorIds.length > 0) {
+          setIsLoadingCoAuthors(true);
+          console.log("Bắt đầu tải thông tin đồng tác giả cho các id đã lọc:", filteredCoAuthorIds);
+          
+          const fetchCoAuthors = async () => {
+            try {
+              // Lấy thông tin chi tiết của từng đồng tác giả
+              const userPromises = filteredCoAuthorIds.map(async (id) => {
+                try {
+                  console.log("Đang lấy thông tin user với ID:", id);
+                  const response = await getUserById(id.toString());
+                  console.log("Kết quả lấy thông tin user:", response);
+                  return response.data;
+                } catch (error) {
+                  console.error("Lỗi khi lấy thông tin user:", id, error);
+                  return null;
+                }
+              });
+              
+              const users = await Promise.all(userPromises);
+              const validUsers = users.filter((user): user is User => user !== null);
+              console.log("Đã tải được thông tin đồng tác giả:", validUsers);
+              
+              // Đảm bảo lọc ra người dùng hiện tại một lần nữa để tránh trường hợp ID bị so sánh khác kiểu dữ liệu
+              const finalFilteredUsers = validUsers.filter(user => user.id !== currentUserId);
+              setSelectedCoAuthors(finalFilteredUsers);
+            } catch (error) {
+              console.error("Lỗi khi tải thông tin đồng tác giả:", error);
+            } finally {
+              setIsLoadingCoAuthors(false);
+            }
+          };
+          
+          fetchCoAuthors();
+        } else {
+          setSelectedCoAuthors([]);
+        }
+      } else {
+        setSelectedCoAuthors([]);
       }
     }
-  }, [initialData, reset]);
+  }, [initialData, reset, currentUserId]);
 
   // Reset các trường phụ thuộc khi workTypeId thay đổi và không có initialData
   useEffect(() => {
@@ -209,12 +266,76 @@ export default function WorkForm({
 
   // Cập nhật coAuthorUserIds khi selectedCoAuthors thay đổi
   useEffect(() => {
+    console.log("Cập nhật coAuthorUserIds với:", selectedCoAuthors);
     setValue("coAuthorUserIds", selectedCoAuthors.map(user => user.id));
   }, [selectedCoAuthors, setValue]);
 
+  // Xử lý chuyển đổi giá trị dạng chuỗi sang số
+  useEffect(() => {
+    const totalAuthors = watch("totalAuthors");
+    const totalMainAuthors = watch("totalMainAuthors");
+    
+    // Kiểm tra nếu giá trị là chuỗi, chuyển thành số
+    if (totalAuthors !== null && typeof totalAuthors === "string") {
+      setValue("totalAuthors", Number(totalAuthors));
+    }
+    
+    if (totalMainAuthors !== null && typeof totalMainAuthors === "string") {
+      setValue("totalMainAuthors", Number(totalMainAuthors));
+    }
+  }, [watch, setValue]);
+
+  // Xử lý chuyển đổi details object sang string và ngược lại
+  useEffect(() => {
+    if (initialData?.details) {
+      try {
+        // Convert details object to formatted JSON string for display
+        const detailsJson = JSON.stringify(initialData.details, null, 2);
+        setDetailsText(detailsJson);
+      } catch (error) {
+        console.error("Lỗi khi parse details:", error);
+        setDetailsText("");
+      }
+    } else {
+      setDetailsText("");
+    }
+  }, [initialData]);
+
+  // Xử lý khi người dùng nhập chi tiết
+  const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDetailsText(value);
+    
+    try {
+      // Cố gắng parse giá trị thành object JSON
+      const detailsObj = value ? JSON.parse(value) : {};
+      setValue("details", detailsObj);
+    } catch (error) {
+      // Nếu không parse được, vẫn lưu giá trị text nhưng không update form
+      console.error("Lỗi khi parse JSON:", error);
+    }
+  };
+
+  // Xử lý khi đồng tác giả thay đổi
+  const handleCoAuthorChange = (_: any, newValue: User[]) => {
+    console.log("Đã chọn đồng tác giả:", newValue);
+    
+    // Đảm bảo không có người dùng hiện tại trong danh sách đồng tác giả
+    const filteredCoAuthors = newValue.filter(user => user.id !== currentUserId);
+    
+    setSelectedCoAuthors(filteredCoAuthors);
+    
+    // Cập nhật giá trị trong form
+    setValue(
+      "coAuthorUserIds",
+      filteredCoAuthors.map((user) => user.id),
+      { shouldValidate: true }
+    );
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={2}>
+      <Grid container spacing={2}>
         {activeTab === 0 && (
           // Tab thông tin công trình
           <>
@@ -223,11 +344,11 @@ export default function WorkForm({
                 name="title"
                 control={control}
                 render={({ field }) => (
-              <TextField
+                  <TextField
                     {...field}
-                label="Tên công trình"
+                    label="Tên công trình"
                     fullWidth
-                error={!!errors.title}
+                    error={!!errors.title}
                     helperText={errors.title?.message?.toString()}
                   />
                 )}
@@ -261,14 +382,21 @@ export default function WorkForm({
                 <Controller
                 name="totalAuthors"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field: { value, onChange, onBlur, ...field } }) => (
                   <TextField
-                      {...field}
+                    {...field}
                     label="Tổng số tác giả"
                     type="number"
+                    inputProps={{ min: 1, step: 1 }}
                     fullWidth
                     error={!!errors.totalAuthors}
                     helperText={errors.totalAuthors?.message?.toString()}
+                    value={value === null ? "" : value}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      onChange(inputValue === "" ? null : Number(inputValue));
+                    }}
+                    onBlur={onBlur}
                   />
                 )}
               />
@@ -278,34 +406,37 @@ export default function WorkForm({
               <Controller
                 name="totalMainAuthors"
                 control={control}
-                render={({ field }) => (
-              <TextField
+                render={({ field: { value, onChange, onBlur, ...field } }) => (
+                  <TextField
                     {...field}
                     label="Số tác giả chính"
-                type="number"
-                fullWidth
+                    type="number"
+                    inputProps={{ min: 1, step: 1 }}
+                    fullWidth
                     error={!!errors.totalMainAuthors}
                     helperText={errors.totalMainAuthors?.message?.toString()}
+                    value={value === null ? "" : value}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      onChange(inputValue === "" ? null : Number(inputValue));
+                    }}
+                    onBlur={onBlur}
                   />
                 )}
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Controller
-                name="details"
-                control={control}
-                render={({ field }) => (
               <TextField
-                    {...field}
-                    label="Chi tiết công trình"
-                    multiline
-                    rows={3}
+                label="Chi tiết công trình (định dạng JSON)"
+                multiline
+                rows={4}
                 fullWidth
-                    error={!!errors.details}
-                    helperText={errors.details?.message?.toString()}
-                  />
-                )}
+                value={detailsText}
+                onChange={handleDetailsChange}
+                error={!!errors.details}
+                helperText={errors.details?.message?.toString() || "Nhập chi tiết công trình dưới dạng JSON, ví dụ: { \"ISSN\": \"1234-5678\", \"DOI\": \"10.1234/abcd\" }"}
+                placeholder='{ "ISSN": "1234-5678", "DOI": "10.1234/abcd" }'
               />
             </Grid>
 
@@ -338,7 +469,7 @@ export default function WorkForm({
                   control={control}
                   render={({ field }) => (
                   <TextField
-                      {...field}
+                    {...field}
                     select
                     label="Cấp độ công trình"
                     fullWidth
@@ -357,31 +488,56 @@ export default function WorkForm({
             </Grid>
 
             <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={usersData?.data || []}
-                value={selectedCoAuthors}
-                onChange={(_, newValue) => setSelectedCoAuthors(newValue)}
-                getOptionLabel={(option) => `${option.fullName} - ${option.userName} - ${option.departmentName}`}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Tìm kiếm đồng tác giả"
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    fullWidth
+              <Controller
+                name="coAuthorUserIds"
+                control={control}
+                render={({ field }) => (
+                  <Autocomplete
+                    multiple
+                    id="coAuthorUserIds"
+                    options={filteredUsers}
+                    getOptionLabel={(option) => {
+                      if (typeof option === 'string') return option;
+                      return `${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ''}`;
+                    }}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    value={selectedCoAuthors}
+                    onChange={handleCoAuthorChange}
+                    loading={isLoadingUsers || isLoadingCoAuthors}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => {
+                        const props = getTagProps({ index });
+                        return (
+                          <Chip
+                            {...props}
+                            label={`${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ''}`}
+                            size="medium"
+                          />
+                        );
+                      })
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Đồng tác giả"
+                        variant="outlined"
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Tìm kiếm đồng tác giả"
+                        error={!!errors.coAuthorUserIds}
+                        helperText={errors.coAuthorUserIds?.message || "Thêm các đồng tác giả (không bao gồm bạn)"}
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {(isLoadingUsers || isLoadingCoAuthors) ? <CircularProgress color="inherit" size={20} /> : null}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
                   />
                 )}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => {
-                    const props = getTagProps({ index });
-                    return (
-                      <Chip
-                        {...props}
-                        label={`${option.fullName} - ${option.userName} - ${option.departmentName}`}
-                      />
-                    );
-                  })
-                }
               />
             </Grid>
           </>

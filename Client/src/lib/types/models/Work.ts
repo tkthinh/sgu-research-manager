@@ -24,6 +24,7 @@ export interface Work {
     scImagoFieldId?: string;
     fieldId?: string;
   };
+  authors?: Author[];
 }
 
 export interface Author {

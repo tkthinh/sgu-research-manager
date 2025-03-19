@@ -64,9 +64,10 @@ export default function WorksPage() {
   const [activeTab, setActiveTab] = useState(0);
 
   // Fetch works
-  const { data: worksData, error: worksError, isPending: isLoadingWorks } = useQuery({
+  const { data: worksData, error: worksError, isPending: isLoadingWorks, refetch } = useQuery({
     queryKey: ["works", "my-works"],
     queryFn: getMyWorks,
+    staleTime: 0, // Luôn refetch khi cần
   });
 
   // Fetch data for dropdowns
@@ -102,27 +103,62 @@ export default function WorksPage() {
 
   // Create/Update mutation
   const createMutation = useMutation({
-    mutationFn: createWork,
-    onSuccess: () => {
+    mutationFn: async (data: any) => {
+      try {
+        console.log("Dữ liệu thực tế gửi lên server:", JSON.stringify(data, null, 2));
+        return await createWork(data);
+      } catch (error: any) {
+        console.error("Chi tiết lỗi từ server:", error.response?.data);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
       toast.success("Công trình đã được thêm thành công");
-      queryClient.invalidateQueries({ queryKey: ["works"] });
+      
+      console.log("Bắt đầu cập nhật lại dữ liệu sau khi thêm mới");
+      
+      // Xóa cache và refetch dữ liệu mới
+      queryClient.removeQueries({ queryKey: ["works", "my-works"] });
+      
+      // Bắt buộc refetch dữ liệu ngay lập tức
+      setTimeout(() => {
+        console.log("Bắt đầu refetch sau khi xóa cache");
+        refetch();
+      }, 100);
+      
       setOpenFormDialog(false);
     },
     onError: (error) => {
+      console.error("Lỗi đầy đủ:", error);
       toast.error("Lỗi khi thêm công trình: " + (error as Error).message);
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (params: { workId: string; data: any }) => {
+      console.log("Dữ liệu gửi đi khi cập nhật:", JSON.stringify(params.data, null, 2));
       return updateWorkByAuthor(params.workId, params.data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Công trình đã được cập nhật thành công");
-      queryClient.invalidateQueries({ queryKey: ["works"] });
+      console.log("Phản hồi từ API sau khi cập nhật:", JSON.stringify(data, null, 2));
+      console.log("Details sau khi cập nhật:", data.data?.details);
+      
+      console.log("Bắt đầu cập nhật lại dữ liệu sau khi update");
+      
+      // Xóa cache và refetch dữ liệu mới
+      queryClient.removeQueries({ queryKey: ["works", "my-works"] });
+      
+      // Bắt buộc refetch dữ liệu ngay lập tức
+      setTimeout(() => {
+        console.log("Bắt đầu refetch sau khi xóa cache");
+        refetch();
+      }, 100);
+      
       setOpenFormDialog(false);
     },
     onError: (error) => {
+      console.error("Lỗi khi cập nhật công trình:", error);
       toast.error("Lỗi khi cập nhật công trình: " + (error as Error).message);
     },
   });
@@ -148,7 +184,58 @@ export default function WorksPage() {
   };
 
   const handleOpenFormDialog = (work?: Work) => {
-    setSelectedWork(work || null);
+    if (work) {
+      console.log("Mở form với công trình:", work);
+      console.log("coAuthorUserIds:", work.coAuthorUserIds);
+      console.log("Giờ tác giả:", work.authors?.[0]?.authorHour);
+      console.log("Giờ công trình:", work.authors?.[0]?.workHour);
+      console.log("Chi tiết công trình:", work.details);
+      
+      // Lấy userId từ localStorage hoặc context auth
+      const currentUserId = localStorage.getItem("userId") || "";
+      
+      // Lấy thông tin tác giả từ authors[0] hoặc author
+      const authorInfo = work.authors && work.authors.length > 0 
+        ? {
+            authorRoleId: work.authors[0].authorRoleId,
+            purposeId: work.authors[0].purposeId,
+            position: work.authors[0].position || 1,
+            scoreLevel: work.authors[0].scoreLevel,
+            scImagoFieldId: work.authors[0].scImagoFieldId || "",
+            fieldId: work.authors[0].fieldId || "",
+          }
+        : work.author || {
+            authorRoleId: "",
+            purposeId: "",
+            position: 1,
+            scoreLevel: undefined,
+            scImagoFieldId: "",
+            fieldId: "",
+          };
+
+      // Đảm bảo tất cả các trường cần thiết có giá trị
+      const workWithDefaults = {
+        ...work,
+        details: work.details || {},
+        totalAuthors: work.totalAuthors || 1,
+        totalMainAuthors: work.totalMainAuthors || 1,
+        author: authorInfo,
+        // Lọc người dùng hiện tại khỏi đồng tác giả - đảm bảo so sánh đúng kiểu dữ liệu
+        coAuthorUserIds: Array.isArray(work.coAuthorUserIds) 
+          ? work.coAuthorUserIds
+              .filter(id => {
+                console.log(`So sánh ${id.toString()} với ${currentUserId}`);
+                return id.toString() !== currentUserId;
+              })
+              .map(id => id.toString())
+          : []
+      };
+      
+      console.log("Mở form với dữ liệu đã xử lý:", workWithDefaults);
+      setSelectedWork(workWithDefaults);
+    } else {
+      setSelectedWork(null);
+    }
     setActiveTab(0);
     setOpenFormDialog(true);
   };
@@ -158,11 +245,95 @@ export default function WorksPage() {
     setOpenFormDialog(false);
   };
 
-  const handleSubmit = async (data: any) => {
-    if (selectedWork?.id) {
-      await updateMutation.mutateAsync({ workId: selectedWork.id, data });
+  // Hàm kiểm tra tính hợp lệ của dữ liệu trước khi gửi
+  const validateWorkData = (data: any): string[] => {
+    // Danh sách lỗi
+    const errors: string[] = [];
+    
+    // Kiểm tra các trường bắt buộc
+    if (!data.title || data.title.trim() === "") {
+      errors.push("Tiêu đề không được để trống");
+    }
+    
+    if (!data.workTypeId) {
+      errors.push("Vui lòng chọn loại công trình");
+    }
+
+    // Kiểm tra thông tin tác giả
+    if (!data.author) {
+      errors.push("Thông tin tác giả là bắt buộc");
     } else {
-      await createMutation.mutateAsync(data);
+      if (!data.author.authorRoleId) {
+        errors.push("Vai trò tác giả là bắt buộc");
+      }
+      
+      if (!data.author.purposeId) {
+        errors.push("Mục đích là bắt buộc");
+      }
+    }
+    
+    return errors;
+  };
+
+  const handleSubmit = async (data: any) => {
+    try {
+      console.log("Dữ liệu gốc từ form:", data);
+      
+      // Kiểm tra dữ liệu trước khi gửi
+      const validationErrors = validateWorkData(data);
+      if (validationErrors.length > 0) {
+        // Hiển thị lỗi và dừng việc gửi dữ liệu
+        toast.error("Dữ liệu không hợp lệ: " + validationErrors.join(", "));
+        return;
+      }
+      
+      // Xử lý ngày tháng - đảm bảo định dạng đúng cho server
+      let formattedDate: string | undefined = undefined;
+      if (data.timePublished) {
+        try {
+          // Chuyển đổi sang định dạng ISO cho timePublished
+          const date = new Date(data.timePublished);
+          // Sử dụng định dạng yyyy-MM-dd theo quy định của server
+          formattedDate = date.toISOString().split('T')[0]; 
+        } catch (err) {
+          console.error("Lỗi khi chuyển đổi ngày tháng:", err);
+        }
+      }
+      
+      // Xử lý dữ liệu trước khi gửi
+      const formattedData = {
+        workRequest: {
+          title: data.title?.trim(),
+          timePublished: formattedDate,
+          totalAuthors: data.totalAuthors ? Number(data.totalAuthors) : undefined,
+          totalMainAuthors: data.totalMainAuthors ? Number(data.totalMainAuthors) : undefined,
+          source: Number(data.source),
+          workTypeId: data.workTypeId,
+          workLevelId: data.workLevelId || undefined,
+          details: data.details || {}  // Thêm thông tin chi tiết vào yêu cầu
+        },
+        authorRequest: {
+          authorRoleId: data.author.authorRoleId,
+          purposeId: data.author.purposeId,
+          position: data.author.position ? parseInt(String(data.author.position)) : undefined,
+          scoreLevel: data.author.scoreLevel ? Number(data.author.scoreLevel) : undefined,
+          scImagoFieldId: data.author.sCImagoFieldId ? String(data.author.sCImagoFieldId) : undefined,
+          fieldId: data.author.fieldId ? String(data.author.fieldId) : undefined
+        },
+        coAuthorUserIds: Array.isArray(data.coAuthorUserIds) ? data.coAuthorUserIds : []
+      };
+      
+      // Log dữ liệu sau khi xử lý để debug
+      console.log("Dữ liệu sau khi xử lý:", JSON.stringify(formattedData, null, 2));
+      
+      if (selectedWork?.id) {
+        await updateMutation.mutateAsync({ workId: selectedWork.id, data: formattedData });
+      } else {
+        await createMutation.mutateAsync(formattedData);
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi dữ liệu:", error);
+      toast.error("Có lỗi xảy ra khi gửi dữ liệu. Vui lòng kiểm tra lại thông tin.");
     }
   };
 
@@ -185,7 +356,15 @@ export default function WorksPage() {
     mutationFn: (id: string) => deleteWork(id),
     onSuccess: () => {
       toast.success("Xóa công trình thành công!");
-      queryClient.invalidateQueries({ queryKey: ["works"] });
+      
+      // Xóa cache và refetch dữ liệu mới
+      queryClient.removeQueries({ queryKey: ["works", "my-works"] });
+      
+      // Bắt buộc refetch dữ liệu ngay lập tức
+      setTimeout(() => {
+        refetch();
+      }, 100);
+      
       setDeleteDialogOpen(false);
     },
     onError: (error: Error) => {

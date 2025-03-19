@@ -16,8 +16,16 @@ export const getWorkById = async (id: string): Promise<ApiResponse<Work>> => {
 
 // Create a new work
 export const createWork = async (data: CreateWorkRequest): Promise<ApiResponse<Work>> => {
-  const response = await apiClient.post<ApiResponse<Work>>("/works", data);
-  return response.data;
+  try {
+    console.log("WorksApi:createWork - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
+    const response = await apiClient.post<ApiResponse<Work>>("/works", data);
+    console.log("WorksApi:createWork - Phản hồi:", JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error: any) {
+    console.error("WorksApi:createWork - Chi tiết lỗi:", error.response?.data);
+    console.error("WorksApi:createWork - Status code:", error.response?.status);
+    throw error;
+  }
 };
 
 // Delete a work
@@ -52,8 +60,16 @@ export const updateWorkByAdmin = async (workId: string, userId: string, data: Up
 
 // Update work by author
 export const updateWorkByAuthor = async (id: string, data: UpdateWorkByAuthorRequest): Promise<ApiResponse<Work>> => {
-  const response = await apiClient.patch<ApiResponse<Work>>(`/works/${id}/update-by-author`, data);
-  return response.data;
+  try {
+    console.log("WorksApi:updateWorkByAuthor - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
+    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${id}/update-by-author`, data);
+    console.log("WorksApi:updateWorkByAuthor - Phản hồi:", JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error: any) {
+    console.error("WorksApi:updateWorkByAuthor - Chi tiết lỗi:", error.response?.data);
+    console.error("WorksApi:updateWorkByAuthor - Status code:", error.response?.status);
+    throw error;
+  }
 };
 
 // Get current user's works

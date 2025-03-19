@@ -7,8 +7,8 @@ export interface User {
   officerRank: string;
   departmentId: string;
   fieldId: string;
-  departmentName?: string;
-  fieldName?: string;
+  departmentName: string;
+  fieldName: string;
   createdAt: string;
   updatedAt?: string;
   identityId?: string;

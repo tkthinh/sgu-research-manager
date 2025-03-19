@@ -22,22 +22,22 @@ interface WorkFormProps {
 }
 
 const schema = z.object({
-  title: z.string().min(1, 'Tiêu đề là bắt buộc'),
-  timePublished: z.string().min(1, 'Thời gian xuất bản là bắt buộc'),
-  totalAuthors: z.number().min(1, 'Số tác giả phải lớn hơn 0'),
-  totalMainAuthors: z.number().min(1, 'Số tác giả chính phải lớn hơn 0'),
-  details: z.string().optional(),
+  title: z.string().min(2, 'Tên công trình phải có ít nhất 2 ký tự'),
+  timePublished: z.any().optional().nullable(),
+  totalAuthors: z.coerce.number().min(1, 'Số tác giả phải lớn hơn 0'),
+  totalMainAuthors: z.coerce.number().min(1, 'Số tác giả chính phải lớn hơn 0'),
+  details: z.any().optional(),
   source: z.number(),
-  workTypeId: z.string().uuid('Loại công trình không hợp lệ'),
-  workLevelId: z.string().uuid('Cấp công trình không hợp lệ'),
+  workTypeId: z.string().min(1, 'Loại công trình là bắt buộc'),
+  workLevelId: z.string().min(1, 'Cấp độ công trình là bắt buộc'),
   coAuthorUserIds: z.array(z.string().uuid('ID đồng tác giả không hợp lệ')),
   author: z.object({
     authorRoleId: z.string().uuid('Vai trò tác giả là bắt buộc'),
     purposeId: z.string().uuid('Mục đích là bắt buộc'),
     position: z.number().min(1, 'Vị trí tác giả phải lớn hơn 0'),
     scoreLevel: z.number().min(0, 'Mức điểm không hợp lệ'),
-    scimagoFieldId: z.string().uuid('Lĩnh vực Scimago là bắt buộc'),
-    fieldId: z.string().uuid('Lĩnh vực là bắt buộc'),
+    sCImagoFieldId: z.string().uuid('Lĩnh vực SCImago không hợp lệ').optional().nullable(),
+    fieldId: z.string().uuid('Lĩnh vực không hợp lệ').optional().nullable(),
   }),
 });
 
@@ -57,8 +57,8 @@ const defaultValues: FormData = {
     authorRoleId: '',
     purposeId: '',
     position: 1,
-    scoreLevel: 0,
-    scimagoFieldId: '',
+    scoreLevel: 1,
+    sCImagoFieldId: '',
     fieldId: '',
   },
 };
@@ -97,7 +97,7 @@ export default function WorkForm({
                 label="Tiêu đề"
                 fullWidth
                 error={!!errors.title}
-                helperText={errors.title?.message}
+                helperText={errors.title?.message?.toString()}
               />
             )}
           />
@@ -116,7 +116,7 @@ export default function WorkForm({
                   textField: {
                     fullWidth: true,
                     error: !!errors.timePublished,
-                    helperText: errors.timePublished?.message,
+                    helperText: errors.timePublished?.message?.toString(),
                   },
                 }}
               />
@@ -128,14 +128,21 @@ export default function WorkForm({
           <Controller
             name="totalAuthors"
             control={control}
-            render={({ field }) => (
+            render={({ field: { value, onChange, onBlur, ...field } }) => (
               <TextField
                 {...field}
                 label="Tổng số tác giả"
                 type="number"
+                inputProps={{ min: 1, step: 1 }}
                 fullWidth
                 error={!!errors.totalAuthors}
-                helperText={errors.totalAuthors?.message}
+                helperText={errors.totalAuthors?.message?.toString()}
+                value={value === null ? "" : value}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  onChange(inputValue === "" ? null : Number(inputValue));
+                }}
+                onBlur={onBlur}
               />
             )}
           />
@@ -145,14 +152,21 @@ export default function WorkForm({
           <Controller
             name="totalMainAuthors"
             control={control}
-            render={({ field }) => (
+            render={({ field: { value, onChange, onBlur, ...field } }) => (
               <TextField
                 {...field}
                 label="Số tác giả chính"
                 type="number"
+                inputProps={{ min: 1, step: 1 }}
                 fullWidth
                 error={!!errors.totalMainAuthors}
-                helperText={errors.totalMainAuthors?.message}
+                helperText={errors.totalMainAuthors?.message?.toString()}
+                value={value === null ? "" : value}
+                onChange={(e) => {
+                  const inputValue = e.target.value;
+                  onChange(inputValue === "" ? null : Number(inputValue));
+                }}
+                onBlur={onBlur}
               />
             )}
           />
@@ -170,7 +184,7 @@ export default function WorkForm({
                 rows={4}
                 fullWidth
                 error={!!errors.details}
-                helperText={errors.details?.message}
+                helperText={errors.details?.message?.toString()}
               />
             )}
           />
@@ -187,7 +201,7 @@ export default function WorkForm({
                 label="Nguồn"
                 fullWidth
                 error={!!errors.source}
-                helperText={errors.source?.message}
+                helperText={errors.source?.message?.toString()}
               >
                 <MenuItem value={WorkSource.NguoiDungKeKhai}>Người dùng kê khai</MenuItem>
                 <MenuItem value={WorkSource.WoS}>WoS</MenuItem>
@@ -208,7 +222,7 @@ export default function WorkForm({
                 label="Loại công trình"
                 fullWidth
                 error={!!errors.workTypeId}
-                helperText={errors.workTypeId?.message}
+                helperText={errors.workTypeId?.message?.toString()}
               >
                 {workTypes.map((type) => (
                   <MenuItem key={type.id} value={type.id}>
@@ -231,7 +245,7 @@ export default function WorkForm({
                 label="Cấp công trình"
                 fullWidth
                 error={!!errors.workLevelId}
-                helperText={errors.workLevelId?.message}
+                helperText={errors.workLevelId?.message?.toString()}
               >
                 {workLevels.map((level) => (
                   <MenuItem key={level.id} value={level.id}>
@@ -255,7 +269,7 @@ export default function WorkForm({
                 label="Vai trò tác giả"
                 fullWidth
                 error={!!errors.author?.authorRoleId}
-                helperText={errors.author?.authorRoleId?.message}
+                helperText={errors.author?.authorRoleId?.message?.toString()}
               >
                 {authorRoles.map((role) => (
                   <MenuItem key={role.id} value={role.id}>
@@ -278,7 +292,7 @@ export default function WorkForm({
                 label="Mục đích"
                 fullWidth
                 error={!!errors.author?.purposeId}
-                helperText={errors.author?.purposeId?.message}
+                helperText={errors.author?.purposeId?.message?.toString()}
               >
                 {purposes.map((purpose) => (
                   <MenuItem key={purpose.id} value={purpose.id}>
@@ -301,7 +315,7 @@ export default function WorkForm({
                 type="number"
                 fullWidth
                 error={!!errors.author?.position}
-                helperText={errors.author?.position?.message}
+                helperText={errors.author?.position?.message?.toString()}
               />
             )}
           />
@@ -314,19 +328,27 @@ export default function WorkForm({
             render={({ field }) => (
               <TextField
                 {...field}
+                select
                 label="Mức điểm"
-                type="number"
                 fullWidth
                 error={!!errors.author?.scoreLevel}
-                helperText={errors.author?.scoreLevel?.message}
-              />
+                helperText={errors.author?.scoreLevel?.message?.toString()}
+              >
+                <MenuItem value={1}>1 điểm</MenuItem>
+                <MenuItem value={2}>0.75 điểm</MenuItem>
+                <MenuItem value={3}>0.5 điểm</MenuItem>
+                <MenuItem value={4}>Top 10%</MenuItem>
+                <MenuItem value={5}>Top 30%</MenuItem>
+                <MenuItem value={6}>Top 50%</MenuItem>
+                <MenuItem value={7}>Top 100%</MenuItem>
+              </TextField>
             )}
           />
         </Grid>
 
         <Grid item xs={6}>
           <Controller
-            name="author.scimagoFieldId"
+            name="author.sCImagoFieldId"
             control={control}
             render={({ field }) => (
               <TextField
@@ -334,8 +356,8 @@ export default function WorkForm({
                 select
                 label="Lĩnh vực Scimago"
                 fullWidth
-                error={!!errors.author?.scimagoFieldId}
-                helperText={errors.author?.scimagoFieldId?.message}
+                error={!!errors.author?.sCImagoFieldId}
+                helperText={errors.author?.sCImagoFieldId?.message?.toString()}
               >
                 {scimagoFields.map((field) => (
                   <MenuItem key={field.id} value={field.id}>
@@ -358,7 +380,7 @@ export default function WorkForm({
                 label="Lĩnh vực"
                 fullWidth
                 error={!!errors.author?.fieldId}
-                helperText={errors.author?.fieldId?.message}
+                helperText={errors.author?.fieldId?.message?.toString()}
               >
                 {fields.map((field) => (
                   <MenuItem key={field.id} value={field.id}>
@@ -380,7 +402,7 @@ export default function WorkForm({
                 value={field.value}
                 onChange={field.onChange}
                 error={!!errors.coAuthorUserIds}
-                helperText={errors.coAuthorUserIds?.message}
+                helperText={errors.coAuthorUserIds?.message?.toString()}
               />
             )}
           />
