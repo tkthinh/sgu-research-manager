@@ -26,6 +26,8 @@ using Application.Users;
 using Application.SystemConfigs;
 using Application.ExcelOperations;
 using Application.Services;
+using Application.Caches;
+using StackExchange.Redis;
 
 namespace Infrastructure
 {
@@ -104,9 +106,12 @@ namespace Infrastructure
          services.AddScoped<IWorkService, WorkService>();
          services.AddScoped<IUserService, UserService>();
          services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
-         services.AddScoped<ISystemConfigService, SystemConfigService>();
+
+         services.AddScoped<ICacheManagementService, CacheManagementService>();
+         services.AddSingleton(ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
 
          services.AddScoped<IExcelService, ExcelService>();
+         services.AddScoped<ISystemConfigService, SystemConfigService>();
 
          // Đăng ký các mapper
          services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
