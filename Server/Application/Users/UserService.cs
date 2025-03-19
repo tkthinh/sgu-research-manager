@@ -5,6 +5,7 @@ using Domain.Enums;
 using Domain.Entities;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Users
 {
@@ -171,9 +172,13 @@ namespace Application.Users
         {
             var normalizedSearchTerm = searchTerm.ToLower();
             
-            var users = await unitOfWork.Repository<User>().FindAsync(u =>
-                u.FullName.ToLower().Contains(normalizedSearchTerm) ||
-                u.UserName.ToLower().Contains(normalizedSearchTerm));
+            var query = unitOfWork.Repository<User>()
+                .Include(u => u.Department)
+                .Where(u => 
+                    u.FullName.ToLower().Contains(normalizedSearchTerm) ||
+                    u.UserName.ToLower().Contains(normalizedSearchTerm));
+
+            var users = await query.ToListAsync();
 
             return users.Select(u => new UserSearchDto
             {

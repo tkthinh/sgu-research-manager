@@ -43,7 +43,7 @@ namespace WebApi.Controllers
             ));
         }
 
-        [HttpGet("by-worktype/{workTypeId}")]
+        [HttpGet("work-type/{workTypeId}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AuthorRoleDto>>>> GetAuthorRolesByWorkTypeId([FromRoute] Guid workTypeId)
         {
             if (workTypeId == Guid.Empty)

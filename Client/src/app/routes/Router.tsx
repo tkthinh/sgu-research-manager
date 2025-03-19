@@ -1,89 +1,101 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 import App from "../layouts/App";
 import Layout from "../layouts/Layout";
 
 import SignIn from "../../features/auth/SignIn";
 import SignUp from "../../features/auth/SignUp";
-import Dashboard from "../../features/dashboard/Dashboard";
+import WorksPage from "../../features/settings/works/WorksPage";
+import FieldsPage from "../../features/settings/fields/FieldPage";
 import DepartmentPage from "../../features/settings/departments/DepartmentPage";
-import FieldPage from "../../features/settings/fields/FieldPage";
-import Setting from "../../features/settings/Setting";
-import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 
 export const router = createBrowserRouter([
   {
-    Component: App,
+    element: <App />,
     children: [
       {
         path: "/",
-        Component: Layout,
+        element: <Navigate to="/dashboard" replace />,
+      },
+      {
+        path: "dashboard",
+        element: <Layout />,
         children: [
-          // ============== CHÍNH ==============
           {
-            path: "/",
-            element: <Dashboard />,
-          },
-          {
-            path: "/cong-trinh",
-            element: <></>,
-          },
-          {
-            path: "/cham-diem",
-            element: <></>,
-          },
-          {
-            path: "/phan-cong",
-            element: <></>,
-          },
-
-          // ============== BÁO CÁO ==============
-          {
-            path: "/bao-cao",
-            element: <></>,
-          },
-
-          // ============== HỆ THỐNG ==============
-          {
-            path: "/he-thong",
-            element: <Setting />,
-          },
-          // Quản lý tài khoản
-          {
-            path: "/he-thong/quan-ly-tai-khoan",
-            element: <></>,
-          },
-          // Quản lý thời gian
-          {
-            path: "/he-thong/quan-ly-thoi-gian",
-            element: <></>,
-          },
-          // Lịch sử upload
-          {
-            path: "/he-thong/lich-su-upload",
-            element: <></>,
-          },
-          // Loại công trình
-          {
-            path: "/he-thong/loai-cong-trinh",
-            element: <WorkTypePage />,
-          },
-          // Cấp công trình
-          {
-            path: "/he-thong/don-vi",
-            element: <DepartmentPage />,
-          },
-          // Ngành
-          {
-            path: "/he-thong/nganh",
-            element: <FieldPage />,
-          },
-          // Đơn vị công tác
-          {
-            path: "/he-thong/don-vi",
-            element: <DepartmentPage />,
+            index: true,
+            element: <div>Dashboard</div>,
           },
         ],
       },
+      {
+        path: "cong-trinh",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <WorksPage />,
+          }
+        ]
+      },
+      {
+        path: "cai-dat/nganh",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <FieldsPage />,
+          }
+        ]
+      },
+      // {
+      //   path: "cai-dat/vai-tro-tac-gia",
+      //   element: <Layout />,
+      //   children: [
+      //     {
+      //       index: true,
+      //       element: <AuthorRolePage />,
+      //     }
+      //   ]
+      // },
+      // {
+      //   path: "cai-dat/muc-dich",
+      //   element: <Layout />,
+      //   children: [
+      //     {
+      //       index: true,
+      //       element: <PurposePage />,
+      //     }
+      //   ]
+      // },
+      // {
+      //   path: "cai-dat/nganh-scimago",
+      //   element: <Layout />,
+      //   children: [
+      //     {
+      //       index: true,
+      //       element: <ScimagoFieldPage />,
+      //     }
+      //   ]
+      // },
+      {
+        path: "cai-dat/don-vi",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <DepartmentPage />,
+          }
+        ]
+      },
+      // {
+      //   path: "cai-dat/he-so-quy-doi",
+      //   element: <Layout />,
+      //   children: [
+      //     {
+      //       index: true,
+      //       element: <FactorPage />,
+      //     }
+      //   ]
+      // },
     ],
   },
   // ============== ĐĂNG NHẬP/ ĐĂNG KÝ ==============

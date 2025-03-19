@@ -61,24 +61,8 @@ namespace WebApi.Controllers
             ));
         }
 
-
-        [HttpGet("search")]
-        //[Authorize(Roles = "User")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> SearchWorks([FromQuery] string title)
-        {
-            if (string.IsNullOrEmpty(title))
-                return BadRequest(new ApiResponse<object>(false, "Tiêu đề không được để trống"));
-
-            var works = await _workService.SearchWorksAsync(title);
-            return Ok(new ApiResponse<IEnumerable<WorkDto>>(
-                true,
-                "Tìm kiếm công trình thành công",
-                works
-            ));
-        }
-
         [HttpPost]
-        //[Authorize(Roles = "User")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> CreateWork([FromBody] CreateWorkRequestDto request)
         {
             try
@@ -95,7 +79,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "User")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<bool>>> DeleteWork(Guid id)
         {
             try
@@ -246,7 +230,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPatch("{workId}/update-by-author")]
-        //[Authorize(Roles = "User")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAuthor(
               [FromRoute] Guid workId,
               [FromBody] UpdateWorkByAuthorRequestDto request)
@@ -317,33 +301,25 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("my-works")]
-        //[Authorize(Roles = "User")]
+        [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyWorks()
         {
             try
             {
-                var works = await _workService.GetAllWorksWithAuthorsAsync();
+                var useridclaim = User.FindFirst("id")?.Value;
+                if (string.IsNullOrEmpty(useridclaim) || !Guid.TryParse(useridclaim, out var userid))
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "không xác định được người dùng"));
+                }
+
+                // lấy danh sách công trình mà user đã kê khai
+                var works = await _workService.GetWorksByCurrentUserAsync(userid);
 
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
-                    "Lấy danh sách công trình thành công",
+                    "lấy danh sách công trình của người dùng hiện tại thành công",
                     works
                 ));
-                // // Lấy UserId từ token
-                // var userIdClaim = User.FindFirst("id")?.Value;
-                // if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-                // {
-                //     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
-                // }
-
-                // // Lấy danh sách công trình mà user đã kê khai
-                // var works = await _workService.GetWorksByCurrentUserAsync(userId);
-
-                // return Ok(new ApiResponse<IEnumerable<WorkDto>>(
-                //     true,
-                //     "Lấy danh sách công trình của người dùng hiện tại thành công",
-                //     works
-                // ));
             }
             catch (Exception ex)
             {

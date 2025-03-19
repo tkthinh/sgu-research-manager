@@ -28,27 +28,27 @@ public class AuthController : ControllerBase
       this.configuration = configuration;
    }
 
-   [HttpPost("login")]
-   public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
-   {
-      var identityUser = await userManager.FindByNameAsync(model.Username);
-
-      if (identityUser == null || !await userManager.CheckPasswordAsync(identityUser, model.Password))
-      {
-         return Unauthorized(new ApiResponse<object>(false, "Sai thông tin đăng nhập", null));
-      }
-
-      // Create user claims
-      var authClaims = new List<Claim>
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
     {
-        new Claim(ClaimTypes.Name, identityUser.UserName!),
-        new Claim(ClaimTypes.Email, identityUser.Email!),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
+        var identityUser = await userManager.FindByNameAsync(model.Username);
 
-      // Optionally, add roles as claims:
-      var userRoles = await userManager.GetRolesAsync(identityUser);
-      authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
+        if (identityUser == null || !await userManager.CheckPasswordAsync(identityUser, model.Password))
+        {
+            return Unauthorized(new ApiResponse<object>(false, "Sai thông tin đăng nhập", null));
+        }
+
+        // Create user claims
+        var authClaims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, identityUser.UserName!),
+            new Claim(ClaimTypes.Email, identityUser.Email!),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        // Optionally, add roles as claims:
+        var userRoles = await userManager.GetRolesAsync(identityUser);
+        authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
       var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
       if (user is not null)
@@ -57,26 +57,26 @@ public class AuthController : ControllerBase
          authClaims.Add(new Claim("id", user.Id.ToString())); // Thêm UserId vào token
       }
 
-      // Generate the token
-      var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+        // Generate the token
+        var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
 
-      var token = new JwtSecurityToken(
-          issuer: configuration["Jwt:Issuer"],
-          audience: configuration["Jwt:Audience"],
-          expires: DateTime.Now.AddHours(3),
-          claims: authClaims,
-          signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-      );
+        var token = new JwtSecurityToken(
+            issuer: configuration["Jwt:Issuer"],
+            audience: configuration["Jwt:Audience"],
+            expires: DateTime.Now.AddHours(3),
+            claims: authClaims,
+            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+        );
 
-      var response = new ApiResponse<object>(
-          true,
-          "Đăng nhập thành công",
-          new
-          {
-             token = new JwtSecurityTokenHandler().WriteToken(token),
-             expiration = token.ValidTo,
-             user
-          });
+        var response = new ApiResponse<object>(
+            true,
+            "Đăng nhập thành công",
+            new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                expiration = token.ValidTo,
+                user
+            });
 
       return Ok(response);
    }
@@ -115,19 +115,19 @@ public class AuthController : ControllerBase
             return BadRequest(new ApiResponse<object>(false, $"Lỗi khi đăng ký: {roleErrors}"));
          }
 
-         // Map to your domain user DTO.
-         var userDto = new UserDto
-         {
-            FullName = request.FullName,
-            UserName = identityUser.UserName,
-            Email = identityUser.Email,
-            IdentityId = identityUser.Id,
-            AcademicTitle = request.AcademicTitle,
-            OfficerRank = request.OfficerRank,
-            DepartmentId = request.DepartmentId,
-            FieldId = request.FieldId,
-            Role = "User"
-         };
+            // Map to your domain user DTO.
+            var userDto = new UserDto
+            {
+                FullName = request.FullName,
+                UserName = identityUser.UserName,
+                Email = identityUser.Email,
+                IdentityId = identityUser.Id,
+                AcademicTitle = request.AcademicTitle,
+                OfficerRank = request.OfficerRank,
+                DepartmentId = request.DepartmentId,
+                FieldId = request.FieldId,
+                Role = "User"
+            };
 
          // Create the domain user.
          var user = await userService.CreateAsync(userDto);
