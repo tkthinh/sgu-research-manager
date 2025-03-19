@@ -9,11 +9,17 @@ namespace Infrastructure.Data.Repositories
     {
         protected readonly ApplicationDbContext context;
         private readonly DbSet<T> dbSet;
+        protected IQueryable<T> Query => dbSet;
 
         public GenericRepository(ApplicationDbContext context)
         {
             this.context = context;
             dbSet = context.Set<T>();
+        }
+
+        public virtual IQueryable<T> Include(Expression<Func<T, object>> includeExpression)
+        {
+            return Query.Include(includeExpression);
         }
 
         public virtual async Task CreateAsync(T entity)
@@ -61,7 +67,7 @@ namespace Infrastructure.Data.Repositories
 
         public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
         {
-            return await dbSet.Where(predicate).ToListAsync();
+            return await Query.Where(predicate).ToListAsync();
         }
 
         public virtual async Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)

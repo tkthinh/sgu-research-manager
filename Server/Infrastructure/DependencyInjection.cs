@@ -54,14 +54,14 @@ namespace Infrastructure
             options.Password.RequiredLength = 6;
          });
 
-         // Cấu hình Redis Cache
-         services.AddStackExchangeRedisCache(options =>
-         {
-            options.Configuration = configuration.GetConnectionString("Redis");
-         });
+            // Cấu hình Redis Cache
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration.GetConnectionString("Redis");
+            });
 
-         // Đăng ký Identity
-         services.AddIdentityCore<IdentityUser>()
+            // Đăng ký Identity
+            services.AddIdentityCore<IdentityUser>()
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AuthDbContext>()
             .AddDefaultTokenProviders();
