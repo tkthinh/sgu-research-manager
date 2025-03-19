@@ -66,12 +66,6 @@ namespace Application.Works
             return dto;
         }
 
-        public async Task<IEnumerable<WorkDto>> SearchWorksAsync(string title, CancellationToken cancellationToken = default)
-        {
-            var works = await _workRepository.FindWorksWithAuthorsAsync(title);
-            return _mapper.MapToDtos(works);
-        }
-
         public async Task<WorkDto> CreateWorkWithAuthorAsync(CreateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
@@ -91,7 +85,7 @@ namespace Application.Works
                 TotalAuthors = request.TotalAuthors,
                 TotalMainAuthors = request.TotalMainAuthors,
                 Details = request.Details,
-                Source = request.Source,
+                Source = WorkSource.NguoiDungKeKhai,
                 WorkTypeId = request.WorkTypeId,
                 WorkLevelId = request.WorkLevelId,
                 CreatedDate = DateTime.UtcNow
@@ -315,7 +309,7 @@ namespace Application.Works
                 work.TotalAuthors = request.WorkRequest.TotalAuthors ?? work.TotalAuthors;
                 work.TotalMainAuthors = request.WorkRequest.TotalMainAuthors ?? work.TotalMainAuthors;
                 work.Details = request.WorkRequest.Details ?? work.Details;
-                work.Source = request.WorkRequest.Source != default ? request.WorkRequest.Source : work.Source;
+                work.Source = request.WorkRequest.Source;
                 work.WorkTypeId = request.WorkRequest.WorkTypeId ?? work.WorkTypeId;
                 work.WorkLevelId = request.WorkRequest.WorkLevelId ?? work.WorkLevelId;
                 work.ModifiedDate = DateTime.UtcNow;
@@ -410,10 +404,10 @@ namespace Application.Works
                 work.TotalAuthors = request.WorkRequest.TotalAuthors ?? work.TotalAuthors;
                 work.TotalMainAuthors = request.WorkRequest.TotalMainAuthors ?? work.TotalMainAuthors;
                 work.Details = request.WorkRequest.Details ?? work.Details;
-                work.Source = request.WorkRequest.Source != default ? request.WorkRequest.Source : work.Source;
+                work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
                 work.WorkTypeId = request.WorkRequest.WorkTypeId ?? work.WorkTypeId;
                 work.WorkLevelId = request.WorkRequest.WorkLevelId ?? work.WorkLevelId;
-            work.ModifiedDate = DateTime.UtcNow;
+                work.ModifiedDate = DateTime.UtcNow;
             }
 
             // Kiểm tra xem user đã có thông tin tác giả chưa
