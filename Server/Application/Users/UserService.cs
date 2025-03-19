@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Application.Users
 {
-   public class UserService : GenericService<UserDto, User>, IUserService
+   public class UserService : GenericCachedService<UserDto, User>, IUserService
    {
       private readonly IUserRepository repository;
 
@@ -16,9 +16,10 @@ namespace Application.Users
           IUnitOfWork unitOfWork,
           IGenericMapper<UserDto, User> mapper,
           IUserRepository repository,
+          IDistributedCache cache,
           ILogger<UserService> logger
           )
-          : base(unitOfWork, mapper, logger)
+          : base(unitOfWork, mapper, cache, logger)
       {
          this.repository = repository;
       }
