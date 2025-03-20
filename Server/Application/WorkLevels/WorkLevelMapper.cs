@@ -12,6 +12,7 @@ namespace Application.WorkLevels
                 Id = entity.Id,
                 Name = entity.Name,
                 WorkTypeId = entity.WorkTypeId,
+                WorkTypeName = entity.WorkType?.Name,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
@@ -19,8 +20,7 @@ namespace Application.WorkLevels
 
         public WorkLevel MapToEntity(WorkLevelDto dto)
         {
-
-           return new WorkLevel
+            return new WorkLevel
             {
                 Id = dto.Id,
                 Name = dto.Name,
