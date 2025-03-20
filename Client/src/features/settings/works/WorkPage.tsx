@@ -37,7 +37,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HistoryIcon from "@mui/icons-material/History";
 import AddIcon from "@mui/icons-material/Add";
-import { searchUsers, getUserById } from "../../../lib/api/usersApi";
+import { getUserById } from "../../../lib/api/usersApi";
 import { User } from "../../../lib/types/models/User";
 
 // Hàm chuyển đổi ScoreLevel thành chuỗi hiển thị
@@ -58,7 +58,7 @@ const getScoreLevelText = (scoreLevel: number): string => {
     case ScoreLevel.HundredPercent:
       return "Top 100%";
     default:
-      return "Không xác định";
+      return "-";
   }
 };
 
@@ -66,7 +66,6 @@ export default function WorksPage() {
   const queryClient = useQueryClient();
   const [openFormDialog, setOpenFormDialog] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
-  const [markingAuthorId, setMarkingAuthorId] = useState<string | null>(null);
   const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
 
   // Fetch works
@@ -112,7 +111,25 @@ export default function WorksPage() {
     mutationFn: async (data: any) => {
       try {
         console.log("Dữ liệu thực tế gửi lên server:", JSON.stringify(data, null, 2));
-        return await createWork(data);
+        return await createWork({
+          title: data.workRequest.title,
+          timePublished: data.workRequest.timePublished,
+          totalAuthors: data.workRequest.totalAuthors,
+          totalMainAuthors: data.workRequest.totalMainAuthors,
+          source: data.workRequest.source,
+          workTypeId: data.workRequest.workTypeId,
+          workLevelId: data.workRequest.workLevelId,
+          details: data.workRequest.details,
+          author: {
+            authorRoleId: data.authorRequest.authorRoleId,
+            purposeId: data.authorRequest.purposeId,
+            position: data.authorRequest.position,
+            scoreLevel: data.authorRequest.scoreLevel,
+            scImagoFieldId: data.authorRequest.scImagoFieldId, 
+            fieldId: data.authorRequest.fieldId
+          },
+          coAuthorUserIds: data.coAuthorUserIds
+        });
       } catch (error: any) {
         console.error("Chi tiết lỗi từ server:", error.response?.data);
         throw error;
@@ -168,50 +185,6 @@ export default function WorksPage() {
       toast.error("Lỗi khi cập nhật công trình: " + (error as Error).message);
     },
   });
-
-  // Mutation để cập nhật trạng thái đánh dấu
-  const markForScoringMutation = useMutation({
-    mutationFn: (params: { authorId: string; marked: boolean }) => {
-      setMarkingAuthorId(params.authorId);
-      console.log(`Đánh dấu authorId ${params.authorId} với trạng thái ${params.marked}`);
-      return setMarkedForScoring(params.authorId, params.marked);
-    },
-    onSuccess: () => {
-      toast.success("Cập nhật trạng thái đánh dấu thành công");
-      
-      // Xóa cache và refetch dữ liệu mới
-      queryClient.removeQueries({ queryKey: ["works", "my-works"] });
-      
-      // Bắt buộc refetch dữ liệu ngay lập tức
-      setTimeout(() => {
-        refetch();
-        setMarkingAuthorId(null);
-      }, 100);
-    },
-    onError: (error: any) => {
-      console.error("Lỗi khi cập nhật trạng thái đánh dấu:", error);
-      // Kiểm tra nếu lỗi chứa thông báo về vượt quá giới hạn
-      const errorMessage = error.response?.data?.message || error.message || 'Đã có lỗi xảy ra';
-      if (errorMessage.includes("vượt quá giới hạn") || errorMessage.includes("quá giới hạn")) {
-        toast.error(`Không thể đánh dấu: ${errorMessage}`, { autoClose: 7000 });
-      } else {
-        toast.error(`Lỗi khi cập nhật trạng thái đánh dấu: ${errorMessage}`);
-      }
-      setMarkingAuthorId(null);
-    },
-  });
-
-  // Hàm xử lý thay đổi trạng thái đánh dấu
-  const handleMarkForScoring = async (authorId: string, currentMarked: boolean) => {
-    try {
-      await markForScoringMutation.mutateAsync({
-        authorId,
-        marked: !currentMarked
-      });
-    } catch (error) {
-      // Lỗi đã được xử lý trong onError của mutation
-    }
-  };
 
   // Lấy thông tin đồng tác giả khi có dữ liệu công trình
   useEffect(() => {
@@ -383,6 +356,9 @@ export default function WorksPage() {
         }
       }
       
+      // Xử lý tham số scImagoFieldId - đảm bảo đúng format (viết hoa chữ I)
+      const scImagoFieldId = data.author.sCImagoFieldId || data.author.scImagoFieldId;
+      
       // Xử lý dữ liệu trước khi gửi
       const formattedData = {
         workRequest: {
@@ -400,7 +376,7 @@ export default function WorksPage() {
           purposeId: data.author.purposeId,
           position: data.author.position ? parseInt(String(data.author.position)) : undefined,
           scoreLevel: data.author.scoreLevel ? Number(data.author.scoreLevel) : undefined,
-          scImagoFieldId: data.author.sCImagoFieldId ? String(data.author.sCImagoFieldId) : undefined,
+          scImagoFieldId: scImagoFieldId ? String(scImagoFieldId) : undefined,
           fieldId: data.author.fieldId ? String(data.author.fieldId) : undefined
         },
         coAuthorUserIds: Array.isArray(data.coAuthorUserIds) ? data.coAuthorUserIds : []
@@ -465,19 +441,6 @@ export default function WorksPage() {
     }
   };
 
-  const getProofStatusText = (status: number) => {
-    switch (status) {
-      case ProofStatus.ChuaXuLy:
-        return "Chưa xử lý";
-      case ProofStatus.HopLe:
-        return "Hợp lệ";
-      case ProofStatus.KhongHopLe:
-        return "Không hợp lệ";
-      default:
-        return "Không xác định";
-    }
-  };
-
   const columns: GridColDef[] = [
     {
       field: "stt",
@@ -526,7 +489,7 @@ export default function WorksPage() {
     },
     {
       field: "details",
-      headerName: "Thông tin chi tiết của công trình",
+      headerName: "Thông tin chi tiết",
       type: "string",
       width: 300,
       renderCell: (params: any) => {
@@ -564,55 +527,23 @@ export default function WorksPage() {
       },
     },
     {
-      field: "totalAuthors",
-      headerName: "Tổng số tác giả",
-      type: "number",
-      width: 130,
-    },
-    {
-      field: "totalMainAuthors",
-      headerName: "Tổng số tác giả chính",
-      type: "number",
-      width: 160,
-    },
-    {
-      field: "authorRoleName",
-      headerName: "Vai trò tác giả",
-      type: "string",
-      width: 150,
-      renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.authorRoleName : "Không xác định"}</div>;
-      },
-    },
-    {
-      field: "position",
-      headerName: "Vị trí tác giả",
-      type: "string",
-      width: 120,
-      renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.position !== undefined && author?.position !== null ? author.position : "Không xác định"}</div>;
-      },
-    },
-    {
       field: "coAuthors",
-      headerName: "Đồng tác giả",
+      headerName: "Số tác giả",
       type: "string",
-      width: 250,
+      width: 140,
       renderCell: (params: any) => {
         const workId = params.row.id;
         const coAuthors = coAuthorsMap[workId] || [];
         
         if (coAuthors.length === 0) return <div>-</div>;
         
-        const coAuthorsText = `${coAuthors.length} đồng tác giả`;
+        const coAuthorsText = `${coAuthors.length} tác giả`;
         
         return (
           <Tooltip 
             title={
               <div>
-                <Typography variant="subtitle2">Danh sách đồng tác giả:</Typography>
+                <Typography variant="subtitle2">Danh sách tác giả:</Typography>
                 {coAuthors.map((user, index) => (
                   <Typography key={index} variant="body2">
                     • {user.fullName} - {user.userName} - {user.departmentName || "Chưa có phòng ban"}
@@ -627,13 +558,39 @@ export default function WorksPage() {
       },
     },
     {
+      field: "totalMainAuthors",
+      headerName: "Số tác giả chính",
+      type: "number",
+      width: 140,
+    },
+    {
+      field: "authorRoleName",
+      headerName: "Vai trò tác giả",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author ? author.authorRoleName : "-"}</div>;
+      },
+    },
+    {
+      field: "position",
+      headerName: "Vị trí",
+      type: "string",
+      width: 80,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author?.position !== undefined && author?.position !== null ? author.position : "-"}</div>;
+      },
+    },
+    {
       field: "purposeName",
       headerName: "Mục đích quy đổi",
       type: "string",
       width: 180,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.purposeName : "Không xác định"}</div>;
+        return <div>{author ? author.purposeName : "-"}</div>;
       },
     },
     {
@@ -643,7 +600,7 @@ export default function WorksPage() {
       width: 150,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.fieldName : "Không xác định"}</div>;
+        return <div>{author ? author.fieldName : "-"}</div>;
       },
     },
     {
@@ -653,7 +610,20 @@ export default function WorksPage() {
       width: 180,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.scImagoFieldName : "Không xác định"}</div>;
+        return <div>{author ? author.scImagoFieldName : "-"}</div>;
+      },
+    },
+    {
+      field: "scoreLevel",
+      headerName: "Mức điểm",
+      type: "string",
+      width: 120,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
+          return <div>-</div>;
+        }
+        return <div>{getScoreLevelText(author.scoreLevel)}</div>;
       },
     },
     {
@@ -663,7 +633,7 @@ export default function WorksPage() {
       width: 120,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.workHour !== undefined && author?.workHour !== null ? author.workHour : "Không xác định"}</div>;
+        return <div>{author?.workHour !== undefined && author?.workHour !== null ? author.workHour : "-"}</div>;
       },
     },
     {
@@ -673,47 +643,7 @@ export default function WorksPage() {
       width: 120,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "Không xác định"}</div>;
-      },
-    },
-    {
-      field: "markedForScoring",
-      headerName: "Đánh dấu",
-      width: 120,
-      renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        if (!author) return <div>-</div>;
-        
-        const isMarked = author.markedForScoring === true;
-        const authorId = author.id;
-        const isLoading = markingAuthorId === authorId;
-        
-        return (
-          <Tooltip 
-            title={isMarked 
-                ? "Bỏ đánh dấu công trình này" 
-                : "Đánh dấu công trình này để tính điểm"
-            }
-          >
-            <span>
-              {isLoading ? (
-                <CircularProgress size={24} />
-              ) : (
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={isMarked}
-                      onChange={() => handleMarkForScoring(authorId, isMarked)}
-                      disabled={markForScoringMutation.isPending}
-                      color="primary"
-                    />
-                  }
-                  label=""
-                />
-              )}
-            </span>
-          </Tooltip>
-        );
+        return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
       },
     },
     {
@@ -737,7 +667,7 @@ export default function WorksPage() {
         const proofStatus = author ? author.proofStatus : undefined;
                 
         if (proofStatus === undefined || proofStatus === null) {
-          return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Không xác định</div>;
+          return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
         }
         
         // Kiểm tra giá trị và áp dụng trạng thái tương ứng
@@ -763,7 +693,7 @@ export default function WorksPage() {
             </div>
           );
         } else {
-          return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>Không xác định</div>;
+          return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
         }
       },
     },

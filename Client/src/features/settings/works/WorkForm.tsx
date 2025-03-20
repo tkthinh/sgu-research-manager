@@ -41,15 +41,15 @@ const schema = z.object({
   source: z.number(),
   workTypeId: z.string().uuid("ID loại công trình không hợp lệ"),
   workLevelId: z.string().uuid("ID cấp độ công trình không hợp lệ").optional().nullable(),
+  coAuthorUserIds: z.array(z.string().uuid("ID đồng tác giả không hợp lệ")).optional().default([]),
   author: z.object({
     authorRoleId: z.string().uuid("ID vai trò tác giả không hợp lệ"),
     purposeId: z.string().uuid("ID mục đích không hợp lệ"),
     position: z.number().min(1, "Vị trí tác giả phải lớn hơn 0").optional().nullable(),
-    scoreLevel: z.number().min(1, "Vui lòng chọn mức điểm").optional().nullable(),
+    scoreLevel: z.number().min(0, "Mức điểm không hợp lệ").optional().nullable(),
     sCImagoFieldId: z.string().uuid("ID lĩnh vực SCImago không hợp lệ").optional().nullable(),
     fieldId: z.string().uuid("ID lĩnh vực không hợp lệ").optional().nullable(),
   }),
-  coAuthorUserIds: z.array(z.string().uuid("ID đồng tác giả không hợp lệ")).optional().default([]),
 });
 
 type WorkFormData = z.infer<typeof schema>;
@@ -83,6 +83,7 @@ export default function WorkForm({
   const [selectedCoAuthors, setSelectedCoAuthors] = useState<User[]>([]);
   const [detailsText, setDetailsText] = useState<string>("");
   const [isLoadingCoAuthors, setIsLoadingCoAuthors] = useState(false);
+  const [visibleScoreLevels, setVisibleScoreLevels] = useState<number[]>([]);
   
   // Lấy userId từ localStorage hoặc context auth nếu có
   // Trong ứng dụng thực tế, bạn nên sử dụng hook auth chính thức
@@ -108,7 +109,7 @@ export default function WorkForm({
             authorRoleId: initialData.author?.authorRoleId || "",
             purposeId: initialData.author?.purposeId || "",
             position: initialData.author?.position || 1,
-            scoreLevel: initialData.author?.scoreLevel,
+            scoreLevel: initialData.author?.scoreLevel ?? null,
             sCImagoFieldId: initialData.author?.scImagoFieldId || "",
             fieldId: initialData.author?.fieldId || "",
           },
@@ -127,7 +128,7 @@ export default function WorkForm({
             authorRoleId: "",
             purposeId: "",
             position: 1,
-            scoreLevel: undefined,
+            scoreLevel: null,
             sCImagoFieldId: "",
             fieldId: "",
           },
@@ -137,6 +138,7 @@ export default function WorkForm({
 
   // Watch workTypeId để lấy dữ liệu phù hợp
   const workTypeId = watch("workTypeId");
+  const workLevelId = watch("workLevelId");
 
   // Fetch dữ liệu dựa trên workTypeId
   const { data: workLevelsData } = useQuery({
@@ -196,63 +198,104 @@ export default function WorkForm({
           authorRoleId: initialData.author?.authorRoleId || "",
           purposeId: initialData.author?.purposeId || "",
           position: initialData.author?.position || 1,
-          scoreLevel: initialData.author?.scoreLevel,
+          scoreLevel: initialData.author?.scoreLevel ?? null,
           sCImagoFieldId: initialData.author?.scImagoFieldId || "",
           fieldId: initialData.author?.fieldId || "",
         },
-        // Đảm bảo lọc ra người dùng hiện tại
         coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
       });
-
-      // Xử lý đồng tác giả
-      if (initialData.coAuthorUserIds?.length > 0) {
-        // Lọc ra người dùng hiện tại trước khi tải thông tin
-        const filteredCoAuthorIds = initialData.coAuthorUserIds
-          .filter(id => id.toString() !== currentUserId);
-        
-        // Tải thông tin đồng tác giả nếu có danh sách ID đã lọc
-        if (filteredCoAuthorIds.length > 0) {
+  
+      // Tải dữ liệu đồng tác giả
+      const loadCoAuthors = async () => {
+        if (initialData.coAuthorUserIds && initialData.coAuthorUserIds.length > 0) {
           setIsLoadingCoAuthors(true);
-          console.log("Bắt đầu tải thông tin đồng tác giả cho các id đã lọc:", filteredCoAuthorIds);
-          
-          const fetchCoAuthors = async () => {
-            try {
-              // Lấy thông tin chi tiết của từng đồng tác giả
-              const userPromises = filteredCoAuthorIds.map(async (id) => {
-                try {
-                  console.log("Đang lấy thông tin user với ID:", id);
-                  const response = await getUserById(id.toString());
-                  console.log("Kết quả lấy thông tin user:", response);
-                  return response.data;
-                } catch (error) {
-                  console.error("Lỗi khi lấy thông tin user:", id, error);
-                  return null;
+          try {
+            const coAuthorsData: User[] = [];
+            for (const userId of initialData.coAuthorUserIds) {
+              if (userId.toString() !== currentUserId) {
+                const response = await getUserById(userId);
+                if (response.success && response.data) {
+                  coAuthorsData.push(response.data);
                 }
-              });
-              
-              const users = await Promise.all(userPromises);
-              const validUsers = users.filter((user): user is User => user !== null);
-              console.log("Đã tải được thông tin đồng tác giả:", validUsers);
-              
-              // Đảm bảo lọc ra người dùng hiện tại một lần nữa để tránh trường hợp ID bị so sánh khác kiểu dữ liệu
-              const finalFilteredUsers = validUsers.filter(user => user.id !== currentUserId);
-              setSelectedCoAuthors(finalFilteredUsers);
-            } catch (error) {
-              console.error("Lỗi khi tải thông tin đồng tác giả:", error);
-            } finally {
-              setIsLoadingCoAuthors(false);
+              }
             }
-          };
-          
-          fetchCoAuthors();
+            setSelectedCoAuthors(coAuthorsData);
+          } catch (error) {
+            console.error("Lỗi khi tải dữ liệu đồng tác giả:", error);
+          } finally {
+            setIsLoadingCoAuthors(false);
+          }
         } else {
           setSelectedCoAuthors([]);
         }
-      } else {
-        setSelectedCoAuthors([]);
-      }
+      };
+      
+      loadCoAuthors();
     }
   }, [initialData, reset, currentUserId]);
+
+  // Kiểm tra và thiết lập các mức điểm (scoreLevel) hiển thị dựa trên loại công trình và cấp công trình
+  useEffect(() => {
+    // Nếu là loại công trình "Bài báo khoa học"
+    if (workTypeId === "2732c858-77dc-471d-bd9a-464a3142530a") {
+      if (workLevelId) {
+        // Cấp độ WoS - ID: "86683a97-fc7a-4b46-a779-f625f7d809a8" hoặc Scopus - ID: "34f94668-7151-457d-aa06-4bf4e2b27df3"
+        if (workLevelId === "86683a97-fc7a-4b46-a779-f625f7d809a8" || workLevelId === "34f94668-7151-457d-aa06-4bf4e2b27df3") {
+          // Các mức top
+          setVisibleScoreLevels([
+            ScoreLevel.TenPercent,
+            ScoreLevel.ThirtyPercent,
+            ScoreLevel.FiftyPercent,
+            ScoreLevel.HundredPercent
+          ]);
+        } else {
+          // Các mức điểm: 1, 0.75, 0.5
+          setVisibleScoreLevels([
+            ScoreLevel.One,
+            ScoreLevel.ZeroPointSevenFive,
+            ScoreLevel.ZeroPointFive
+          ]);
+        }
+      } else {
+        // Nếu chưa chọn cấp công trình, hiển thị tất cả
+        setVisibleScoreLevels([
+          ScoreLevel.One,
+          ScoreLevel.ZeroPointSevenFive,
+          ScoreLevel.ZeroPointFive,
+          ScoreLevel.TenPercent,
+          ScoreLevel.ThirtyPercent,
+          ScoreLevel.FiftyPercent,
+          ScoreLevel.HundredPercent
+        ]);
+      }
+    } else {
+      // Các loại công trình khác không có mức điểm
+      setVisibleScoreLevels([]);
+      // Reset scoreLevel khi chuyển loại công trình
+      setValue("author.scoreLevel", null);
+    }
+  }, [workTypeId, workLevelId, setValue]);
+
+  // Kiểm tra xem loại công trình có cấp công trình hay không
+  const [hasWorkLevels, setHasWorkLevels] = useState(true);
+
+  // Kiểm tra loại công trình có cấp độ hay không
+  useEffect(() => {
+    if (workTypeId) {
+      // Kiểm tra xem có dữ liệu workLevels không
+      if (workLevelsData?.data && Array.isArray(workLevelsData.data)) {
+        setHasWorkLevels(workLevelsData.data.length > 0);
+        
+        // Nếu không có cấp công trình, đặt workLevelId thành null
+        if (workLevelsData.data.length === 0) {
+          setValue("workLevelId", null);
+        }
+      } else {
+        // Mặc định là có cấp công trình
+        setHasWorkLevels(true);
+      }
+    }
+  }, [workTypeId, workLevelsData, setValue]);
 
   // Reset các trường phụ thuộc khi workTypeId thay đổi và không có initialData
   useEffect(() => {
@@ -475,7 +518,7 @@ export default function WorkForm({
                     fullWidth
                     error={!!errors.workLevelId}
                     helperText={errors.workLevelId?.message?.toString()}
-                    disabled={!workTypeId}
+                    disabled={!workTypeId || !hasWorkLevels}
                   >
                     {workLevelsData?.data?.map((level) => (
                       <MenuItem key={level.id} value={level.id}>
@@ -615,22 +658,43 @@ export default function WorkForm({
                 <Controller
                 name="author.scoreLevel"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...field}
+                      {...restField}
                     select
                     label="Mức điểm"
                     fullWidth
                     error={!!errors.author?.scoreLevel}
                     helperText={errors.author?.scoreLevel?.message?.toString()}
+                    disabled={visibleScoreLevels.length === 0}
+                    value={value ?? ""}
+                    onChange={(e) => {
+                      const newValue = e.target.value === "" ? null : Number(e.target.value);
+                      onChange(newValue);
+                    }}
                   >
-                    <MenuItem value={ScoreLevel.One}>1 điểm</MenuItem>
-                    <MenuItem value={ScoreLevel.ZeroPointSevenFive}>0.75 điểm</MenuItem>
-                    <MenuItem value={ScoreLevel.ZeroPointFive}>0.5 điểm</MenuItem>
-                    <MenuItem value={ScoreLevel.TenPercent}>Top 10%</MenuItem>
-                    <MenuItem value={ScoreLevel.ThirtyPercent}>Top 30%</MenuItem>
-                    <MenuItem value={ScoreLevel.FiftyPercent}>Top 50%</MenuItem>
-                    <MenuItem value={ScoreLevel.HundredPercent}>Top 100%</MenuItem>
+                    <MenuItem value="">Chọn mức điểm</MenuItem>
+                    {visibleScoreLevels.includes(ScoreLevel.One) && (
+                      <MenuItem value={ScoreLevel.One}>1 điểm</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.ZeroPointSevenFive) && (
+                      <MenuItem value={ScoreLevel.ZeroPointSevenFive}>0.75 điểm</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.ZeroPointFive) && (
+                      <MenuItem value={ScoreLevel.ZeroPointFive}>0.5 điểm</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.TenPercent) && (
+                      <MenuItem value={ScoreLevel.TenPercent}>Top 10%</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.ThirtyPercent) && (
+                      <MenuItem value={ScoreLevel.ThirtyPercent}>Top 30%</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.FiftyPercent) && (
+                      <MenuItem value={ScoreLevel.FiftyPercent}>Top 50%</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.HundredPercent) && (
+                      <MenuItem value={ScoreLevel.HundredPercent}>Top 100%</MenuItem>
+                    )}
                   </TextField>
                 )}
               />
