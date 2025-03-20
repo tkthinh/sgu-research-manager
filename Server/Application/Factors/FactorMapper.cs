@@ -11,9 +11,13 @@ namespace Application.Factors
             {
                 Id = entity.Id,
                 WorkTypeId = entity.WorkTypeId,
+                WorkTypeName = entity.WorkType?.Name,
                 WorkLevelId = entity.WorkLevelId,
+                WorkLevelName = entity.WorkLevel?.Name,
                 PurposeId = entity.PurposeId,
+                PurposeName = entity.Purpose?.Name,
                 AuthorRoleId = entity.AuthorRoleId,
+                AuthorRoleName = entity.AuthorRole?.Name,
                 Name = entity.Name,
                 ScoreLevel = entity.ScoreLevel,
                 ConvertHour = entity.ConvertHour,

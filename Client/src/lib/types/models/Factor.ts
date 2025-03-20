@@ -4,10 +4,13 @@ export interface Factor {
   id: string;
   workTypeId: string;
   workTypeName?: string;
-  workLevelId: string;
+  workLevelId?: string;
   workLevelName?: string;
   purposeId: string;
   purposeName?: string;
+  authorRoleId?: string;
+  authorRoleName?: string;
+  name?: string;
   scoreLevel: ScoreLevel;
   convertHour: number;
   maxAllowed: number;

@@ -3,11 +3,14 @@ using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 using Domain.Enums;
+using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class FactorsController : ControllerBase
     {
         private readonly IFactorService factorService;
@@ -22,12 +25,39 @@ namespace WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<ApiResponse<IEnumerable<FactorDto>>>> GetFactors()
         {
-            var factors = await factorService.GetAllAsync();
-            return Ok(new ApiResponse<IEnumerable<FactorDto>>(
-                true,
-                "Lấy dữ liệu hệ số thành công",
-                factors
-            ));
+            try
+            {
+                var factors = await factorService.GetAllAsync();
+                return Ok(new ApiResponse<IEnumerable<FactorDto>>(
+                    true,
+                    "Lấy dữ liệu hệ số thành công",
+                    factors
+                ));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Lỗi khi lấy danh sách hệ số thành công");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("work-type/{workTypeId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<FactorDto>>>> GetFactorsByWorkTypeId(Guid workTypeId)
+        {
+            try
+            {
+                var factors = await factorService.GetFactorsByWorkTypeIdAsync(workTypeId);
+                return Ok(new ApiResponse<IEnumerable<FactorDto>>(
+                    true,
+                    "Lấy dữ liệu hệ số thành công",
+                    factors
+                ));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Lỗi khi lấy danh sách hệ số thành công");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
         }
 
         [HttpGet("find")]
@@ -69,16 +99,24 @@ namespace WebApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<FactorDto>>> GetFactor([FromRoute] Guid id)
         {
-            var factor = await factorService.GetByIdAsync(id);
-            if (factor == null)
+            try
             {
-                return NotFound(new ApiResponse<FactorDto>(false, "Không tìm thấy hệ số"));
+                var factor = await factorService.GetByIdAsync(id);
+                if (factor == null)
+                {
+                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy hệ số"));
+                }
+                return Ok(new ApiResponse<FactorDto>(
+                    true,
+                    "Lấy dữ liệu hệ số thành công",
+                    factor
+                ));
             }
-            return Ok(new ApiResponse<FactorDto>(
-                true,
-                "Lấy dữ liệu hệ số thành công",
-                factor
-            ));
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Lỗi khi lấy thông tin hệ số thành công");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
         }
 
         [HttpPost]
