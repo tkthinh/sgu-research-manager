@@ -18,12 +18,21 @@ export const NAVIGATION: Navigation = [
   {
     title: 'Trang chủ',
     icon: <DashboardIcon />,
-    segment: 'dashboard'
   },
   {
     segment: 'cong-trinh',
     title: 'Công trình',
     icon: <ConstructionIcon />,
+  },
+  {
+    segment: 'quy-doi',
+    title: 'Đăng ký quy đổi',
+    icon: <LibraryAddIcon />,
+  },
+  {
+    segment: 'cham-diem',
+    title: 'Chấm điểm công trình',
+    icon: <RateReviewIcon />,
   },
   {
     segment: 'phan-cong',
@@ -53,40 +62,62 @@ export const NAVIGATION: Navigation = [
     title: 'Quản lý thời gian',
     icon: <ManageHistoryIcon />,
   },
+  // {
+  //   segment: 'lich-su-upload',
+  //   title: 'Lịch sử upload',
+  //   icon: <RestorePageIcon />,
+  // },
   {
-    segment: 'lich-su-upload',
-    title: 'Lịch sử upload',
-    icon: <RestorePageIcon />,
-  },
-  {
-    segment: 'cai-dat',
+    segment: 'he-thong',
     title: 'Cấu hình hệ thống',
     icon: <SettingsIcon />,
     children: [
       {
-        segment: 'he-so-quy-doi',
-        title: 'Hệ số quy đổi',
+        segment: 'he-so-cham-diem',
+        title: 'Hệ số chấm điểm',
       },
       {
         segment: 'vai-tro-tac-gia',
         title: 'Vai trò tác giả',
       },
       {
-        segment: 'muc-dich',
+        segment: 'muc-dich-quy-doi',
         title: 'Mục đích quy đổi',
       },
       {
-        segment: 'nganh',
-        title: 'Ngành',
+        segment: 'tinh-trang-minh-chung',
+        title: 'Tình trạng minh chứng',
+      },
+      {
+        kind: 'divider',
+      },
+      {
+        segment: 'loai-cong-trinh',
+        title: 'Loại công trình',
+      },
+      {
+        segment: 'cap-cong-trinh',
+        title: 'Cấp công trình',
       },
       {
         segment: 'nganh-scimago',
         title: 'Ngành SCImago',
       },
       {
+        segment: 'tinh-trang-cong-trinh',
+        title: 'Tình trạng công trình',
+      },
+      {
+        kind: 'divider',
+      },
+      {
+        segment: 'nganh',
+        title: 'Ngành',
+      },
+      {
         segment: 'don-vi',
         title: 'Đơn vị',
-      }
+      },
     ]
   },
 ];

@@ -6,7 +6,6 @@ import CustomAccount from "../shared/components/header/CustomAccount";
 export default function Layout() {
   return (
     <DashboardLayout
-      defaultSidebarCollapsed
       slots={{
         toolbarAccount: CustomAccount,
       }}
