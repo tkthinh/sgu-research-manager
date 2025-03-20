@@ -48,8 +48,16 @@ export const getWorksByDepartmentId = async (departmentId: string): Promise<ApiR
 
 // Set marked for scoring
 export const setMarkedForScoring = async (authorId: string, marked: boolean): Promise<ApiResponse<object>> => {
-  const response = await apiClient.patch<ApiResponse<object>>(`/works/authors/${authorId}/mark`, marked);
-  return response.data;
+  try {
+    console.log(`WorksApi:setMarkedForScoring - Đánh dấu authorId ${authorId} với trạng thái ${marked}`);
+    const response = await apiClient.patch<ApiResponse<object>>(`/works/authors/${authorId}/mark`, marked);
+    console.log("WorksApi:setMarkedForScoring - Phản hồi:", JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error: any) {
+    console.error("WorksApi:setMarkedForScoring - Chi tiết lỗi:", error.response?.data);
+    console.error("WorksApi:setMarkedForScoring - Status code:", error.response?.status);
+    throw error;
+  }
 };
 
 // Update work by admin

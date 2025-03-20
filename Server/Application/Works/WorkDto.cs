@@ -6,7 +6,7 @@ namespace Application.Works
     public class WorkDto
     {
         public Guid Id { get; set; }
-        public string Title { get; set; }
+        public required string Title { get; set; }
         public DateOnly? TimePublished { get; set; }
         public int? TotalAuthors { get; set; }
         public int? TotalMainAuthors { get; set; }

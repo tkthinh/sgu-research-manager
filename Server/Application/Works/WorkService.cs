@@ -246,10 +246,10 @@ namespace Application.Works
                 var maxAllowed = await GetMaxAllowedForScoring(work.WorkTypeId, work.WorkLevelId, author.ScoreLevel, cancellationToken);
 
                 // Đếm số lượng công trình đã được đánh dấu của người dùng với cùng ScoreLevel
-            var markedAuthors = await _unitOfWork.Repository<Author>()
-                    .FindAsync(a => a.UserId == author.UserId &&
-                                   a.MarkedForScoring &&
-                                   a.ScoreLevel == author.ScoreLevel);
+                var markedAuthors = await _unitOfWork.Repository<Author>()
+                        .FindAsync(a => a.UserId == author.UserId &&
+                                       a.MarkedForScoring &&
+                                       a.ScoreLevel == author.ScoreLevel);
 
                 if (markedAuthors.Count() >= maxAllowed)
                 {
