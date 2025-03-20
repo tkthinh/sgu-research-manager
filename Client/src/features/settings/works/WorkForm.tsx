@@ -11,7 +11,8 @@ import {
   Chip,
   Stack,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  Typography
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -81,7 +82,7 @@ export default function WorkForm({
 }: WorkFormProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCoAuthors, setSelectedCoAuthors] = useState<User[]>([]);
-  const [detailsText, setDetailsText] = useState<string>("");
+  const [detailsFields, setDetailsFields] = useState<Record<string, string>>({});
   const [isLoadingCoAuthors, setIsLoadingCoAuthors] = useState(false);
   const [visibleScoreLevels, setVisibleScoreLevels] = useState<number[]>([]);
   
@@ -139,6 +140,132 @@ export default function WorkForm({
   // Watch workTypeId để lấy dữ liệu phù hợp
   const workTypeId = watch("workTypeId");
   const workLevelId = watch("workLevelId");
+
+  // Khởi tạo các trường details dựa trên initialData
+  useEffect(() => {
+    if (initialData?.details) {
+      setDetailsFields(initialData.details);
+    } else {
+      setDetailsFields({});
+    }
+  }, [initialData]);
+
+  // Xác định các trường details cần hiển thị dựa trên loại công trình và cấp công trình
+  const getDetailsFieldsConfig = () => {
+    if (!workTypeId) return [];
+
+    // Bài báo khoa học
+    if (workTypeId === "2732c858-77dc-471d-bd9a-464a3142530a") {
+      // Cấp WoS
+      if (workLevelId === "0b031a2d-4ac5-48fb-9759-f7a2fe2f7290") {
+        return [
+          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
+          { key: "Số trang", label: "Số trang", required: false },
+          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
+          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
+          { key: "Loại WoS", label: "Loại WoS", required: true },
+          { key: "Xếp hạng tạp chí", label: "Xếp hạng tạp chí", required: false },
+        ];
+      }
+      // Cấp Scopus
+      else if (workLevelId === "34f94668-7151-457d-aa06-4bf4e2b27df3") {
+        return [
+          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
+          { key: "Số trang", label: "Số trang", required: false },
+          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
+          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
+          { key: "Xếp hạng tạp chí", label: "Xếp hạng tạp chí", required: false },
+        ];
+      }
+      // Các cấp khác: Trường, bộ/ngành, quốc tế
+      else {
+        return [
+          { key: "Tên tạp chí", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
+          { key: "Số trang", label: "Số trang", required: false },
+          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
+          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
+        ];
+      }
+    }
+    // Báo cáo khoa học
+    else if (workTypeId === "03412ca7-8ccf-4903-9018-457768060ab4") {
+      // Cấp WoS
+      if (workLevelId === "f81c134b-fd83-4e25-9590-cf7ecfc5b203") {
+        return [
+          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
+          { key: "Số trang", label: "Số trang", required: false },
+          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
+          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
+          { key: "Loại WoS", label: "Loại WoS", required: true },
+          { key: "Xếp hạng tạp chí", label: "Xếp hạng tạp chí", required: false },
+        ];
+      }
+      // Cấp Scopus
+      else if (workLevelId === "f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9") {
+        return [
+          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
+          { key: "Số trang", label: "Số trang", required: false },
+          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
+          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
+          { key: "Xếp hạng tạp chí", label: "Xếp hạng tạp chí", required: false },
+        ];
+      }
+      // Các cấp khác: Trường, bộ/ngành, quốc tế, quốc gia
+      else {
+        return [
+          { key: "Tên tạp chí", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
+          { key: "Số trang", label: "Số trang", required: false },
+          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
+          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
+        ];
+      }
+    }
+    // Chương sách, chuyên khảo, giáo trình - sách, tài liệu hướng dẫn, tham khảo
+    else if (["3bbfc66a-3144-4edf-959b-e049d7e33d97", "61bbbecc-038a-43b7-aafa-a95e25a93f38", 
+              "628a119e-324f-42b8-8ff4-e29ee5c643a9", "84a14a8b-eae8-4720-bc7c-e1f93b35a256", 
+              "8aaf0a8a-35ed-4768-8fd4-44fc4a561cd0", "1ff8d087-e0c3-45df-befc-662c0a80c10c"].includes(workTypeId)) {
+      return [
+        { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
+        { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
+        { key: "Số trang", label: "Số trang", required: false },
+        { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
+        { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
+      ];
+    }
+    // Đề tài, giáo trình
+    else if (["49cf7589-fb84-4934-be8e-991c6319a348", "323371c0-26c7-4549-90f2-11c881be402d"].includes(workTypeId)) {
+      return [
+        { key: "Mã số đề tài", label: "Mã số đề tài", required: true },
+        { key: "Sản phẩm thuộc đề tài", label: "Sản phẩm thuộc đề tài", required: false },
+        { key: "Xếp loại", label: "Xếp loại", required: false },
+      ];
+    }
+    // Hội thảo, hội nghị và hướng dẫn SV NCKH
+    else if (["140a3e34-ded1-4bfa-8633-fbea545cbdaa", "e2f7974c-47c3-478e-9b53-74093f6c621f"].includes(workTypeId)) {
+      return [
+        { key: "Hoạt động", label: "Hoạt động", required: true },
+      ];
+    }
+    
+    // Mặc định trả về mảng rỗng
+    return [];
+  };
+
+  
+  const detailsConfig = getDetailsFieldsConfig();
+
+  // Cập nhật details khi người dùng nhập vào các trường
+  const handleDetailsFieldChange = (key: string, value: string) => {
+    const updatedFields = { ...detailsFields, [key]: value };
+    setDetailsFields(updatedFields);
+    setValue("details", updatedFields);
+  };
 
   // Fetch dữ liệu dựa trên workTypeId
   const { data: workLevelsData } = useQuery({
@@ -332,29 +459,24 @@ export default function WorkForm({
   useEffect(() => {
     if (initialData?.details) {
       try {
-        // Convert details object to formatted JSON string for display
-        const detailsJson = JSON.stringify(initialData.details, null, 2);
-        setDetailsText(detailsJson);
+        // Khởi tạo trường details từ dữ liệu ban đầu
+        setDetailsFields(initialData.details);
       } catch (error) {
         console.error("Lỗi khi parse details:", error);
-        setDetailsText("");
+        setDetailsFields({});
       }
     } else {
-      setDetailsText("");
+      setDetailsFields({});
     }
   }, [initialData]);
 
   // Xử lý khi người dùng nhập chi tiết
   const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setDetailsText(value);
-    
     try {
-      // Cố gắng parse giá trị thành object JSON
-      const detailsObj = value ? JSON.parse(value) : {};
-      setValue("details", detailsObj);
+      const jsonValue = JSON.parse(e.target.value);
+      setDetailsFields(jsonValue);
+      setValue("details", jsonValue);
     } catch (error) {
-      // Nếu không parse được, vẫn lưu giá trị text nhưng không update form
       console.error("Lỗi khi parse JSON:", error);
     }
   };
@@ -382,7 +504,7 @@ export default function WorkForm({
         {activeTab === 0 && (
           // Tab thông tin công trình
           <>
-            <Grid item xs={12}>
+            <Grid item xs={6}>
               <Controller
                 name="title"
                 control={control}
@@ -398,7 +520,7 @@ export default function WorkForm({
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={6}>
                 <Controller
                   name="timePublished"
                   control={control}
@@ -419,6 +541,53 @@ export default function WorkForm({
                   </LocalizationProvider>
                   )}
                 />
+            </Grid>
+
+            <Grid item xs={6}>
+                <Controller
+                  name="workTypeId"
+                  control={control}
+                  render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                      label="Loại công trình"
+                    fullWidth
+                    error={!!errors.workTypeId}
+                    helperText={errors.workTypeId?.message?.toString()}
+                    >
+                    {workTypes.map((type) => (
+                        <MenuItem key={type.id} value={type.id}>
+                          {type.name}
+                        </MenuItem>
+                      ))}
+                  </TextField>
+                  )}
+                />
+            </Grid>
+
+            <Grid item xs={6}>
+                <Controller
+                  name="workLevelId"
+                  control={control}
+                  render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    label="Cấp công trình"
+                    fullWidth
+                    error={!!errors.workLevelId}
+                    helperText={errors.workLevelId?.message?.toString()}
+                    disabled={!workTypeId || !hasWorkLevels}
+                  >
+                    {workLevelsData?.data?.map((level) => (
+                      <MenuItem key={level.id} value={level.id}>
+                        {level.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
             </Grid>
 
             <Grid item xs={6}>
@@ -468,68 +637,7 @@ export default function WorkForm({
                 )}
               />
             </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                label="Chi tiết công trình (định dạng JSON)"
-                multiline
-                rows={4}
-                fullWidth
-                value={detailsText}
-                onChange={handleDetailsChange}
-                error={!!errors.details}
-                helperText={errors.details?.message?.toString() || "Nhập chi tiết công trình dưới dạng JSON, ví dụ: { \"ISSN\": \"1234-5678\", \"DOI\": \"10.1234/abcd\" }"}
-                placeholder='{ "ISSN": "1234-5678", "DOI": "10.1234/abcd" }'
-              />
-            </Grid>
-
-            <Grid item xs={6}>
-                <Controller
-                  name="workTypeId"
-                  control={control}
-                  render={({ field }) => (
-                  <TextField
-                    {...field}
-                    select
-                      label="Loại công trình"
-                    fullWidth
-                    error={!!errors.workTypeId}
-                    helperText={errors.workTypeId?.message?.toString()}
-                    >
-                    {workTypes.map((type) => (
-                        <MenuItem key={type.id} value={type.id}>
-                          {type.name}
-                        </MenuItem>
-                      ))}
-                  </TextField>
-                  )}
-                />
-            </Grid>
-
-            <Grid item xs={6}>
-                <Controller
-                  name="workLevelId"
-                  control={control}
-                  render={({ field }) => (
-                  <TextField
-                    {...field}
-                    select
-                    label="Cấp độ công trình"
-                    fullWidth
-                    error={!!errors.workLevelId}
-                    helperText={errors.workLevelId?.message?.toString()}
-                    disabled={!workTypeId || !hasWorkLevels}
-                  >
-                    {workLevelsData?.data?.map((level) => (
-                      <MenuItem key={level.id} value={level.id}>
-                        {level.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              />
-            </Grid>
-
+            
             <Grid item xs={12}>
               <Controller
                 name="coAuthorUserIds"
@@ -583,6 +691,29 @@ export default function WorkForm({
                 )}
               />
             </Grid>
+
+            {/* Chi tiết động dựa trên loại công trình và cấp công trình */}
+            {detailsConfig.length > 0 && (
+              <Grid item xs={12}>
+                <Grid container spacing={2}>
+                  {detailsConfig.map(field => (
+                    <Grid item xs={12} sm={6} key={field.key}>
+                      <TextField
+                        label={field.label}
+                        fullWidth
+                        value={detailsFields[field.key] || ""}
+                        onChange={(e) => handleDetailsFieldChange(field.key, e.target.value)}
+                        required={field.required}
+                        error={field.required && (!detailsFields[field.key] || detailsFields[field.key].trim() === "")}
+                        helperText={field.required && (!detailsFields[field.key] || detailsFields[field.key].trim() === "") 
+                          ? "Trường này là bắt buộc" 
+                          : ""}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Grid>
+            )}
           </>
         )}
 
@@ -621,7 +752,7 @@ export default function WorkForm({
                   <TextField
                       {...field}
                     select
-                    label="Mục đích"
+                    label="Mục đích quy đổi"
                     fullWidth
                     error={!!errors.author?.purposeId}
                     helperText={errors.author?.purposeId?.message?.toString()}

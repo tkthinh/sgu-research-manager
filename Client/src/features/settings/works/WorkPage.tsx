@@ -6,21 +6,18 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
   Typography,
   Tooltip,
   Container,
   Tabs,
   Tab,
-  Switch,
-  FormControlLabel,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { deleteWork, getMyWorks, createWork, updateWorkByAuthor, setMarkedForScoring } from "../../../lib/api/worksApi";
+import { deleteWork, getMyWorks, createWork, updateWorkByAuthor } from "../../../lib/api/worksApi";
 import { getWorkTypes } from "../../../lib/api/workTypesApi";
 import { getWorkLevels } from "../../../lib/api/workLevelsApi";
 import { getAuthorRoles } from "../../../lib/api/authorRolesApi";
@@ -235,7 +232,7 @@ export default function WorksPage() {
   // Handle form dialog
   const [selectedWork, setSelectedWork] = useState<Work | null>(null);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
@@ -503,7 +500,7 @@ export default function WorksPage() {
         return (
           <Tooltip 
             title={
-              <div style={{ whiteSpace: 'pre-line' }}>
+              <div style={{ whiteSpace: 'pre-line', fontSize: '0.8rem' }}>
                 {detailsText}
               </div>
             } 
@@ -653,7 +650,32 @@ export default function WorksPage() {
       width: 150,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.note || ""}</div>;
+        const noteText = author?.note || "";
+    
+        // Nếu không có ghi chú, hiển thị "-"
+        if (!noteText) {
+          return <div>-</div>;
+        }
+    
+        return (
+          <Tooltip 
+            title={
+              <div style={{ whiteSpace: 'pre-line', fontSize: '0.8rem' }}>
+                {noteText}
+              </div>
+            } 
+            arrow
+          >
+            <div style={{ 
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              width: '100%'
+            }}>
+              {noteText}
+            </div>
+          </Tooltip>
+        );
       },
     },
     {
