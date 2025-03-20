@@ -1,14 +1,12 @@
 import { Navigation } from "@toolpad/core";
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ConstructionIcon from '@mui/icons-material/Construction';
-import RateReviewIcon from '@mui/icons-material/RateReview';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RestorePageIcon from '@mui/icons-material/RestorePage';
-import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
 import LibraryAddCheckIcon from '@mui/icons-material/LibraryAddCheck';
 
 export const NAVIGATION: Navigation = [
@@ -27,8 +25,8 @@ export const NAVIGATION: Navigation = [
     icon: <ConstructionIcon />,
   },
   {
-    segment: 'danh-dau-cong-trinh',
-    title: 'Đánh dấu công trình',
+    segment: 'dang-ky-quy-doi',
+    title: 'Đăng ký quy đổi',
     icon: <LibraryAddCheckIcon />,
   },
   {
@@ -55,8 +53,8 @@ export const NAVIGATION: Navigation = [
     icon: <ManageAccountsIcon />,
   },
   {
-    segment: 'quan-ly-thoi-gian',
-    title: 'Quản lý thời gian',
+    segment: 'cau-hinh-he-thong',
+    title: 'Cấu hình hệ thống',
     icon: <ManageHistoryIcon />,
   },
   {

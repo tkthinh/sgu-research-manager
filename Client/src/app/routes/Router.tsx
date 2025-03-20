@@ -14,6 +14,7 @@ import AuthorRolePage from "../../features/settings/authorRoles/AuthorRolePage";
 import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 import MarkedWorksPage from "../../features/settings/works/MarkedWorksPage";
+import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
 
 export const router = createBrowserRouter([
   {
@@ -44,12 +45,22 @@ export const router = createBrowserRouter([
         ]
       },
       {
-        path: "danh-dau-cong-trinh",
+        path: "dang-ky-quy-doi",
         element: <Layout />,
         children: [
           {
             index: true,
             element: <MarkedWorksPage />,
+          }
+        ]
+      },
+      {
+        path: "cau-hinh-he-thong",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <SystemConfigPage />,
           }
         ]
       },
