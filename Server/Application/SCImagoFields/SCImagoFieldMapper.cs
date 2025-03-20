@@ -12,6 +12,7 @@ namespace Application.SCImagoFields
                 Id = entity.Id,
                 Name = entity.Name,
                 WorkTypeId = entity.WorkTypeId,
+                WorkTypeName = entity.WorkType?.Name,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
