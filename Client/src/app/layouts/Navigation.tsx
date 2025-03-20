@@ -60,9 +60,17 @@ export const NAVIGATION: Navigation = [
   },
   {
     segment: 'cai-dat',
-    title: 'Cấu hình hệ thống',
+    title: 'Quản lý danh mục',
     icon: <SettingsIcon />,
     children: [
+      {
+        segment: 'loai-cong-trinh',
+        title: 'Loại công trình',
+      },
+      {
+        segment: 'cap-cong-trinh',
+        title: 'Cấp công trình',
+      },
       {
         segment: 'he-so-quy-doi',
         title: 'Hệ số quy đổi',
@@ -76,12 +84,12 @@ export const NAVIGATION: Navigation = [
         title: 'Mục đích quy đổi',
       },
       {
-        segment: 'nganh',
-        title: 'Ngành',
-      },
-      {
         segment: 'nganh-scimago',
         title: 'Ngành SCImago',
+      },
+      {
+        segment: 'nganh',
+        title: 'Ngành',
       },
       {
         segment: 'don-vi',

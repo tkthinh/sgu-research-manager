@@ -13,6 +13,7 @@ namespace Application.AuthorRoles
                 Name = entity.Name,
                 IsMainAuthor = entity.IsMainAuthor,
                 WorkTypeId = entity.WorkTypeId,
+                WorkTypeName = entity.WorkType?.Name,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };

@@ -44,14 +44,9 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("work-type/{workTypeId}")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<AuthorRoleDto>>>> GetAuthorRolesByWorkTypeId([FromRoute] Guid workTypeId)
+        public async Task<ActionResult<ApiResponse<IEnumerable<AuthorRoleDto>>>> GetAuthorRolesByWorkTypeId(Guid workTypeId)
         {
-            if (workTypeId == Guid.Empty)
-            {
-                return BadRequest(new ApiResponse<IEnumerable<AuthorRoleDto>>(false, "WorkTypeId không hợp lệ"));
-            }
-
-            var roles = await authorRoleService.GetByWorkTypeIdAsync(workTypeId);
+            var roles = await authorRoleService.GetAuthorRolesByWorkTypeIdAsync(workTypeId);
             if (roles == null || !roles.Any())
             {
                 return Ok(new ApiResponse<IEnumerable<AuthorRoleDto>>(

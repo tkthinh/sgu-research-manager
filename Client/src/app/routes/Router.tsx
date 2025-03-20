@@ -4,9 +4,15 @@ import Layout from "../layouts/Layout";
 
 import SignIn from "../../features/auth/SignIn";
 import SignUp from "../../features/auth/SignUp";
-import WorksPage from "../../features/settings/works/WorksPage";
-import FieldsPage from "../../features/settings/fields/FieldPage";
+import WorkPage from "../../features/settings/works/WorkPage";
+import FieldPage from "../../features/settings/fields/FieldPage";
 import DepartmentPage from "../../features/settings/departments/DepartmentPage";
+import PurposePage from "../../features/settings/purposes/PurposePage";
+import ScimagoFieldPage from "../../features/settings/scimagoFields/ScimagoFieldPage";
+import FactorPage from "../../features/settings/factors/FactorPage";
+import AuthorRolePage from "../../features/settings/authorRoles/AuthorRolePage";
+import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
+import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 
 export const router = createBrowserRouter([
   {
@@ -32,7 +38,17 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <WorksPage />,
+            element: <WorkPage />,
+          }
+        ]
+      },
+      {
+        path: "cai-dat/loai-cong-trinh",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <WorkTypePage />,
           }
         ]
       },
@@ -42,40 +58,50 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <FieldsPage />,
+            element: <FieldPage />,
           }
         ]
       },
-      // {
-      //   path: "cai-dat/vai-tro-tac-gia",
-      //   element: <Layout />,
-      //   children: [
-      //     {
-      //       index: true,
-      //       element: <AuthorRolePage />,
-      //     }
-      //   ]
-      // },
-      // {
-      //   path: "cai-dat/muc-dich",
-      //   element: <Layout />,
-      //   children: [
-      //     {
-      //       index: true,
-      //       element: <PurposePage />,
-      //     }
-      //   ]
-      // },
-      // {
-      //   path: "cai-dat/nganh-scimago",
-      //   element: <Layout />,
-      //   children: [
-      //     {
-      //       index: true,
-      //       element: <ScimagoFieldPage />,
-      //     }
-      //   ]
-      // },
+      {
+        path: "cai-dat/cap-cong-trinh",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <WorkLevelPage />,
+          }
+        ]
+      },
+      {
+        path: "cai-dat/vai-tro-tac-gia",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <AuthorRolePage />,
+          }
+        ]
+      },
+      {
+        path: "cai-dat/muc-dich",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <PurposePage />,
+          }
+        ]
+      },
+      {
+        path: "cai-dat/nganh-scimago",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <ScimagoFieldPage />,
+          }
+        ]
+      },
       {
         path: "cai-dat/don-vi",
         element: <Layout />,
@@ -86,16 +112,16 @@ export const router = createBrowserRouter([
           }
         ]
       },
-      // {
-      //   path: "cai-dat/he-so-quy-doi",
-      //   element: <Layout />,
-      //   children: [
-      //     {
-      //       index: true,
-      //       element: <FactorPage />,
-      //     }
-      //   ]
-      // },
+      {
+        path: "cai-dat/he-so-quy-doi",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <FactorPage />,
+          }
+        ]
+      },
     ],
   },
   // ============== ĐĂNG NHẬP/ ĐĂNG KÝ ==============
