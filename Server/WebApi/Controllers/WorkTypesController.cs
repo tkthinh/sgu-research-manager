@@ -19,12 +19,23 @@ namespace WebApi.Controllers
       }
 
       [HttpGet]
-      public async Task<ActionResult<ApiResponse<IEnumerable<WorkTypeWithLevelCountDto>>>> GetWorkTypes()
+      public async Task<ActionResult<ApiResponse<IEnumerable<WorkTypeDto>>>> GetWorkTypes()
       {
-         var workTypes = await workTypeService.GetWorkTypesWithCountAsync();
-         return Ok(new ApiResponse<IEnumerable<WorkTypeWithLevelCountDto>>(
+         var workTypes = await workTypeService.GetAllAsync();
+         return Ok(new ApiResponse<IEnumerable<WorkTypeDto>>(
              true,
              "Lấy dữ liệu loại công trình thành công",
+             workTypes
+         ));
+      }
+
+      [HttpGet("with-details")]
+      public async Task<ActionResult<ApiResponse<IEnumerable<WorkTypeWithDetailsCountDto>>>> GetWorkTypesWithDetailsCount()
+      {
+         var workTypes = await workTypeService.GetWorkTypesWithDetailsCountAsync();
+         return Ok(new ApiResponse<IEnumerable<WorkTypeWithDetailsCountDto>>(
+             true,
+             "Lấy dữ liệu loại công trình với thông tin chi tiết thành công",
              workTypes
          ));
       }

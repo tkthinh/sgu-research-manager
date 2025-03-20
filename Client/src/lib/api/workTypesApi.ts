@@ -1,10 +1,16 @@
 import { ApiResponse } from "../types/common/ApiResponse";
-import { WorkType } from "../types/models/WorkType";
+import { WorkType, WorkTypeWithDetails } from "../types/models/WorkType";
 import apiClient from "./api";
 
 // Fetch all work types
 export const getWorkTypes = async (): Promise<ApiResponse<WorkType[]>> => {
   const response = await apiClient.get<ApiResponse<WorkType[]>>("/worktypes");
+  return response.data;
+};
+
+// Fetch work types with detailed counts
+export const getWorkTypesWithDetails = async (): Promise<ApiResponse<WorkTypeWithDetails[]>> => {
+  const response = await apiClient.get<ApiResponse<WorkTypeWithDetails[]>>("/worktypes/with-details");
   return response.data;
 };
 

@@ -5,14 +5,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Link,
   TextField,
   Typography,
+  CircularProgress,
+  Grid,
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { useNavigation } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
 import { toast } from "react-toastify";
 import * as z from "zod";
 import { createWorkType, updateWorkType } from "../../../lib/api/workTypesApi";
@@ -22,6 +22,8 @@ import { WorkType } from "../../../lib/types/models/WorkType";
 const schema = z.object({
   name: z.string().min(2, "Tên loại công trình phải có ít nhất 2 ký tự"),
 });
+
+type WorkTypeFormData = z.infer<typeof schema>;
 
 interface WorkTypeFormProps {
   open: boolean;
@@ -35,15 +37,14 @@ export default function WorkTypeForm({
   data,
 }: WorkTypeFormProps) {
   const queryClient = useQueryClient();
-  const navigation = useNavigation();
 
   const {
-    register,
+    control,
     handleSubmit,
     setValue,
     reset,
-    formState: { errors, isSubmitting },
-  } = useForm({
+    formState: { errors },
+  } = useForm<WorkTypeFormData>({
     resolver: zodResolver(schema),
     defaultValues: { name: "" },
   });
@@ -54,11 +55,11 @@ export default function WorkTypeForm({
     } else {
       reset();
     }
-  }, [data, open, setValue, reset]);
+  }, [data, setValue, reset]);
 
   // Mutation for create and update operations
   const mutation = useMutation({
-    mutationFn: async (formData: Partial<WorkType>) => {
+    mutationFn: async (formData: WorkTypeFormData) => {
       if (data?.id) {
         return updateWorkType(data.id, formData);
       } else {
@@ -76,61 +77,70 @@ export default function WorkTypeForm({
     },
     onError: (error) => {
       console.error("API Error:", error);
+      toast.error("Đã xảy ra lỗi: " + (error as Error).message);
     },
   });
 
   // Handle form submission
-  const onSubmit = async (formData: Partial<WorkType>) => {
+  const onSubmit = async (formData: WorkTypeFormData) => {
     await mutation.mutateAsync(formData);
   };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {data ? "Cập nhật Loại Công trình" : "Thêm Loại Công trình"}
+        {data ? "Cập nhật loại công trình" : "Thêm loại công trình"}
       </DialogTitle>
       <DialogContent>
-        <TextField
-          label="Tên loại công trình"
-          {...register("name")}
-          error={!!errors.name}
-          helperText={errors.name?.message}
-          fullWidth
-          margin="dense"
-          disabled={isSubmitting}
-        />
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12}>
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Tên loại công trình"
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
+                  fullWidth
+                  disabled={mutation.isPending}
+                />
+              )}
+            />
+          </Grid>
+          
+          {data && (
+            <Grid item xs={12}>
+              <Typography
+                fontSize={12}
+                fontStyle={"italic"}
+                sx={{ fontWeight: "300" }}
+              >
+                - Chỉnh sửa tên loại công trình chỉ ảnh hưởng đến tên hiển thị
+              </Typography>
+              <Typography
+                fontSize={12}
+                fontStyle={"italic"}
+                sx={{ fontWeight: "300" }}
+              >
+                - Các cấp công trình, mục đích, và vai trò tác giả thuộc loại này không bị ảnh hưởng
+              </Typography>
+            </Grid>
+          )}
+        </Grid>
       </DialogContent>
-      {data && (
-        <>
-          <Typography
-            fontSize={12}
-            fontStyle={"italic"}
-            sx={{ px: 4, pb: 2, fontWeight: "300" }}
-          >
-            - Chỉnh sửa tên công trình chỉ ảnh hưởng đến tên hiển thị
-          </Typography>
-          <Typography
-            fontSize={12}
-            fontStyle={"italic"}
-            sx={{ px: 4, pb: 2, fontWeight: "300" }}
-          >
-            - Các cấp công trình thuộc loại sẽ không bị ảnh hưởng. Để chỉnh sửa
-            các cấp công trình, truy cập mục
-            <Link href="/he-thong/cap-cong-trinh"> Cấp công trình</Link>
-          </Typography>
-        </>
-      )}
       <DialogActions>
-        <Button onClick={handleClose} disabled={isSubmitting}>
+        <Button onClick={handleClose} disabled={mutation.isPending}>
           Hủy
         </Button>
         <Button
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
-          disabled={isSubmitting}
+          disabled={mutation.isPending}
         >
-          {isSubmitting ? "Đang lưu..." : "Lưu"}
+          {mutation.isPending ? <CircularProgress size={24} /> : (data ? "Cập nhật" : "Thêm mới")}
         </Button>
       </DialogActions>
     </Dialog>

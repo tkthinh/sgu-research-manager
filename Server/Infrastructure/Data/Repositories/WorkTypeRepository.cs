@@ -11,10 +11,16 @@ namespace Infrastructure.Data.Repositories
       {
       }
 
-      public async Task<IEnumerable<WorkType>> GetWorkTypesWithLevelCountAsync(CancellationToken cancellationToken = default)
+      public async Task<IEnumerable<WorkType>> GetWorkTypesWithDetailsCountAsync(CancellationToken cancellationToken = default)
       {
          return await context.WorkTypes
+            .AsNoTracking()
             .Include(wt => wt.WorkLevels)
+            .Include(wt => wt.Purposes)
+            .Include(wt => wt.AuthorRoles)
+            .Include(wt => wt.Factors)
+            .Include(wt => wt.SCImagoFields)
+            .OrderBy(wt => wt.Name)
             .ToListAsync(cancellationToken);
       }
    }

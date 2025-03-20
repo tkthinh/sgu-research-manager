@@ -4,6 +4,6 @@ namespace Domain.Interfaces
 {
    public interface IWorkTypeRepository : IGenericRepository<WorkType>
    {
-      Task<IEnumerable<WorkType>> GetWorkTypesWithLevelCountAsync(CancellationToken cancellationToken = default);
+      Task<IEnumerable<WorkType>> GetWorkTypesWithDetailsCountAsync(CancellationToken cancellationToken = default);
    }
 }
