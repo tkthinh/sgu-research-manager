@@ -13,6 +13,7 @@ import FactorPage from "../../features/settings/factors/FactorPage";
 import AuthorRolePage from "../../features/settings/authorRoles/AuthorRolePage";
 import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
+import MarkedWorksPage from "../../features/settings/works/MarkedWorksPage";
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,16 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: <WorkPage />,
+          }
+        ]
+      },
+      {
+        path: "danh-dau-cong-trinh",
+        element: <Layout />,
+        children: [
+          {
+            index: true,
+            element: <MarkedWorksPage />,
           }
         ]
       },

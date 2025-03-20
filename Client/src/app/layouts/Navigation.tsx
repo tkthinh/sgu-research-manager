@@ -9,6 +9,7 @@ import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RestorePageIcon from '@mui/icons-material/RestorePage';
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
+import LibraryAddCheckIcon from '@mui/icons-material/LibraryAddCheck';
 
 export const NAVIGATION: Navigation = [
   {
@@ -24,6 +25,11 @@ export const NAVIGATION: Navigation = [
     segment: 'cong-trinh',
     title: 'Công trình',
     icon: <ConstructionIcon />,
+  },
+  {
+    segment: 'danh-dau-cong-trinh',
+    title: 'Đánh dấu công trình',
+    icon: <LibraryAddCheckIcon />,
   },
   {
     segment: 'phan-cong',
