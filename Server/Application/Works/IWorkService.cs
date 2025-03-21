@@ -1,5 +1,6 @@
 ﻿using Application.Authors;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Works
 {
@@ -15,5 +16,9 @@ namespace Application.Works
         Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default);
         Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<byte[]> ExportToExcelAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default);
+        Task ImportAsync(IFormFile file);
+
     }
 }

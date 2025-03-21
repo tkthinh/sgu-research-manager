@@ -2,7 +2,7 @@
 
 namespace Application.ExcelOperations.Dtos
 {
-    public class ExcelImportRowDto
+    public class ImportExcelDto
     {
         public string? Username { get; set; }
         public string? FullName { get; set; }

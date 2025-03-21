@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using Domain.Enums;
 using Application.SystemConfigs;
 using Microsoft.AspNetCore.Http;
+using OfficeOpenXml;
+using System.Globalization;
 
 namespace Application.Works
 {
@@ -627,6 +629,415 @@ namespace Application.Works
 
             // Kết hợp và loại bỏ trùng lặp
             workDto.CoAuthorUserIds = authorUserIds.Union(coAuthorUserIds).Distinct().ToList();
+        }
+
+        public async Task<byte[]> ExportToExcelAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
+        {
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Kê khai công trình");
+
+                // Định dạng tiêu đề
+                worksheet.Cells[1, 1].Value = "TRƯỜNG ĐẠI HỌC SÀI GÒN";
+                worksheet.Cells[1, 1, 1, 10].Merge = true;
+                worksheet.Cells[1, 12].Value = "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM";
+                worksheet.Cells[1, 12, 1, 18].Merge = true;
+                worksheet.Cells[2, 1].Value = "ĐƠN VỊ:";
+                worksheet.Cells[2, 1, 2, 10].Merge = true;
+                worksheet.Cells[2, 12].Value = "Độc lập - Tự do - Hạnh phúc";
+                worksheet.Cells[2, 12, 2, 18].Merge = true;
+                worksheet.Cells[3, 1].Value = "KÊ KHAI SẢN PHẨM, CÔNG TRÌNH CỦA HOẠT ĐỘNG KHOA HỌC CÔNG NGHỆ NĂM HỌC 2023-2024";
+                worksheet.Cells[3, 1, 3, 18].Merge = true;
+
+                // Phần I: Thông tin tác giả
+                worksheet.Cells[5, 1].Value = "I. THÔNG TIN TÁC GIẢ";
+                worksheet.Cells[5, 1, 5, 18].Merge = true;
+
+                // Lấy thông tin cá nhân từ bản ghi đầu tiên (vì thông tin cá nhân giống nhau cho tất cả công trình)
+                var userInfo = exportData.FirstOrDefault();
+                if (userInfo == null)
+                    throw new Exception("Không có dữ liệu để export");
+
+                worksheet.Cells[6, 1].Value = "1. Họ và tên:";
+                worksheet.Cells[6, 2].Value = userInfo.FullName;
+                worksheet.Cells[6, 5].Value = "4. Học hàm/học vị:";
+                worksheet.Cells[6, 6].Value = userInfo.AcademicTitle;
+                worksheet.Cells[6, 9].Value = "7. Mã số viên chức:";
+                worksheet.Cells[6, 10].Value = userInfo.UserName; // Dùng UserName làm mã số viên chức
+
+                worksheet.Cells[7, 1].Value = "2. Ngành:";
+                worksheet.Cells[7, 2].Value = userInfo.DepartmentName;
+                worksheet.Cells[7, 5].Value = "5. Chuyên ngành:";
+                //worksheet.Cells[7, 6].Value = userInfo.MajorName;
+                worksheet.Cells[7, 9].Value = "8. Ngạch công chức:";
+                worksheet.Cells[7, 10].Value = userInfo.OfficerRank;
+
+                worksheet.Cells[8, 1].Value = "3. Số điện thoại:";
+                //worksheet.Cells[8, 2].Value = userInfo.PhoneNumber;
+                worksheet.Cells[8, 5].Value = "6. Email:";
+                worksheet.Cells[8, 6].Value = userInfo.Email;
+
+                // Phần II: Thông tin công trình
+                worksheet.Cells[10, 1].Value = "II. THÔNG TIN CÔNG TRÌNH";
+                worksheet.Cells[10, 1, 10, 18].Merge = true;
+
+                // Tiêu đề bảng
+                var headers = new[]
+                {
+            "STT", "Tên công trình", "Loại công trình", "Cấp công trình", "Thời điểm công bố/hoàn thành",
+            "Tổng số tác giả", "Tổng số tác giả chính", "Vị trí của tác giả", "Vai trò tác giả", "Đồng tác giả",
+            "Thông tin chi tiết của công trình", "Mục đích quy đổi", "Mức điểm của công trình", "Ngành theo SCImago",
+            "Ngành tính điểm", "Giờ chuẩn quy đổi", "Trạng thái", "Ghi chú"
+        };
+                for (int i = 0; i < headers.Length; i++)
+                {
+                    worksheet.Cells[11, i + 1].Value = headers[i];
+                }
+
+                // Điền dữ liệu công trình
+                for (int i = 0; i < exportData.Count; i++)
+                {
+                    var work = exportData[i];
+                    worksheet.Cells[i + 12, 1].Value = i + 1;
+                    worksheet.Cells[i + 12, 2].Value = work.Title;
+                    worksheet.Cells[i + 12, 3].Value = work.WorkTypeName;
+                    worksheet.Cells[i + 12, 4].Value = work.WorkLevelName;
+                    worksheet.Cells[i + 12, 5].Value = work.TimePublished.HasValue ? work.TimePublished.Value.ToString("dd/MM/yyyy") : "Không xác định";
+                    worksheet.Cells[i + 12, 6].Value = work.TotalAuthors;
+                    worksheet.Cells[i + 12, 7].Value = work.TotalMainAuthors;
+                    worksheet.Cells[i + 12, 8].Value = work.Position;
+                    worksheet.Cells[i + 12, 9].Value = work.AuthorRoleName;
+                    worksheet.Cells[i + 12, 10].Value = work.CoAuthorNames;
+                    worksheet.Cells[i + 12, 11].Value = work.Details != null ? string.Join("; ", work.Details.Select(kv => $"{kv.Key}: {kv.Value}")) : "Không xác định";
+                    worksheet.Cells[i + 12, 12].Value = work.PurposeName;
+                    worksheet.Cells[i + 12, 13].Value = work.ScoreLevel;
+                    worksheet.Cells[i + 12, 14].Value = work.SCImagoFieldName;
+                    worksheet.Cells[i + 12, 15].Value = work.ScoringFieldName;
+                    worksheet.Cells[i + 12, 16].Value = work.AuthorHour;
+                    worksheet.Cells[i + 12, 17].Value = work.ProofStatus?.ToString();
+                    worksheet.Cells[i + 12, 18].Value = work.Note;
+                }
+
+                // Phần III: Tổng số công trình
+                int startRow = 12 + exportData.Count + 2;
+                worksheet.Cells[startRow, 1].Value = "III. TỔNG SỐ CÔNG TRÌNH";
+                worksheet.Cells[startRow, 1, startRow, 18].Merge = true;
+
+                startRow += 1;
+                worksheet.Cells[startRow, 1].Value = "Tôi xin chịu trách nhiệm về tính xác thực của những thông tin trong bản kê khai này.";
+                worksheet.Cells[startRow, 1, startRow, 18].Merge = true;
+
+                startRow += 1;
+                worksheet.Cells[startRow, 1].Value = "TỔNG SỐ CÔNG TRÌNH";
+                worksheet.Cells[startRow, 1, startRow, 18].Merge = true;
+
+                startRow += 1;
+                worksheet.Cells[startRow, 1].Value = "TT";
+                worksheet.Cells[startRow, 2].Value = "Loại công trình";
+                worksheet.Cells[startRow, 3].Value = "Số lượng";
+
+                // Tính tổng số công trình theo loại
+                var workTypeCounts = exportData
+                    .GroupBy(w => w.WorkTypeName ?? "Khác")
+                    .ToDictionary(g => g.Key, g => g.Count());
+
+                var workTypes = new[] { "Bài báo khoa học", "Báo cáo khoa học", "Đề tài", "Giáo trình", "Sách", "Hội thảo, hội nghị", "Hướng dẫn SV NCKH", "Khác" };
+                for (int i = 0; i < workTypes.Length; i++)
+                {
+                    worksheet.Cells[startRow + i + 1, 1].Value = i + 1;
+                    worksheet.Cells[startRow + i + 1, 2].Value = workTypes[i];
+                    worksheet.Cells[startRow + i + 1, 3].Value = workTypeCounts.ContainsKey(workTypes[i]) ? workTypeCounts[workTypes[i]] : 0;
+                }
+
+                startRow += workTypes.Length + 1;
+                worksheet.Cells[startRow, 1].Value = "Tổng số sản phẩm:";
+                worksheet.Cells[startRow, 2].Value = exportData.Count;
+
+                // Định dạng cột
+                worksheet.Cells.AutoFitColumns();
+
+                // Trả về nội dung file Excel dưới dạng byte[]
+                return package.GetAsByteArray();
+            }
+        }
+        public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            // Lấy thông tin cá nhân của user
+            var user = await _unitOfWork.Repository<User>()
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            if (user == null)
+                throw new Exception("Không tìm thấy người dùng");
+
+            // Lấy danh sách công trình của user
+            var works = await GetWorksByCurrentUserAsync(userId, cancellationToken);
+
+            // Lấy thông tin đồng tác giả
+            var allCoAuthorUserIds = works.SelectMany(w => w.CoAuthorUserIds).Distinct().ToList();
+            var coAuthors = await _unitOfWork.Repository<User>()
+                .FindAsync(u => allCoAuthorUserIds.Contains(u.Id));
+
+            // Ánh xạ dữ liệu vào ExportExcelDto
+            var exportData = works.Select(w =>
+            {
+                var author = w.Authors?.FirstOrDefault();
+                var coAuthorNames = string.Join(", ", w.CoAuthorUserIds
+                    .Where(uid => uid != userId)
+                    .Select(uid => coAuthors.FirstOrDefault(u => u.Id == uid)?.FullName ?? "Không xác định"));
+
+                return new ExportExcelDto
+                {
+                    UserName = user.UserName ?? "Không xác định",
+                    FullName = user.FullName ?? "Không xác định",
+                    Email = user.Email ?? "Không xác định",
+                    AcademicTitle = user.AcademicTitle.ToString() ?? "Không xác định", // Học hàm/học vị
+                    OfficerRank = user.OfficerRank.ToString() ?? "Không xác định", // Ngạch công chức
+                    DepartmentName = user.Department?.Name ?? "Không xác định",
+                    FieldName = author?.FieldName ?? "Không xác định", // Ngành - Field
+                    //MajorName = user.Major ?? "Không xác định", // Chuyên ngành
+                    //PhoneNumber = user.PhoneNumber ?? "Không xác định",
+                    Title = w.Title ?? "Không xác định",
+                    WorkTypeName = w.WorkTypeName ?? "Không xác định",
+                    WorkLevelName = w.WorkLevelName,
+                    TimePublished = w.TimePublished,
+                    TotalAuthors = w.TotalAuthors,
+                    TotalMainAuthors = w.TotalMainAuthors,
+                    Position = author?.Position,
+                    AuthorRoleName = author?.AuthorRoleName,
+                    CoAuthorUserIds = w.CoAuthorUserIds,
+                    CoAuthorNames = coAuthorNames,
+                    Details = w.Details ?? new Dictionary<string, string>(),
+                    PurposeName = author?.PurposeName,
+                    SCImagoFieldName = author?.SCImagoFieldName,
+                    ScoringFieldName = author?.FieldName,
+                    ScoreLevel = author?.ScoreLevel,
+                    AuthorHour = (int?)author?.AuthorHour, // Chuyển đổi decimal sang int
+                    ProofStatus = author?.ProofStatus,
+                    Note = author?.Note
+                };
+            }).ToList();
+
+            return exportData;
+        }
+
+        public async Task ImportAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("File không hợp lệ");
+
+            var importRows = new List<ImportExcelDto>();
+
+            using (var stream = new MemoryStream())
+            {
+                await file.CopyToAsync(stream);
+                stream.Position = 0;
+
+                // Cấp phép dùng EPPlus trong môi trường non-commercial
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                using (var package = new ExcelPackage(stream))
+                {
+                    var worksheet = package.Workbook.Worksheets.First();
+                    int rowCount = worksheet.Dimension.Rows;
+
+                    // Giả sử dòng đầu tiên là header
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+                        // Parse cột Details (giả sử cột 16)
+                        string detailsText = worksheet.Cells[row, 16].Text.Trim();
+                        Dictionary<string, string> details = new Dictionary<string, string>();
+                        if (!string.IsNullOrEmpty(detailsText))
+                        {
+                            var lines = detailsText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                            foreach (var line in lines)
+                            {
+                                var parts = line.Split(new[] { ':' }, 2);
+                                if (parts.Length == 2)
+                                {
+                                    string key = parts[0].Trim();
+                                    string value = parts[1].Trim();
+                                    if (!string.IsNullOrEmpty(key))
+                                        details[key] = value;
+                                }
+                            }
+                        }
+
+                        var dto = new ImportExcelDto
+                        {
+                            Username = worksheet.Cells[row, 1].Text.Trim(),
+                            FullName = worksheet.Cells[row, 2].Text.Trim(),
+                            DepartmentName = worksheet.Cells[row, 3].Text.Trim(),
+                            Title = worksheet.Cells[row, 4].Text.Trim(),
+                            WorkTypeName = worksheet.Cells[row, 5].Text.Trim(),
+                            WorkLevelName = worksheet.Cells[row, 6].Text.Trim(),
+                            TimePublished = DateOnly.TryParseExact(worksheet.Cells[row, 7].Text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? date :
+                           DateOnly.TryParseExact(worksheet.Cells[row, 7].Text, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out date) ? date :
+                           DateOnly.TryParseExact(worksheet.Cells[row, 7].Text, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out date) ? date : null,
+                            TotalAuthors = int.TryParse(worksheet.Cells[row, 8].Text.Trim(), out var ta) ? ta : (int?)null,
+                            TotalMainAuthors = int.TryParse(worksheet.Cells[row, 9].Text.Trim(), out var tma) ? tma : (int?)null,
+                            Position = int.TryParse(worksheet.Cells[row, 10].Text.Trim(), out var pos) ? pos : (int?)null,
+                            AuthorRoleName = worksheet.Cells[row, 11].Text.Trim(),
+                            PurposeName = worksheet.Cells[row, 12].Text.Trim(),
+                            SCImagoFieldName = worksheet.Cells[row, 13].Text.Trim(),
+                            ScoringFieldName = worksheet.Cells[row, 14].Text.Trim(),
+                            ScoreLevel = Enum.TryParse<ScoreLevel>(worksheet.Cells[row, 15].Text.Trim(), out var scoreLevel)
+                                                ? scoreLevel
+                                                : (ScoreLevel?)null,
+                            Details = details
+                        };
+
+                        importRows.Add(dto);
+                    }
+                }
+            }
+
+            await ProcessImportRows(importRows);
+        }
+
+        private async Task ProcessImportRows(List<ImportExcelDto> importRows)
+        {
+            var userRepo = _unitOfWork.Repository<User>();
+            var authorRepo = _unitOfWork.Repository<Author>();
+            var authorRoleRepo = _unitOfWork.Repository<AuthorRole>();
+            var purposeRepo = _unitOfWork.Repository<Purpose>();
+            var scImagoRepo = _unitOfWork.Repository<SCImagoField>();
+            var fieldRepo = _unitOfWork.Repository<Field>();
+            var workRepo = _unitOfWork.Repository<Work>();
+            var workTypeRepo = _unitOfWork.Repository<WorkType>();
+            var workLevelRepo = _unitOfWork.Repository<WorkLevel>();
+
+            foreach (var dto in importRows)
+            {
+                // 1) Tìm User
+                var user = await userRepo.FirstOrDefaultAsync(u =>
+                    u.UserName.ToLower() == dto.Username.ToLower());
+                if (user == null) continue;
+
+                // 2) Tìm WorkType, WorkLevel
+                var workType = await workTypeRepo.FirstOrDefaultAsync(wt =>
+                    wt.Name.ToLower() == dto.WorkTypeName.ToLower());
+                if (workType == null) continue;
+
+                WorkLevel? workLevel = null;
+                if (!string.IsNullOrWhiteSpace(dto.WorkLevelName))
+                {
+                    workLevel = await workLevelRepo.FirstOrDefaultAsync(wl =>
+                        wl.Name.ToLower() == dto.WorkLevelName.ToLower());
+                }
+
+                // 3) Tìm công trình dựa trên 4 trường: Title, WorkTypeId, WorkLevelId, TimePublished
+                //    Nếu 4 trường này trùng nhau thì xem là cùng 1 công trình
+                // Lấy Id nếu workLevel != null
+                Guid? workLevelId = workLevel?.Id;
+                DateOnly? timePublished = dto.TimePublished; // Có thể null
+
+                var existingWork = await workRepo.FirstOrDefaultAsync(w =>
+                    w.Title.ToLower() == dto.Title.ToLower() &&
+                    w.WorkTypeId == workType.Id &&
+                    // So sánh WorkLevelId
+                    (workLevelId == null ? w.WorkLevelId == null : w.WorkLevelId == workLevelId) &&
+                    // So sánh TimePublished
+                    (timePublished == null ? w.TimePublished == null : w.TimePublished == timePublished)
+                );
+
+
+                Work work;
+                if (existingWork == null)
+                {
+                    // => Chưa có công trình này, tạo mới
+                    work = new Work
+                    {
+                        Title = dto.Title,
+                        TimePublished = dto.TimePublished,
+                        TotalAuthors = dto.TotalAuthors,
+                        TotalMainAuthors = dto.TotalMainAuthors,
+                        Details = dto.Details,
+                        WorkTypeId = workType.Id,
+                        WorkLevelId = workLevel?.Id,
+                        Source = WorkSource.QuanLyNhap
+                    };
+                    await workRepo.CreateAsync(work);
+                }
+                else
+                {
+                    work = existingWork;
+                }
+
+                // 4) Tìm AuthorRole, Purpose, SCImagoField, ScoringField
+                var authorRole = await authorRoleRepo.FirstOrDefaultAsync(ar =>
+                    ar.Name.ToLower() == dto.AuthorRoleName.ToLower());
+                if (authorRole == null) continue;
+
+                var purpose = await purposeRepo.FirstOrDefaultAsync(p =>
+                    p.Name.ToLower() == dto.PurposeName.ToLower());
+                if (purpose == null) continue;
+
+                SCImagoField? scImagoField = null;
+                if (!string.IsNullOrWhiteSpace(dto.SCImagoFieldName))
+                {
+                    scImagoField = await scImagoRepo.FirstOrDefaultAsync(s =>
+                        s.Name.ToLower() == dto.SCImagoFieldName.ToLower());
+                }
+
+                Field? field = null;
+                if (!string.IsNullOrWhiteSpace(dto.ScoringFieldName))
+                {
+                    field = await fieldRepo.FirstOrDefaultAsync(sf =>
+                        sf.Name.ToLower() == dto.ScoringFieldName.ToLower());
+                }
+
+                // 5) Kiểm tra Author đã tồn tại chưa (dựa trên UserId + WorkId)
+                var existingAuthor = await authorRepo.FirstOrDefaultAsync(a =>
+                    a.UserId == user.Id && a.WorkId == work.Id);
+                if (existingAuthor != null)
+                {
+                    // => Tác giả đã tồn tại, bỏ qua hoặc update
+                    continue;
+                }
+
+                // 6) Tạo mới Author
+                var newAuthor = new Author
+                {
+                    UserId = user.Id,
+                    WorkId = work.Id,
+                    AuthorRoleId = authorRole.Id,
+                    PurposeId = purpose.Id,
+                    SCImagoFieldId = scImagoField?.Id,
+                    FieldId = field?.Id,
+                    Position = dto.Position,
+                    ScoreLevel = dto.ScoreLevel,
+                    MarkedForScoring = false,
+                    ProofStatus = ProofStatus.ChuaXuLy
+                };
+
+                // 7) Tính workHour, authorHour (nếu cần)
+                var factorRepo = _unitOfWork.Repository<Factor>();
+                var factor = await factorRepo.FirstOrDefaultAsync(f =>
+                    f.WorkTypeId == work.WorkTypeId &&
+                    f.WorkLevelId == work.WorkLevelId &&
+                    f.PurposeId == purpose.Id &&
+                    (f.AuthorRoleId == null || f.AuthorRoleId == authorRole.Id) &&
+                    f.ScoreLevel == newAuthor.ScoreLevel);
+
+                if (factor != null)
+                {
+                    int workHour = CalculateWorkHour(newAuthor.ScoreLevel, factor);
+                    newAuthor.WorkHour = workHour;
+
+                    int totalAuthors = work.TotalAuthors ?? 0;
+                    int totalMainAuthors = work.TotalMainAuthors ?? 0;
+                    decimal authorHour = await CalculateAuthorHour(workHour, totalAuthors, totalMainAuthors, authorRole.Id);
+                    newAuthor.AuthorHour = authorHour;
+                }
+                else
+                {
+                    newAuthor.WorkHour = 0;
+                    newAuthor.AuthorHour = 0;
+                }
+
+                await authorRepo.CreateAsync(newAuthor);
+            }
+
+            // Cuối cùng, lưu tất cả thay đổi
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }
