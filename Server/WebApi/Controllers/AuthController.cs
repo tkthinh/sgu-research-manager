@@ -69,7 +69,7 @@ public class AuthController : ControllerBase
       var token = new JwtSecurityToken(
           issuer: configuration["Jwt:Issuer"],
           audience: configuration["Jwt:Audience"],
-          expires: DateTime.Now.AddHours(3),
+          expires: DateTime.Now.AddHours(8),
           claims: authClaims,
           signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
       );
@@ -105,6 +105,7 @@ public class AuthController : ControllerBase
          {
             UserName = request.UserName,
             Email = request.Email,
+            PhoneNumber = request.PhoneNumber,
             IsApproved = false
          };
          var identityResult = await userManager.CreateAsync(identityUser, request.Password);
@@ -128,9 +129,11 @@ public class AuthController : ControllerBase
             FullName = request.FullName,
             UserName = identityUser.UserName,
             Email = identityUser.Email,
+            PhoneNumber = identityUser.PhoneNumber,
             IdentityId = identityUser.Id,
             AcademicTitle = request.AcademicTitle,
             OfficerRank = request.OfficerRank,
+            Specialization = request.Specialization,
             DepartmentId = request.DepartmentId,
             FieldId = request.FieldId,
             Role = "User"
