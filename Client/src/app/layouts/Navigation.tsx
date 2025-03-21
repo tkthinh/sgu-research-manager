@@ -82,14 +82,6 @@ export const NAVIGATION: Navigation = [
         title: 'Cấp công trình',
       },
       {
-        segment: 'loai-cong-trinh',
-        title: 'Loại công trình',
-      },
-      {
-        segment: 'cap-cong-trinh',
-        title: 'Cấp công trình',
-      },
-      {
         segment: 'he-so-quy-doi',
         title: 'Hệ số quy đổi',
       },
@@ -107,14 +99,6 @@ export const NAVIGATION: Navigation = [
       },
       {
         kind: 'divider',
-      },
-      {
-        segment: 'loai-cong-trinh',
-        title: 'Loại công trình',
-      },
-      {
-        segment: 'cap-cong-trinh',
-        title: 'Cấp công trình',
       },
       {
         segment: 'nganh-scimago',

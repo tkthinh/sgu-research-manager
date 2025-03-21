@@ -1,6 +1,6 @@
 ﻿using Domain.Enums;
 
-namespace Application.ExcelOperations.Dtos
+namespace Application.Works
 {
     public class ImportExcelDto
     {

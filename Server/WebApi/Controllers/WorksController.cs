@@ -229,7 +229,7 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPatch("{workId}/update-by-author")]
+        [HttpPatch("{workId}")]
         [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAuthor(
               [FromRoute] Guid workId,

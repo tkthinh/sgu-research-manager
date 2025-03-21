@@ -23,125 +23,59 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: "dashboard",
-        element: <Layout />,
+        Component: Layout,
         children: [
           {
-            index: true,
-            element: <div>Dashboard</div>,
+            path: "/",
+            element: <Dashboard />
           },
-        ],
-      },
-      {
-        path: "cong-trinh",
-        element: <Layout />,
-        children: [
           {
-            index: true,
-            element: <WorkPage />,
-          }
-        ]
-      },
-      {
-        path: "dang-ky-quy-doi",
-        element: <Layout />,
-        children: [
+            path: "cong-trinh",
+            element: <WorkPage />
+          },
           {
-            index: true,
-            element: <MarkedWorksPage />,
-          }
-        ]
-      },
-      {
-        path: "cau-hinh-he-thong",
-        element: <Layout />,
-        children: [
+            path: "dang-ky-quy-doi",
+            element: <MarkedWorksPage />
+          },
           {
-            index: true,
-            element: <SystemConfigPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/loai-cong-trinh",
-        element: <Layout />,
-        children: [
+            path: "cau-hinh-he-thong",
+            element: <SystemConfigPage />
+          },
           {
-            index: true,
-            element: <WorkTypePage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/nganh",
-        element: <Layout />,
-        children: [
+            path: "cai-dat/loai-cong-trinh",
+            element: <WorkTypePage />
+          },
           {
-            index: true,
-            element: <FieldPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/cap-cong-trinh",
-        element: <Layout />,
-        children: [
+            path: "cai-dat/cap-cong-trinh",
+            element: <WorkLevelPage />
+          },
           {
-            index: true,
-            element: <WorkLevelPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/vai-tro-tac-gia",
-        element: <Layout />,
-        children: [
+            path: "cai-dat/vai-tro-tac-gia",
+            element: <AuthorRolePage />
+          },
           {
-            index: true,
-            element: <AuthorRolePage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/muc-dich",
-        element: <Layout />,
-        children: [
+            path: "cai-dat/he-so-quy-doi",
+            element: <FactorPage />
+          },
           {
-            index: true,
-            element: <PurposePage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/nganh-scimago",
-        element: <Layout />,
-        children: [
+            path: "cai-dat/muc-dich-quy-doi",
+            element: <PurposePage />
+          },
+          // {
+          //   path: "cai-dat/tinh-trang-cong-trinh",
+          //   element: <PurposePage />
+          // },
           {
-            index: true,
-            element: <ScimagoFieldPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/don-vi",
-        element: <Layout />,
-        children: [
+            path: "cat-dat/nganh",
+            element: <FieldPage />
+          },
           {
-            index: true,
-            element: <DepartmentPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/he-so-quy-doi",
-        element: <Layout />,
-        children: [
+            path: "cai-dat/nganh-scimago",
+            element: <ScimagoFieldPage />
+          },
           {
-            index: true,
-            element: <FactorPage />,
+            path: "cai-dat/don-vi",
+            element: <DepartmentPage />
           }
         ]
       },

@@ -70,7 +70,7 @@ export const updateWorkByAdmin = async (workId: string, userId: string, data: Up
 export const updateWorkByAuthor = async (id: string, data: UpdateWorkByAuthorRequest): Promise<ApiResponse<Work>> => {
   try {
     console.log("WorksApi:updateWorkByAuthor - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
-    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${id}/update-by-author`, data);
+    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${id}`, data);
     console.log("WorksApi:updateWorkByAuthor - Phản hồi:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error: any) {

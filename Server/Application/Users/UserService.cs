@@ -6,6 +6,7 @@ using Domain.Entities;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Application.Works;
 
 namespace Application.Users
 {
@@ -187,6 +188,25 @@ namespace Application.Users
                 UserName = u.UserName,
                 DepartmentName = u.Department?.Name ?? "Chưa có phòng ban"
             });
+        }
+
+        public async Task<IEnumerable<UserDto>> GetUsersByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default)
+        {
+            // Kiểm tra DepartmentId hợp lệ
+            if (departmentId == Guid.Empty)
+            {
+                throw new ArgumentException("DepartmentId không hợp lệ", nameof(departmentId));
+            }
+
+            // Truy vấn người dùng theo DepartmentId, bao gồm thông tin Department và Field
+            var users = await unitOfWork.Repository<User>()
+                .Include(u => u.Department)
+                .Include(u => u.Field)
+                .Where(u => u.DepartmentId == departmentId)
+                .ToListAsync(cancellationToken);
+
+            // Ánh xạ sang UserDto
+            return mapper.MapToDtos(users);
         }
     }
 }
