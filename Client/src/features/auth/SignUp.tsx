@@ -1,8 +1,9 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@hookform/resolvers/zod"; 
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
   Alert,
   Button,
+  CircularProgress,
   CssBaseline,
   Divider,
   FormControl,
@@ -73,12 +74,13 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 // Form schemas
+
+// Update username validation: exactly 9 numeric characters.
 const stepOneSchema = z
   .object({
     username: z
       .string()
-      .min(1, "Mã số giảng viên là bắt buộc")
-      .max(9, "Mã số giảng viên không hợp lệ"),
+      .regex(/^\d{9}$/, "Mã số giảng viên phải gồm 9 số"),
     password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
     confirmPassword: z.string().min(6, "Vui lòng xác nhận mật khẩu"),
   })
@@ -87,11 +89,14 @@ const stepOneSchema = z
     path: ["confirmPassword"],
   });
 
+// Added phoneNumber and specialization fields to step two.
 const stepTwoSchema = z.object({
   email: z.string().email("Email không hợp lệ"),
   fullname: z.string().min(2, "Họ và tên là bắt buộc"),
-  academicTitle: z.string().optional(),
-  officerRank: z.string().optional(),
+  phoneNumber: z.string().regex(/^(0|\+84)(3[2-9]|5[689]|7[06-9]|8[1-9]|9[0-9])\d{7}$/ , "Vui lòng nhập số điện thoại"),
+  specialization: z.string().min(1, "Chuyên ngành là bắt buộc"),
+  academicTitle: z.string().min(1, "Vui lòng chọn học hàm / học vị"),
+  officerRank: z.string().min(1, "Vui lòng chọn ngạch viên chức"),
   departmentId: z.string().min(1, "Vui lòng chọn phòng ban"),
   fieldId: z.string().min(1, "Vui lòng chọn lĩnh vực"),
 });
@@ -121,12 +126,14 @@ const SignUp: React.FC = () => {
     },
   });
 
-  // Setup form for step two
+  // Setup form for step two (with additional fields)
   const stepTwoForm = useForm<StepTwoFormValues>({
     resolver: zodResolver(stepTwoSchema),
     defaultValues: {
       email: "",
       fullname: "",
+      phoneNumber: "",
+      specialization: "",
       academicTitle: "",
       officerRank: "",
       departmentId: "",
@@ -149,9 +156,7 @@ const SignUp: React.FC = () => {
     setStep(2);
   };
 
-  const handleStepTwoSubmit: SubmitHandler<StepTwoFormValues> = async (
-    data,
-  ) => {
+  const handleStepTwoSubmit: SubmitHandler<StepTwoFormValues> = async (data) => {
     setLoading(true);
     setError(null);
 
@@ -164,6 +169,8 @@ const SignUp: React.FC = () => {
         password: stepOneData.password,
         email: data.email,
         fullname: data.fullname,
+        phoneNumber: data.phoneNumber,
+        specialization: data.specialization,
         academicTitle: data.academicTitle || "",
         officerRank: data.officerRank || "",
         departmentId: data.departmentId,
@@ -176,9 +183,7 @@ const SignUp: React.FC = () => {
         // Redirect to login page or show success message
         window.location.href = "/dang-nhap?registered=true";
       } else {
-        setError(
-          response.message || "Đăng ký không thành công. Vui lòng thử lại.",
-        );
+        setError(response.message || "Đăng ký không thành công. Vui lòng thử lại.");
       }
     } catch (err) {
       setError("Có lỗi xảy ra. Vui lòng thử lại sau.");
@@ -266,15 +271,8 @@ const SignUp: React.FC = () => {
                         InputProps={{
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton
-                                onClick={handleTogglePasswordVisibility}
-                                edge="end"
-                              >
-                                {showPassword ? (
-                                  <VisibilityOff />
-                                ) : (
-                                  <Visibility />
-                                )}
+                              <IconButton onClick={handleTogglePasswordVisibility} edge="end">
+                                {showPassword ? <VisibilityOff /> : <Visibility />}
                               </IconButton>
                             </InputAdornment>
                           ),
@@ -304,15 +302,8 @@ const SignUp: React.FC = () => {
                         InputProps={{
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton
-                                onClick={handleToggleConfirmPasswordVisibility}
-                                edge="end"
-                              >
-                                {showConfirmPassword ? (
-                                  <VisibilityOff />
-                                ) : (
-                                  <Visibility />
-                                )}
+                              <IconButton onClick={handleToggleConfirmPasswordVisibility} edge="end">
+                                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                               </IconButton>
                             </InputAdornment>
                           ),
@@ -366,6 +357,42 @@ const SignUp: React.FC = () => {
                         id="email"
                         placeholder="Nhập email"
                         type="email"
+                        fullWidth
+                        error={!!fieldState.error}
+                        helperText={fieldState.error?.message}
+                      />
+                    </FormControl>
+                  )}
+                />
+                <Controller
+                  key="phoneNumber"
+                  name="phoneNumber"
+                  control={stepTwoForm.control}
+                  render={({ field, fieldState }) => (
+                    <FormControl fullWidth error={!!fieldState.error}>
+                      <FormLabel htmlFor="phoneNumber">SĐT</FormLabel>
+                      <TextField
+                        {...field}
+                        id="phoneNumber"
+                        placeholder="Nhập số điện thoại"
+                        fullWidth
+                        error={!!fieldState.error}
+                        helperText={fieldState.error?.message}
+                      />
+                    </FormControl>
+                  )}
+                />
+                <Controller
+                  key="specialization"
+                  name="specialization"
+                  control={stepTwoForm.control}
+                  render={({ field, fieldState }) => (
+                    <FormControl fullWidth error={!!fieldState.error}>
+                      <FormLabel htmlFor="specialization">Chuyên ngành</FormLabel>
+                      <TextField
+                        {...field}
+                        id="specialization"
+                        placeholder="Nhập chuyên ngành"
                         fullWidth
                         error={!!fieldState.error}
                         helperText={fieldState.error?.message}
@@ -429,7 +456,7 @@ const SignUp: React.FC = () => {
                       <InputLabel>Học hàm / học vị</InputLabel>
                       <Select {...field} label="Học hàm / học vị">
                         {Object.entries(AcademicTitle)
-                          .filter(([key]) => isNaN(Number(key))) // Filter out numeric keys
+                          .filter(([key]) => isNaN(Number(key)))
                           .map(([key]) => (
                             <MenuItem key={key} value={key}>
                               {getAcademicTitle(key)}
@@ -454,7 +481,7 @@ const SignUp: React.FC = () => {
                       <InputLabel>Ngạch viên chức</InputLabel>
                       <Select {...field} label="Ngạch viên chức">
                         {Object.entries(OfficerRank)
-                          .filter(([key]) => isNaN(Number(key))) // Filter out numeric keys
+                          .filter(([key]) => isNaN(Number(key)))
                           .map(([key]) => (
                             <MenuItem key={key} value={key}>
                               {getOfficerRank(key)}
@@ -486,7 +513,7 @@ const SignUp: React.FC = () => {
                     fullWidth
                     disabled={loading}
                   >
-                    Đăng ký
+                    {loading ? <CircularProgress size={24} /> : "Đăng ký"}
                   </Button>
                 </Stack>
               </Stack>

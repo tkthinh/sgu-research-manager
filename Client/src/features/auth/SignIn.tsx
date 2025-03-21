@@ -4,6 +4,7 @@ import { Alert, IconButton, InputAdornment } from "@mui/material";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import MuiCard from "@mui/material/Card";
+import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
 import FormControl from "@mui/material/FormControl";
@@ -77,6 +78,7 @@ export default function SignIn() {
     shouldUnregister: true,
   });
 
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -87,6 +89,9 @@ export default function SignIn() {
   const registeredSuccess = searchParams.get("registered") === "true";
 
   const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    setError(null); // Optional: clear previous errors
+
     try {
       const response = await signIn({
         username: data.username,
@@ -95,19 +100,18 @@ export default function SignIn() {
 
       if (response.success) {
         localStorage.setItem("token", response.data.token);
+        localStorage.setItem("expiration", response.data.expiration);
         localStorage.setItem("user", JSON.stringify(response.data.user));
         navigate("/");
       }
     } catch (error: any) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
+      if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else {
         setError("Đăng nhập thất bại: " + error.message);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -194,8 +198,9 @@ export default function SignIn() {
               fullWidth
               variant="contained"
               onClick={handleSubmit(onSubmit)}
+              disabled={loading}
             >
-              Đăng nhập
+              {loading ? <CircularProgress size={24} /> : "Đăng nhập"}
             </Button>
           </Box>
 

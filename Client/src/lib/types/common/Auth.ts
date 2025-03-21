@@ -5,9 +5,11 @@ export interface SignUpRequest {
   username: string;
   password: string;
   email: string;
+  phoneNumber: string;
   fullname: string;
   academicTitle: string;
   officerRank: string;
+  specialization: string;
   departmentId: string;
   fieldId: string;
 }
