@@ -10,78 +10,34 @@ import FieldPage from "../../features/settings/fields/FieldPage";
 import Setting from "../../features/settings/Setting";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 import WorksPage from "../../features/settings/works/WorksPage";
+import ProtectedRoute from "../shared/components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
     Component: App,
     children: [
       {
-        path: "/",
-        Component: Layout,
+        element: <ProtectedRoute />,
         children: [
-          // ============== CHÍNH ==============
           {
             path: "/",
-            element: <Dashboard />,
-          },
-          {
-            path: "/cong-trinh",
-            element: <WorksPage></WorksPage>,
-          },
-          {
-            path: "/cham-diem",
-            element: <></>,
-          },
-          {
-            path: "/phan-cong",
-            element: <></>,
-          },
-
-          // ============== BÁO CÁO ==============
-          {
-            path: "/bao-cao",
-            element: <></>,
-          },
-
-          // ============== HỆ THỐNG ==============
-          {
-            path: "/he-thong",
-            element: <Setting />,
-          },
-          // Quản lý tài khoản
-          {
-            path: "/he-thong/quan-ly-tai-khoan",
-            element: <></>,
-          },
-          // Quản lý thời gian
-          {
-            path: "/he-thong/quan-ly-thoi-gian",
-            element: <></>,
-          },
-          // // Lịch sử upload
-          // {
-          //   path: "/he-thong/lich-su-upload",
-          //   element: <></>,
-          // },
-          // Loại công trình
-          {
-            path: "/he-thong/loai-cong-trinh",
-            element: <WorkTypePage />,
-          },
-          // Cấp công trình
-          {
-            path: "/he-thong/don-vi",
-            element: <DepartmentPage />,
-          },
-          // Ngành
-          {
-            path: "/he-thong/nganh",
-            element: <FieldPage />,
-          },
-          // Đơn vị công tác
-          {
-            path: "/he-thong/don-vi",
-            element: <DepartmentPage />,
+            Component: Layout,
+            children: [
+              // ============== CHÍNH ==============
+              { path: "/", element: <Dashboard /> },
+              { path: "/cong-trinh", element: <WorksPage /> },
+              { path: "/cham-diem", element: <></> },
+              { path: "/phan-cong", element: <></> },
+              // ============== BÁO CÁO ==============
+              { path: "/bao-cao", element: <></> },
+              // ============== HỆ THỐNG ==============
+              { path: "/he-thong", element: <Setting /> },
+              { path: "/he-thong/quan-ly-tai-khoan", element: <></> },
+              { path: "/he-thong/quan-ly-thoi-gian", element: <></> },
+              { path: "/he-thong/loai-cong-trinh", element: <WorkTypePage /> },
+              { path: "/he-thong/don-vi", element: <DepartmentPage /> },
+              { path: "/he-thong/nganh", element: <FieldPage /> },
+            ],
           },
         ],
       },
