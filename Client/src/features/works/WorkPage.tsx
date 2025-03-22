@@ -107,7 +107,6 @@ export default function WorksPage() {
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       try {
-        console.log("Dữ liệu thực tế gửi lên server:", JSON.stringify(data, null, 2));
         return await createWork({
           title: data.workRequest.title,
           timePublished: data.workRequest.timePublished,
@@ -128,57 +127,45 @@ export default function WorksPage() {
           },
         });
       } catch (error: any) {
-        console.error("Chi tiết lỗi từ server:", error.response?.data);
         throw error;
       }
     },
     onSuccess: (data) => {
       toast.success("Công trình đã được thêm thành công");
-      
-      console.log("Bắt đầu cập nhật lại dữ liệu sau khi thêm mới");
-      
+            
       // Xóa cache và refetch dữ liệu mới
       queryClient.removeQueries({ queryKey: ["works", "my-works"] });
       
       // Bắt buộc refetch dữ liệu ngay lập tức
       setTimeout(() => {
-        console.log("Bắt đầu refetch sau khi xóa cache");
         refetch();
       }, 100);
       
       setOpenFormDialog(false);
     },
     onError: (error) => {
-      console.error("Lỗi đầy đủ:", error);
       toast.error("Lỗi khi thêm công trình: " + (error as Error).message);
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: (params: { workId: string; data: any }) => {
-      console.log("Dữ liệu gửi đi khi cập nhật:", JSON.stringify(params.data, null, 2));
       return updateWorkByAuthor(params.workId, params.data);
     },
     onSuccess: (data) => {
       toast.success("Công trình đã được cập nhật thành công");
-      console.log("Phản hồi từ API sau khi cập nhật:", JSON.stringify(data, null, 2));
-      console.log("Details sau khi cập nhật:", data.data?.details);
-      
-      console.log("Bắt đầu cập nhật lại dữ liệu sau khi update");
       
       // Xóa cache và refetch dữ liệu mới
       queryClient.removeQueries({ queryKey: ["works", "my-works"] });
       
       // Bắt buộc refetch dữ liệu ngay lập tức
       setTimeout(() => {
-        console.log("Bắt đầu refetch sau khi xóa cache");
         refetch();
       }, 100);
       
       setOpenFormDialog(false);
     },
     onError: (error) => {
-      console.error("Lỗi khi cập nhật công trình:", error);
       toast.error("Lỗi khi cập nhật công trình: " + (error as Error).message);
     },
   });
@@ -238,12 +225,6 @@ export default function WorksPage() {
 
   const handleOpenFormDialog = (work?: Work) => {
     if (work) {
-      console.log("Mở form với công trình:", work);
-      console.log("coAuthorUserIds:", work.coAuthorUserIds);
-      console.log("Giờ tác giả:", work.authors?.[0]?.authorHour);
-      console.log("Giờ công trình:", work.authors?.[0]?.workHour);
-      console.log("Chi tiết công trình:", work.details);
-      
       // Lấy userId từ localStorage hoặc context auth
       const currentUserId = localStorage.getItem("userId") || "";
       
@@ -277,14 +258,12 @@ export default function WorksPage() {
         coAuthorUserIds: Array.isArray(work.coAuthorUserIds) 
           ? work.coAuthorUserIds
               .filter(id => {
-                console.log(`So sánh ${id.toString()} với ${currentUserId}`);
                 return id.toString() !== currentUserId;
               })
               .map(id => id.toString())
           : []
       };
       
-      console.log("Mở form với dữ liệu đã xử lý:", workWithDefaults);
       setSelectedWork(workWithDefaults);
     } else {
       setSelectedWork(null);
@@ -330,8 +309,6 @@ export default function WorksPage() {
 
   const handleSubmit = async (data: any) => {
     try {
-      console.log("Dữ liệu gốc từ form:", data);
-      
       // Kiểm tra dữ liệu trước khi gửi
       const validationErrors = validateWorkData(data);
       if (validationErrors.length > 0) {
@@ -360,7 +337,6 @@ export default function WorksPage() {
       const coAuthorUserIds = Array.isArray(data.coAuthorUserIds) 
         ? data.coAuthorUserIds.filter(id => id) 
         : [];
-      console.log("coAuthorUserIds trước khi xử lý:", coAuthorUserIds);
       
       // Xử lý dữ liệu trước khi gửi - đảm bảo coAuthorUserIds nằm TRONG workRequest
       const formattedData = {
@@ -384,26 +360,19 @@ export default function WorksPage() {
           fieldId: data.author.fieldId ? String(data.author.fieldId) : undefined
         }
       };
-      
-      // Log dữ liệu sau khi xử lý để debug
-      console.log("Dữ liệu sau khi xử lý:", JSON.stringify(formattedData, null, 2));
-      
+            
       if (selectedWork?.id) {
-        console.log("Dữ liệu gửi đi khi cập nhật:", JSON.stringify(formattedData, null, 2));
         const response = await updateMutation.mutateAsync({ workId: selectedWork.id, data: formattedData });
         console.log("Phản hồi từ API sau khi cập nhật:", response);
         console.log("coAuthorUserIds trả về:", response.data?.coAuthorUserIds);
         
-        console.log("Bắt đầu cập nhật lại dữ liệu sau khi update");
         queryClient.removeQueries({ queryKey: ['works', 'my-works'] });
         queryClient.removeQueries({ queryKey: ['works', selectedWork.id] });
-        console.log("Bắt đầu refetch sau khi xóa cache");
         await queryClient.refetchQueries({ queryKey: ['works', 'my-works'] });
       } else {
         await createMutation.mutateAsync(formattedData);
       }
     } catch (error) {
-      console.error("Lỗi khi gửi dữ liệu:", error);
       toast.error("Có lỗi xảy ra khi gửi dữ liệu. Vui lòng kiểm tra lại thông tin.");
     }
   };
@@ -482,7 +451,6 @@ export default function WorksPage() {
           const formattedDate = format(new Date(params.value), "dd/MM/yyyy", { locale: vi });
           return <div>{formattedDate}</div>;
         } catch (error) {
-          console.log("Lỗi định dạng ngày:", params.value, error);
           return <div>{params.value}</div>;
         }
       },

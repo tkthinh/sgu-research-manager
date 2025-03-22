@@ -16,8 +16,8 @@ import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
-// import EvaluateWorksPage from "../../features/users/EvaluateWorksPage";
-
+import UserListPage from "../../features/users/UserListPage";
+import UserWorkDetailPage from "../../features/users/UserWorkDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -39,10 +39,14 @@ export const router = createBrowserRouter([
             path: "dang-ky-quy-doi",
             element: <MarkedWorksPage />
           },
-          // {
-          //   path: "danh-gia",
-          //   element: <EvaluateWorksPage />
-          // },
+          {
+            path: "danh-sach-nguoi-dung",
+            element: <UserListPage />
+          },
+          {
+            path: "cong-trinh-nguoi-dung/:userId",
+            element: <UserWorkDetailPage />
+          },
           {
             path: "cau-hinh-he-thong",
             element: <SystemConfigPage />

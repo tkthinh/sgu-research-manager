@@ -9,6 +9,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import RestorePageIcon from '@mui/icons-material/RestorePage';
 import LibraryAddCheckIcon from '@mui/icons-material/LibraryAddCheck';
+import GroupIcon from '@mui/icons-material/Group';
 
 export const NAVIGATION: Navigation = [
   {
@@ -26,8 +27,8 @@ export const NAVIGATION: Navigation = [
   },
 
   {
-    segment: 'danh-gia',
-    title: 'Đánh giá công trình',
+    segment: 'cham-diem',
+    title: 'Chấm điểm công trình',
     icon: <RateReviewIcon />,
   },
   {
@@ -39,6 +40,11 @@ export const NAVIGATION: Navigation = [
     segment: 'phan-cong',
     title: 'Phân công chấm điểm',
     icon: <AssignmentIndIcon />,
+  },
+  {
+    segment: 'danh-sach-nguoi-dung',
+    title: 'Danh sách người dùng',
+    icon: <GroupIcon />,
   },
   {
     kind: 'header',
@@ -94,6 +100,10 @@ export const NAVIGATION: Navigation = [
         title: 'Mục đích quy đổi',
       },
       {
+        segment: 'tinh-trang-minh-chung',
+        title: 'Tình trạng minh chứng',
+      },
+      {
         kind: 'divider',
       },
       {
@@ -103,6 +113,10 @@ export const NAVIGATION: Navigation = [
       {
         segment: 'nganh',
         title: 'Ngành',
+      },
+      {
+        segment: 'tinh-trang-cong-trinh',
+        title: 'Tình trạng công trình',
       },
       {
         kind: 'divider',
