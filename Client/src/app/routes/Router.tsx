@@ -14,80 +14,46 @@ import FactorPage from "../../features/settings/factors/FactorPage";
 import AuthorRolePage from "../../features/settings/authorRoles/AuthorRolePage";
 import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
+import ProtectedRoute from "../shared/components/ProtectedRoute";
+import UserPage from "../../features/settings/users/UserPage";
 import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
-import UserListPage from "../../features/users/UserListPage";
-import UserWorkDetailPage from "../../features/users/UserWorkDetailPage";
 
 export const router = createBrowserRouter([
   {
     element: <App />,
     children: [
       {
-        path: "/",
-        Component: Layout,
+        element: <ProtectedRoute />,
         children: [
           {
             path: "/",
-            element: <Dashboard />
+            Component: Layout,
+            children: [
+              // ============== CHÍNH ==============
+              { path: "/", element: <Dashboard /> },
+              { path: "/cong-trinh", element: <WorkPage /> },
+              { path: "dang-ky-quy-doi", element: <MarkedWorksPage /> },
+              { path: "/cham-diem", element: <></> },
+              { path: "/phan-cong", element: <></> },
+              // ============== BÁO CÁO ==============
+              { path: "/bao-cao", element: <></> },
+              // ============== HỆ THỐNG ==============
+              { path: "/quan-ly-tai-khoan", element: <UserPage /> },
+              { path: "/cau-hinh-he-thong", element: <SystemConfigPage /> },
+              { path: "/cai-dat", element: <Setting /> },
+              { path: "/cai-dat/quan-ly-thoi-gian", element: <></> },
+              { path: "/cai-dat/loai-cong-trinh", element: <WorkTypePage /> },
+              { path: "/cai-dat/cap-cong-trinh", element: <WorkLevelPage /> },
+              { path: "/cai-dat/vai-tro-tac-gia", element: <AuthorRolePage /> },
+              { path: "/cai-dat/muc-dich-quy-doi", element: <PurposePage /> },
+              { path: "/cai-dat/he-so-quy-doi", element: <FactorPage /> },
+              { path: "/cai-dat/nganh-scimago", element: <ScimagoFieldPage /> },
+              { path: "/cai-dat/don-vi", element: <DepartmentPage /> },
+              { path: "/cai-dat/nganh", element: <FieldPage /> },
+            ],
           },
-          {
-            path: "cong-trinh",
-            element: <WorkPage />
-          },
-          {
-            path: "dang-ky-quy-doi",
-            element: <MarkedWorksPage />
-          },
-          {
-            path: "danh-sach-nguoi-dung",
-            element: <UserListPage />
-          },
-          {
-            path: "cong-trinh-nguoi-dung/:userId",
-            element: <UserWorkDetailPage />
-          },
-          {
-            path: "cau-hinh-he-thong",
-            element: <SystemConfigPage />
-          },
-          {
-            path: "cai-dat/loai-cong-trinh",
-            element: <WorkTypePage />
-          },
-          {
-            path: "cai-dat/cap-cong-trinh",
-            element: <WorkLevelPage />
-          },
-          {
-            path: "cai-dat/vai-tro-tac-gia",
-            element: <AuthorRolePage />
-          },
-          {
-            path: "cai-dat/he-so-quy-doi",
-            element: <FactorPage />
-          },
-          {
-            path: "cai-dat/muc-dich-quy-doi",
-            element: <PurposePage />
-          },
-          // {
-          //   path: "cai-dat/tinh-trang-cong-trinh",
-          //   element: <PurposePage />
-          // },
-          {
-            path: "cat-dat/nganh",
-            element: <FieldPage />
-          },
-          {
-            path: "cai-dat/nganh-scimago",
-            element: <ScimagoFieldPage />
-          },
-          {
-            path: "cai-dat/don-vi",
-            element: <DepartmentPage />
-          }
-        ]
+        ],
       },
     ],
   },

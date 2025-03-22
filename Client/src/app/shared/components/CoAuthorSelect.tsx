@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Autocomplete, TextField, Box, Typography } from '@mui/material';
 import { debounce } from 'lodash';
-import axios from '../lib/api/api';
+import apiClient from '../../../lib/api/api';
 
 interface User {
   id: string;
@@ -27,7 +27,7 @@ export default function CoAuthorSelect({ value, onChange, error, helperText }: C
     const fetchSelectedUsers = async () => {
       try {
         const promises = value.map(id =>
-          axios.get<{ data: User }>(`/api/users/${id}`).then(res => res.data.data)
+          apiClient.get<{ data: User }>(`/api/users/${id}`).then(res => res.data.data)
         );
         const users = await Promise.all(promises);
         setSelectedUsers(users);
@@ -48,7 +48,7 @@ export default function CoAuthorSelect({ value, onChange, error, helperText }: C
     }
 
     try {
-      const response = await axios.get<{ data: User[] }>(`/api/users/search?searchTerm=${searchTerm}`);
+      const response = await apiClient.get<{ data: User[] }>(`/api/users/search?searchTerm=${searchTerm}`);
       setOptions(response.data.data);
     } catch (error) {
       console.error('Error searching users:', error);

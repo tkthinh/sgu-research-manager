@@ -92,16 +92,12 @@ export const NAVIGATION: Navigation = [
         title: 'Hệ số quy đổi',
       },
       {
-        segment: 'vai-tro-tac-gia',
-        title: 'Vai trò tác giả',
-      },
-      {
         segment: 'muc-dich-quy-doi',
         title: 'Mục đích quy đổi',
       },
       {
-        segment: 'tinh-trang-minh-chung',
-        title: 'Tình trạng minh chứng',
+        segment: 'vai-tro-tac-gia',
+        title: 'Vai trò tác giả',
       },
       {
         kind: 'divider',
@@ -111,19 +107,15 @@ export const NAVIGATION: Navigation = [
         title: 'Ngành SCImago',
       },
       {
-        segment: 'nganh',
-        title: 'Ngành',
-      },
-      {
-        segment: 'tinh-trang-cong-trinh',
-        title: 'Tình trạng công trình',
-      },
-      {
         kind: 'divider',
       },
       {
         segment: 'don-vi',
         title: 'Đơn vị',
+      },
+      {
+        segment: 'nganh',
+        title: 'Ngành',
       },
     ]
   },

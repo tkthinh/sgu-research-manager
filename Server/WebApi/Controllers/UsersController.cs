@@ -26,55 +26,71 @@ namespace WebApi.Controllers
             this.userManager = userManager;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<ApiResponse<IEnumerable<UserDto>>>> GetUsers()
-        {
-            var usersList = (await userService.GetAllAsync()).ToList();
+      [HttpGet]
+      public async Task<ActionResult<ApiResponse<IEnumerable<UserWithRoleDto>>>> GetUsers()
+      {
+         var users = (await userService.GetAllAsync()).ToList();
 
-            // For each domain user, retrieve the associated Identity roles and set the Role property.
-            foreach (var user in usersList)
+         var usersWithRoles = new List<UserWithRoleDto>();
+
+         // For each domain user, retrieve the associated Identity roles and set the Role property.
+         foreach (var user in users)
+         {
+            var dto = new UserWithRoleDto
             {
-                var identityUser = await userManager.FindByIdAsync(user.IdentityId);
-                if (identityUser != null)
-                {
-                    var roles = await userManager.GetRolesAsync(identityUser);
-                    user.Role = roles.Any() ? roles.First() : "No Role";
-                    /*user.IsApproved = identityUser.IsApproved*/;
-                }
-                else
-                {
-                    user.Role = "Unknown";
-                }
-            }
+               Id = user.Id,
+               DepartmentId = user.DepartmentId,
+               FieldId = user.FieldId,
+               UserName = user.UserName,
+               FullName = user.FullName,
+               Email = user.Email,
+               PhoneNumber = user.PhoneNumber,
+               Specialization = user.Specialization,
+               AcademicTitle = user.AcademicTitle,
+               OfficerRank = user.OfficerRank,
+               DepartmentName = user.DepartmentName,
+               FieldName = user.FieldName,
+               IdentityId = user.IdentityId
+            };
 
-            return Ok(new ApiResponse<IEnumerable<UserDto>>(
-                true,
-                "Lấy danh sách người dùng thành công",
-                usersList
-            ));
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<UserDto>>> GetUser([FromRoute] Guid id)
-        {
-            var user = await userService.GetByIdAsync(id);
-            if (user is null)
+            if (!string.IsNullOrEmpty(user.IdentityId))
             {
-                return NotFound(new ApiResponse<UserDto>(false, "Không tìm thấy người dùng"));
-            }
+               var identityUser = await userManager.FindByIdAsync(user.IdentityId);
+               if (identityUser != null)
+               {
+                  dto.IsApproved = identityUser.IsApproved;
 
-            var identityUser = await userManager.FindByIdAsync(user.IdentityId);
-            if (identityUser != null)
-            {
-                // You can join multiple roles if necessary. Here we take the first role.
-                var roles = await userManager.GetRolesAsync(identityUser);
-                user.Role = roles.Any() ? roles.First() : "No Role";
-                /*user.IsApproved = identityUser.IsApproved*/;
+                  var roles = await userManager.GetRolesAsync(identityUser);
+                  dto.Role = roles.Any() ? roles.First() : "No Role";
+               }
+               else
+               {
+                  dto.Role = "Unknown";
+               }
             }
             else
             {
-                user.Role = "Unknown";
+               dto.Role = "Unknown";
             }
+
+            usersWithRoles.Add(dto);
+         }
+
+         return Ok(new ApiResponse<IEnumerable<UserWithRoleDto>>(
+             true,
+             "Lấy danh sách người dùng thành công",
+             usersWithRoles
+         ));
+      }
+
+      [HttpGet("{id}")]
+      public async Task<ActionResult<ApiResponse<UserDto>>> GetUser([FromRoute] Guid id)
+      {
+         var user = await userService.GetByIdAsync(id);
+         if (user is null)
+         {
+            return NotFound(new ApiResponse<UserDto>(false, "Không tìm thấy người dùng"));
+         }
 
             return Ok(new ApiResponse<UserDto>(
                       true,
@@ -111,47 +127,58 @@ namespace WebApi.Controllers
             return Ok(new ApiResponse<object>(true, "Cập nhật thông tin thành công"));
         }
 
-        // Admin update endpoint for updating all user info including role.
-        [HttpPut("admin/{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApiResponse<object>>> AdminUpdateUser([FromRoute] Guid id, [FromBody] UpdateUserAdminRequestDto requestDto)
-        {
-            try
+      // Admin update endpoint for updating all user info including role.
+      [HttpPut("admin/{id}")]
+      [Authorize(Roles = "Admin")]
+      public async Task<ActionResult<ApiResponse<object>>> AdminUpdateUser([FromRoute] Guid id, [FromBody] UpdateUserAdminRequestDto requestDto)
+      {
+         try
+         {
+            var user = await userService.GetByIdAsync(id);
+            if (user is null)
             {
-                var user = await userService.GetByIdAsync(id);
-                if (user is null)
-                {
-                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy người dùng"));
-                }
-                // Update domain user properties.
-                user.UserName = requestDto.UserName;
-                user.FullName = requestDto.FullName;
-                user.AcademicTitle = requestDto.AcademicTitle;
-                user.OfficerRank = requestDto.OfficerRank;
-                user.DepartmentId = requestDto.DepartmentId;
-                user.FieldId = requestDto.FieldId;
+               return NotFound(new ApiResponse<object>(false, "Không tìm thấy người dùng"));
+            }
+            // Update domain user properties.
+            user.FullName = requestDto.FullName;
+            user.Email = requestDto.Email;
+            user.PhoneNumber = requestDto.PhoneNumber;
+            user.AcademicTitle = requestDto.AcademicTitle;
+            user.OfficerRank = requestDto.OfficerRank;
+            user.Specialization = requestDto.Specialization;
+            user.DepartmentId = requestDto.DepartmentId;
+            user.FieldId = requestDto.FieldId;
 
-                // Update the Identity user role.
-                var identityUser = await userManager.FindByIdAsync(user.IdentityId);
-                if (identityUser == null)
-                {
-                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy thông tin Identity user"));
-                }
+            if (!string.IsNullOrEmpty(user.IdentityId))
+            {
+               var identityUser = await userManager.FindByIdAsync(user.IdentityId);
+               if (identityUser == null)
+               {
+                  return NotFound(new ApiResponse<object>(false, "Không tìm thấy thông tin Identity user"));
+               }
 
-                // Approve the user account.
-                identityUser.IsApproved = true;
+               // Approve the user account.
+               identityUser.IsApproved = requestDto.IsApproved;
 
-                // Remove all existing roles.
-                var currentRoles = await userManager.GetRolesAsync(identityUser);
-                await userManager.RemoveFromRolesAsync(identityUser, currentRoles);
-                // Add the new role from the DTO.
-                string newRole = requestDto.Role.ToString();
-                var roleResult = await userManager.AddToRoleAsync(identityUser, newRole);
-                if (!roleResult.Succeeded)
-                {
-                    var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                    return BadRequest(new ApiResponse<object>(false, $"Lỗi cập nhật role: {errors}"));
-                }
+               // Remove all existing roles.
+               var currentRoles = await userManager.GetRolesAsync(identityUser);
+               await userManager.RemoveFromRolesAsync(identityUser, currentRoles);
+               // Add the new role from the DTO.
+               string newRole = requestDto.Role.ToString();
+               var roleResult = await userManager.AddToRoleAsync(identityUser, newRole);
+               if (!roleResult.Succeeded)
+               {
+                  var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                  return BadRequest(new ApiResponse<object>(false, $"Lỗi cập nhật role: {errors}"));
+               }
+
+               var updateResult = await userManager.UpdateAsync(identityUser);
+               if (!updateResult.Succeeded)
+               {
+                  var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+                  return BadRequest(new ApiResponse<object>(false, $"Lỗi phê duyệt người dùng: {errors}"));
+               }
+            }
 
                 await userService.UpdateAsync(user);
                 return Ok(new ApiResponse<object>(true, "Cập nhật thông tin người dùng thành công"));
