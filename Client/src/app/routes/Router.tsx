@@ -4,7 +4,7 @@ import Layout from "../layouts/Layout";
 
 import SignIn from "../../features/auth/SignIn";
 import SignUp from "../../features/auth/SignUp";
-import WorkPage from "../../features/settings/works/WorkPage";
+import WorkPage from "../../features/works/WorkPage";
 import FieldPage from "../../features/settings/fields/FieldPage";
 import Dashboard from "../../features/dashboard/Dashboard";
 import DepartmentPage from "../../features/settings/departments/DepartmentPage";
@@ -14,8 +14,10 @@ import FactorPage from "../../features/settings/factors/FactorPage";
 import AuthorRolePage from "../../features/settings/authorRoles/AuthorRolePage";
 import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
-import MarkedWorksPage from "../../features/settings/works/MarkedWorksPage";
+import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
+import EvaluateWorksPage from "../../features/users/EvaluateWorksPage";
+
 
 export const router = createBrowserRouter([
   {
@@ -37,6 +39,10 @@ export const router = createBrowserRouter([
             path: "dang-ky-quy-doi",
             element: <MarkedWorksPage />
           },
+          // {
+          //   path: "danh-gia",
+          //   element: <EvaluateWorksPage />
+          // },
           {
             path: "cau-hinh-he-thong",
             element: <SystemConfigPage />

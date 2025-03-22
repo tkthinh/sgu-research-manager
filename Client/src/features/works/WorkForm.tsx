@@ -21,15 +21,15 @@ import { vi } from "date-fns/locale";
 import { useEffect, useState, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
-import { Work } from "../../../lib/types/models/Work";
-import { WorkSource } from "../../../lib/types/enums/WorkSource";
-import { ScoreLevel } from "../../../lib/types/enums/ScoreLevel";
-import { getWorkLevelsByWorkTypeId } from "../../../lib/api/workLevelsApi";
-import { getAuthorRolesByWorkTypeId } from "../../../lib/api/authorRolesApi";
-import { getPurposesByWorkTypeId } from "../../../lib/api/purposesApi";
-import { getScimagoFieldsByWorkTypeId } from "../../../lib/api/scimagoFieldsApi";
-import { searchUsers, getUserById } from "../../../lib/api/usersApi";
-import { User } from "../../../lib/types/models/User";
+import { Work } from "../../lib/types/models/Work";
+import { WorkSource } from "../../lib/types/enums/WorkSource";
+import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
+import { getWorkLevelsByWorkTypeId } from "../../lib/api/workLevelsApi";
+import { getAuthorRolesByWorkTypeId } from "../../lib/api/authorRolesApi";
+import { getPurposesByWorkTypeId } from "../../lib/api/purposesApi";
+import { getScimagoFieldsByWorkTypeId } from "../../lib/api/scimagoFieldsApi";
+import { searchUsers, getUserById } from "../../lib/api/usersApi";
+import { User } from "../../lib/types/models/User";
 import { useQuery } from "@tanstack/react-query";
 
 // Define validation schema

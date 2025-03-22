@@ -26,8 +26,8 @@ export const NAVIGATION: Navigation = [
   },
 
   {
-    segment: 'cham-diem',
-    title: 'Chấm điểm công trình',
+    segment: 'danh-gia',
+    title: 'Đánh giá công trình',
     icon: <RateReviewIcon />,
   },
   {
@@ -94,10 +94,6 @@ export const NAVIGATION: Navigation = [
         title: 'Mục đích quy đổi',
       },
       {
-        segment: 'tinh-trang-minh-chung',
-        title: 'Tình trạng minh chứng',
-      },
-      {
         kind: 'divider',
       },
       {
@@ -107,10 +103,6 @@ export const NAVIGATION: Navigation = [
       {
         segment: 'nganh',
         title: 'Ngành',
-      },
-      {
-        segment: 'tinh-trang-cong-trinh',
-        title: 'Tình trạng công trình',
       },
       {
         kind: 'divider',
