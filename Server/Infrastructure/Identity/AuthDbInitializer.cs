@@ -42,6 +42,8 @@ public static class AuthDbInitializer
             {
                UserName = "admin",
                Email = "admin@sgu.edu.vn",
+               PhoneNumber = "0123456789",
+               Specialization = "Chuyên ngành Test",
                AcademicTitle = "TS",
                FullName = "Ạc Min",
                OfficerRank = "GiangVien",
@@ -81,6 +83,8 @@ public static class AuthDbInitializer
             {
                UserName = "user",
                Email = "user@sgu.edu.vn",
+               PhoneNumber = "0123456789",
+               Specialization = "Chuyên ngành Test",
                AcademicTitle = "ThS", 
                FullName = "U Sờ",
                OfficerRank = "GiangVien",   
@@ -119,6 +123,8 @@ public static class AuthDbInitializer
             {
                UserName = "manager",
                Email = "manager@sgu.edu.vn",
+               PhoneNumber = "0123456789",
+               Specialization = "Chuyên ngành Test",
                AcademicTitle = "CN", 
                FullName = "Quản Lý",
                OfficerRank = "ChuyenVien",   

@@ -15,135 +15,46 @@ import AuthorRolePage from "../../features/settings/authorRoles/AuthorRolePage";
 import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 import MarkedWorksPage from "../../features/settings/works/MarkedWorksPage";
+import ProtectedRoute from "../shared/components/ProtectedRoute";
+import UserPage from "../../features/settings/users/UserPage";
 import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
+import Setting from "../../features/settings/Setting";
 
 export const router = createBrowserRouter([
   {
     element: <App />,
     children: [
       {
-        path: "/",
-        element: <Navigate to="/dashboard" replace />,
-      },
-      {
-        path: "dashboard",
-        element: <Layout />,
+        element: <ProtectedRoute />,
         children: [
           {
-            index: true,
-            element: <div>Dashboard</div>,
+            path: "/",
+            Component: Layout,
+            children: [
+              // ============== CHÍNH ==============
+              { path: "/", element: <Dashboard /> },
+              { path: "/cong-trinh", element: <WorkPage /> },
+              { path: "dang-ky-quy-doi", element: <MarkedWorksPage /> },
+              { path: "/cham-diem", element: <></> },
+              { path: "/phan-cong", element: <></> },
+              // ============== BÁO CÁO ==============
+              { path: "/bao-cao", element: <></> },
+              // ============== HỆ THỐNG ==============
+              { path: "/quan-ly-tai-khoan", element: <UserPage /> },
+              { path: "/cau-hinh-he-thong", element: <SystemConfigPage /> },
+              { path: "/he-thong", element: <Setting /> },
+              { path: "/he-thong/quan-ly-thoi-gian", element: <></> },
+              { path: "/he-thong/loai-cong-trinh", element: <WorkTypePage /> },
+              { path: "/he-thong/cap-cong-trinh", element: <WorkLevelPage /> },
+              { path: "/he-thong/vai-tro-tac-gia", element: <AuthorRolePage /> },
+              { path: "/he-thong/muc-dich", element: <PurposePage /> },
+              { path: "/he-thong/he-so-quy-doi", element: <FactorPage /> },
+              { path: "/he-thong/nganh-scimago", element: <ScimagoFieldPage /> },
+              { path: "/he-thong/don-vi", element: <DepartmentPage /> },
+              { path: "/he-thong/nganh", element: <FieldPage /> },
+            ],
           },
         ],
-      },
-      {
-        path: "cong-trinh",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <WorkPage />,
-          }
-        ]
-      },
-      {
-        path: "dang-ky-quy-doi",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <MarkedWorksPage />,
-          }
-        ]
-      },
-      {
-        path: "cau-hinh-he-thong",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <SystemConfigPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/loai-cong-trinh",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <WorkTypePage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/nganh",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <FieldPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/cap-cong-trinh",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <WorkLevelPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/vai-tro-tac-gia",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <AuthorRolePage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/muc-dich",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <PurposePage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/nganh-scimago",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <ScimagoFieldPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/don-vi",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <DepartmentPage />,
-          }
-        ]
-      },
-      {
-        path: "cai-dat/he-so-quy-doi",
-        element: <Layout />,
-        children: [
-          {
-            index: true,
-            element: <FactorPage />,
-          }
-        ]
       },
     ],
   },
