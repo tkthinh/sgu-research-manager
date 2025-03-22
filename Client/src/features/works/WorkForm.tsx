@@ -106,6 +106,7 @@ export default function WorkForm({
           timePublished: initialData.timePublished ? new Date(initialData.timePublished) : null,
           details: initialData.details || {},
           source: initialData.source,
+          coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
           author: {
             authorRoleId: initialData.author?.authorRoleId || "",
             purposeId: initialData.author?.purposeId || "",
@@ -114,7 +115,6 @@ export default function WorkForm({
             sCImagoFieldId: initialData.author?.scImagoFieldId || "",
             fieldId: initialData.author?.fieldId || "",
           },
-          coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
         }
       : {
           title: "",
@@ -125,6 +125,7 @@ export default function WorkForm({
           source: WorkSource.NguoiDungKeKhai,
           workTypeId: "",
           workLevelId: "",
+          coAuthorUserIds: [],
           author: {
             authorRoleId: "",
             purposeId: "",
@@ -133,7 +134,6 @@ export default function WorkForm({
             sCImagoFieldId: "",
             fieldId: "",
           },
-          coAuthorUserIds: [],
         },
   });
 
@@ -321,6 +321,7 @@ export default function WorkForm({
         timePublished: initialData.timePublished ? new Date(initialData.timePublished) : null,
         details: initialData.details || {},
         source: initialData.source,
+        coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
         author: {
           authorRoleId: initialData.author?.authorRoleId || "",
           purposeId: initialData.author?.purposeId || "",
@@ -329,7 +330,6 @@ export default function WorkForm({
           sCImagoFieldId: initialData.author?.scImagoFieldId || "",
           fieldId: initialData.author?.fieldId || "",
         },
-        coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
       });
   
       // Tải dữ liệu đồng tác giả
@@ -436,8 +436,18 @@ export default function WorkForm({
 
   // Cập nhật coAuthorUserIds khi selectedCoAuthors thay đổi
   useEffect(() => {
+    if (!selectedCoAuthors) return;
+
     console.log("Cập nhật coAuthorUserIds với:", selectedCoAuthors);
-    setValue("coAuthorUserIds", selectedCoAuthors.map(user => user.id));
+    const coAuthorIds = selectedCoAuthors.map(user => user.id);
+    console.log("Danh sách ID đồng tác giả cập nhật:", coAuthorIds);
+    
+    // Đảm bảo cập nhật giá trị vào form
+    setValue(
+      "coAuthorUserIds",
+      coAuthorIds,
+      { shouldValidate: true }
+    );
   }, [selectedCoAuthors, setValue]);
 
   // Xử lý chuyển đổi giá trị dạng chuỗi sang số
@@ -490,10 +500,13 @@ export default function WorkForm({
     
     setSelectedCoAuthors(filteredCoAuthors);
     
-    // Cập nhật giá trị trong form
+    // Cập nhật giá trị trong form - chỉ lưu trữ IDs
+    const coAuthorIds = filteredCoAuthors.map(user => user.id);
+    console.log("Danh sách ID đồng tác giả cập nhật:", coAuthorIds);
+    
     setValue(
       "coAuthorUserIds",
-      filteredCoAuthors.map((user) => user.id),
+      coAuthorIds,
       { shouldValidate: true }
     );
   };

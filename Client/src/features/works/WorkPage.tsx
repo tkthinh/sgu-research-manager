@@ -117,6 +117,7 @@ export default function WorksPage() {
           workTypeId: data.workRequest.workTypeId,
           workLevelId: data.workRequest.workLevelId,
           details: data.workRequest.details,
+          coAuthorUserIds: data.coAuthorUserIds,
           author: {
             authorRoleId: data.authorRequest.authorRoleId,
             purposeId: data.authorRequest.purposeId,
@@ -125,7 +126,6 @@ export default function WorksPage() {
             scImagoFieldId: data.authorRequest.scImagoFieldId, 
             fieldId: data.authorRequest.fieldId
           },
-          coAuthorUserIds: data.coAuthorUserIds
         });
       } catch (error: any) {
         console.error("Chi tiết lỗi từ server:", error.response?.data);
@@ -356,7 +356,13 @@ export default function WorksPage() {
       // Xử lý tham số scImagoFieldId - đảm bảo đúng format (viết hoa chữ I)
       const scImagoFieldId = data.author.sCImagoFieldId || data.author.scImagoFieldId;
       
-      // Xử lý dữ liệu trước khi gửi
+      // Đảm bảo coAuthorUserIds là một mảng và không chứa giá trị undefined/null
+      const coAuthorUserIds = Array.isArray(data.coAuthorUserIds) 
+        ? data.coAuthorUserIds.filter(id => id) 
+        : [];
+      console.log("coAuthorUserIds trước khi xử lý:", coAuthorUserIds);
+      
+      // Xử lý dữ liệu trước khi gửi - đảm bảo coAuthorUserIds nằm TRONG workRequest
       const formattedData = {
         workRequest: {
           title: data.title?.trim(),
@@ -366,7 +372,8 @@ export default function WorksPage() {
           source: Number(data.source),
           workTypeId: data.workTypeId,
           workLevelId: data.workLevelId || undefined,
-          details: data.details || {}  // Thêm thông tin chi tiết vào yêu cầu
+          details: data.details || {},
+          coAuthorUserIds: coAuthorUserIds // QUAN TRỌNG: coAuthorUserIds phải nằm trong workRequest
         },
         authorRequest: {
           authorRoleId: data.author.authorRoleId,
@@ -375,15 +382,23 @@ export default function WorksPage() {
           scoreLevel: data.author.scoreLevel ? Number(data.author.scoreLevel) : undefined,
           scImagoFieldId: scImagoFieldId ? String(scImagoFieldId) : undefined,
           fieldId: data.author.fieldId ? String(data.author.fieldId) : undefined
-        },
-        coAuthorUserIds: Array.isArray(data.coAuthorUserIds) ? data.coAuthorUserIds : []
+        }
       };
       
       // Log dữ liệu sau khi xử lý để debug
       console.log("Dữ liệu sau khi xử lý:", JSON.stringify(formattedData, null, 2));
       
       if (selectedWork?.id) {
-        await updateMutation.mutateAsync({ workId: selectedWork.id, data: formattedData });
+        console.log("Dữ liệu gửi đi khi cập nhật:", JSON.stringify(formattedData, null, 2));
+        const response = await updateMutation.mutateAsync({ workId: selectedWork.id, data: formattedData });
+        console.log("Phản hồi từ API sau khi cập nhật:", response);
+        console.log("coAuthorUserIds trả về:", response.data?.coAuthorUserIds);
+        
+        console.log("Bắt đầu cập nhật lại dữ liệu sau khi update");
+        queryClient.removeQueries({ queryKey: ['works', 'my-works'] });
+        queryClient.removeQueries({ queryKey: ['works', selectedWork.id] });
+        console.log("Bắt đầu refetch sau khi xóa cache");
+        await queryClient.refetchQueries({ queryKey: ['works', 'my-works'] });
       } else {
         await createMutation.mutateAsync(formattedData);
       }
@@ -524,8 +539,24 @@ export default function WorksPage() {
       },
     },
     {
-      field: "coAuthors",
+      field: "totalAuthors",
       headerName: "Số tác giả",
+      type: "number",
+      width: 140,
+      align: "center",
+      headerAlign: "left"
+    },
+    {
+      field: "totalMainAuthors",
+      headerName: "Số tác giả chính",
+      type: "number",
+      width: 140,
+      align: "center",
+      headerAlign: "left"
+    },
+    {
+      field: "coAuthors",
+      headerName: "Đồng tác giả",
       type: "string",
       width: 140,
       renderCell: (params: any) => {
@@ -540,7 +571,7 @@ export default function WorksPage() {
           <Tooltip 
             title={
               <div>
-                <Typography variant="subtitle2">Danh sách tác giả:</Typography>
+                <Typography variant="subtitle2">Danh sách đồng tác giả:</Typography>
                 {coAuthors.map((user, index) => (
                   <Typography key={index} variant="body2">
                     • {user.fullName} - {user.userName} - {user.departmentName || "Chưa có phòng ban"}
@@ -553,12 +584,6 @@ export default function WorksPage() {
           </Tooltip>
         );
       },
-    },
-    {
-      field: "totalMainAuthors",
-      headerName: "Số tác giả chính",
-      type: "number",
-      width: 140,
     },
     {
       field: "authorRoleName",

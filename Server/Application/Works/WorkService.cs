@@ -9,6 +9,11 @@ using Application.SystemConfigs;
 using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 using System.Globalization;
+using System.Data;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Application.Works
 {
@@ -156,26 +161,20 @@ namespace Application.Works
             if (existingWorkAuthor == null) // Chỉ thêm nếu chưa tồn tại
             {
                 var workAuthor = new WorkAuthor
-            {
-                Id = Guid.NewGuid(),
+                {
+                    Id = Guid.NewGuid(),
                     WorkId = work.Id,
                     UserId = userId
                 };
                 await _unitOfWork.Repository<WorkAuthor>().CreateAsync(workAuthor);
             }
 
-
-
             await _unitOfWork.Repository<Author>().CreateAsync(author);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            // Tạo danh sách đầy đủ tất cả UserId (bao gồm cả tác giả chính)
-            var allAuthorUserIds = new List<Guid> { userId };
-            allAuthorUserIds.AddRange(coAuthorUserIds);
-            allAuthorUserIds = allAuthorUserIds.Distinct().ToList(); // Đảm bảo không trùng lặp
-
             var workDto = _mapper.MapToDto(work);
-            workDto.CoAuthorUserIds = allAuthorUserIds; // Gán danh sách đầy đủ
+            // Gán danh sách đồng tác giả không bao gồm tác giả chính
+            workDto.CoAuthorUserIds = coAuthorUserIds;
             await SafeInvalidateCacheAsync(work.Id);
 
             return workDto;
@@ -198,13 +197,13 @@ namespace Application.Works
             {
                 var userAuthor = authors.FirstOrDefault(a => a.WorkId == work.Id);
                 if (userAuthor is null)
-                {
-                    return null;
-                }
+               {
+                  return null;
+               }
                 
-                var filteredWork = _mapper.MapToDto(work);
-                filteredWork.Authors = new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) };
-                return filteredWork;
+                    var filteredWork = _mapper.MapToDto(work);
+                    filteredWork.Authors = new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) };
+                    return filteredWork;
             }).Where(w => w is not null).ToList();
 
             await FillCoAuthorUserIdsForMultipleWorksAsync(filteredWorks!, cancellationToken);
@@ -249,11 +248,11 @@ namespace Application.Works
                 // 2. Đếm số lượng công trình đã được đánh dấu
                 var markedAuthors = await _unitOfWork.Repository<Author>().FindAsync(a =>
                     a.UserId == author.UserId &&
-                    a.MarkedForScoring &&
-                    a.ScoreLevel == author.ScoreLevel);
-                
+                                       a.MarkedForScoring &&
+                                       a.ScoreLevel == author.ScoreLevel);
+
                 // 3. Lấy thông tin WorkType (nếu cần)
-                var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
+                    var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
                 
                 // 4. Lấy thông tin WorkLevel (nếu cần)
                 WorkLevel? workLevel = null;
@@ -345,7 +344,7 @@ namespace Application.Works
             // Cập nhật các thuộc tính cơ bản
             UpdateAuthorBasicProperties(author, authorRequest);
 
-            // Tính lại WorkHour và AuthorHour nếu có thay đổi liên quan
+                // Tính lại WorkHour và AuthorHour nếu có thay đổi liên quan
             if (ShouldRecalculateAuthorHours(authorRequest, workRequest))
             {
                 await UpdateAuthorHoursAsync(author, work, authorRequest.ScoreLevel, workRequest, cancellationToken);
@@ -382,23 +381,23 @@ namespace Application.Works
         {
             var effectiveScoreLevel = newScoreLevel ?? author.ScoreLevel;
             
-            var factor = (await _factorRepository.FindAsync(f =>
-                f.WorkTypeId == work.WorkTypeId &&
-                f.WorkLevelId == work.WorkLevelId &&
-                f.PurposeId == author.PurposeId &&
+                    var factor = (await _factorRepository.FindAsync(f =>
+                        f.WorkTypeId == work.WorkTypeId &&
+                        f.WorkLevelId == work.WorkLevelId &&
+                        f.PurposeId == author.PurposeId &&
                 f.ScoreLevel == effectiveScoreLevel))
-                .FirstOrDefault();
-            
+                        .FirstOrDefault();
+
             if (factor is null)
                 throw new Exception(ErrorMessages.FactorNotFound);
 
             author.WorkHour = CalculateWorkHour(effectiveScoreLevel, factor);
-            author.AuthorHour = await CalculateAuthorHour(
-                author.WorkHour,
+                    author.AuthorHour = await CalculateAuthorHour(
+                        author.WorkHour,
                 workRequest?.TotalAuthors ?? work.TotalAuthors ?? 0,
                 workRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0,
-                author.AuthorRoleId);
-        }
+                        author.AuthorRoleId);
+                }
 
         private void UpdateAuthorProofStatus(Author author, UpdateAuthorByAdminRequestDto authorRequest)
         {
@@ -415,23 +414,177 @@ namespace Application.Works
             if (work is null)
                 throw new Exception(ErrorMessages.WorkNotFound);
 
-            // Kiểm tra trạng thái hệ thống
+            logger.LogInformation("UpdateWorkByAuthorAsync - Received request for workId {WorkId}", workId);
+            
+            // Xử lý đặc biệt cho coAuthorUserIds - kiểm tra cả hai vị trí
+            List<Guid> coAuthorUserIds = new List<Guid>();
+            
+            // Xác định coAuthorUserIds từ vị trí đúng và vị trí có thể sai
+            if (request.WorkRequest?.CoAuthorUserIds != null && request.WorkRequest.CoAuthorUserIds.Any()) 
+            {
+                // Vị trí 1: Trong workRequest (cấu trúc chính xác)
+                coAuthorUserIds.AddRange(request.WorkRequest.CoAuthorUserIds);
+                logger.LogInformation("Found CoAuthorUserIds in WorkRequest: {Count} ids - {CoAuthorUserIds}", 
+                    request.WorkRequest.CoAuthorUserIds.Count, 
+                    string.Join(", ", request.WorkRequest.CoAuthorUserIds));
+            }
+            
+            // Kiểm tra xem có thuộc tính coAuthorUserIds ở gốc của request không (vị trí sai)
+            try 
+            {
+                var property = request.GetType().GetProperty("CoAuthorUserIds") ?? 
+                              request.GetType().GetProperty("coAuthorUserIds");
+                
+                if (property != null)
+                {
+                    var value = property.GetValue(request);
+                    if (value is List<Guid> userIds && userIds.Any())
+                    {
+                        coAuthorUserIds.AddRange(userIds);
+                        logger.LogInformation("Found CoAuthorUserIds at root level: {Count} ids - {CoAuthorUserIds}", 
+                            userIds.Count, string.Join(", ", userIds));
+                    }
+                    else if (value is IEnumerable<Guid> userIdsEnum)
+                    {
+                        var userIdsList = userIdsEnum.ToList();
+                        if (userIdsList.Any())
+                        {
+                            coAuthorUserIds.AddRange(userIdsList);
+                            logger.LogInformation("Found CoAuthorUserIds as IEnumerable at root level: {Count} ids - {CoAuthorUserIds}", 
+                                userIdsList.Count, string.Join(", ", userIdsList));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking for root-level CoAuthorUserIds");
+            }
+            
+            // Loại bỏ trùng lặp từ danh sách coAuthorUserIds
+            coAuthorUserIds = coAuthorUserIds.Distinct().ToList();
+            logger.LogInformation("Final combined CoAuthorUserIds: {Count} ids - {CoAuthorUserIds}", 
+                coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
+
             await ValidateSystemStateAsync(work, userId, cancellationToken);
 
-            // Cập nhật thông tin công trình
             if (request.WorkRequest is not null)
             {
                 UpdateWorkDetailsByAuthor(work, request.WorkRequest);
+
+                // Luôn gọi UpdateCoAuthorsAsync để cập nhật đúng danh sách đồng tác giả
+                // Ngay cả khi danh sách rỗng, việc này cũng đảm bảo xóa các đồng tác giả cũ nếu người dùng muốn
+                logger.LogInformation("Updating CoAuthors with combined list: {Count} userIds - {UserIds}", 
+                    coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
+                await UpdateCoAuthorsAsync(work, coAuthorUserIds, userId, cancellationToken);
             }
 
-            // Kiểm tra và cập nhật thông tin tác giả
             var author = await GetOrCreateAuthorAsync(work, userId, request, cancellationToken);
 
+            // Lưu các thay đổi vào database
             await SaveChangesAsync(work, author, cancellationToken);
+            
+            logger.LogInformation("Changes saved successfully for workId {WorkId}", workId);
 
+            // Ánh xạ sang DTO và điền thông tin đồng tác giả
             var workDto = _mapper.MapToDto(work);
+            
+            logger.LogInformation("WorkDto mapped. Filling CoAuthorUserIds...");
             await FillCoAuthorUserIdsAsync(workDto, cancellationToken);
+            
+            logger.LogInformation("UpdateWorkByAuthorAsync complete. Returning CoAuthorUserIds: {CoAuthorUserIds}", 
+                string.Join(", ", workDto.CoAuthorUserIds));
+                
             return workDto;
+        }
+
+        private async Task UpdateCoAuthorsAsync(Work work, List<Guid> newCoAuthorUserIds, Guid currentUserId, CancellationToken cancellationToken)
+        {
+            try {
+                // Đảm bảo newCoAuthorUserIds không bao gồm currentUserId
+                newCoAuthorUserIds = newCoAuthorUserIds.Where(id => id != currentUserId).Distinct().ToList();
+                
+                logger.LogInformation("UpdateCoAuthorsAsync - Work {WorkId}: Processing {Count} new coauthors: {NewCoauthors}", 
+                    work.Id, newCoAuthorUserIds.Count, string.Join(", ", newCoAuthorUserIds));
+
+                // Lấy tất cả WorkAuthor hiện có của công trình
+                var existingWorkAuthors = await _unitOfWork.Repository<WorkAuthor>()
+                    .FindAsync(wa => wa.WorkId == work.Id);
+                var existingCoAuthorIds = existingWorkAuthors.Select(wa => wa.UserId).ToList();
+
+                // Lấy thêm tất cả Author của công trình (trừ tác giả chính)
+                var existingAuthors = await _unitOfWork.Repository<Author>()
+                    .FindAsync(a => a.WorkId == work.Id && a.UserId != currentUserId);
+                var existingAuthorUserIds = existingAuthors.Select(a => a.UserId).ToList();
+
+                // Tổng hợp tất cả User IDs hiện có (từ cả WorkAuthor và Author)
+                var allExistingUserIds = existingCoAuthorIds.Union(existingAuthorUserIds).Distinct().ToList();
+
+                logger.LogInformation("Existing WorkAuthors: {Count} users - {ExistingIds}", 
+                    existingCoAuthorIds.Count, string.Join(", ", existingCoAuthorIds));
+                logger.LogInformation("Existing Authors: {Count} users - {ExistingAuthorIds}", 
+                    existingAuthorUserIds.Count, string.Join(", ", existingAuthorUserIds));
+                logger.LogInformation("Combined existing: {Count} users - {AllExistingUserIds}", 
+                    allExistingUserIds.Count, string.Join(", ", allExistingUserIds));
+
+                // 1. Xóa các WorkAuthor không còn trong danh sách mới
+                var workAuthorsToRemove = existingWorkAuthors.Where(wa => 
+                    wa.UserId != currentUserId && !newCoAuthorUserIds.Contains(wa.UserId)).ToList();
+                
+                foreach (var wAuthor in workAuthorsToRemove)
+                {
+                    logger.LogInformation("Removing WorkAuthor with UserId: {UserId}", wAuthor.UserId);
+                    work.WorkAuthors.Remove(wAuthor);
+                }
+
+                // 2. Xóa các Author không còn trong danh sách mới
+                // * Quan trọng: Không xóa Author của người dùng hiện tại (currentUserId)
+                var authorsToRemove = existingAuthors.Where(a => 
+                    a.UserId != currentUserId && !newCoAuthorUserIds.Contains(a.UserId)).ToList();
+                
+                foreach (var author in authorsToRemove)
+                {
+                    work.Authors.Remove(author);
+                    // Xóa Author khỏi cơ sở dữ liệu
+                    await _unitOfWork.Repository<Author>().DeleteAsync(author.Id);
+                }
+
+                // Tìm các userId cần thêm mới: những userId có trong newCoAuthorUserIds nhưng không có trong allExistingUserIds
+                var userIdsToAdd = newCoAuthorUserIds.Where(id => 
+                    !allExistingUserIds.Contains(id) && id != currentUserId).ToList();
+                
+                logger.LogInformation("UserIds to add as new coauthors: {Count} users - {UserIdsToAdd}", 
+                    userIdsToAdd.Count, string.Join(", ", userIdsToAdd));
+
+                // Thêm các đồng tác giả mới
+                foreach (var coAuthorId in userIdsToAdd)
+                {
+                    try 
+                    {
+                        var workAuthor = new WorkAuthor
+                        {
+                            Id = Guid.NewGuid(),
+                            WorkId = work.Id,
+                            UserId = coAuthorId
+                        };
+                        logger.LogInformation("Creating WorkAuthor for UserId: {UserId}", coAuthorId);
+                        await _unitOfWork.Repository<WorkAuthor>().CreateAsync(workAuthor);
+                        
+                        // Thêm vào danh sách WorkAuthors của đối tượng Work
+                        work.WorkAuthors.Add(workAuthor);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error adding coauthor {UserId} to work {WorkId}", coAuthorId, work.Id);
+                    }
+                }
+                
+                logger.LogInformation("UpdateCoAuthorsAsync completed for work {WorkId}", work.Id);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error in UpdateCoAuthorsAsync for work {WorkId}", work.Id);
+            }
         }
 
         private async Task ValidateSystemStateAsync(Work work, Guid userId, CancellationToken cancellationToken)
@@ -453,11 +606,11 @@ namespace Application.Works
             work.TotalAuthors = workRequest.TotalAuthors ?? work.TotalAuthors;
             work.TotalMainAuthors = workRequest.TotalMainAuthors ?? work.TotalMainAuthors;
             work.Details = workRequest.Details ?? work.Details;
-            work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
+                work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
-            work.ModifiedDate = DateTime.UtcNow;
-        }
+                work.ModifiedDate = DateTime.UtcNow;
+            }
 
         private async Task<Author> GetOrCreateAuthorAsync(Work work, Guid userId, UpdateWorkByAuthorRequestDto request, CancellationToken cancellationToken)
         {
@@ -483,34 +636,34 @@ namespace Application.Works
             if (request.AuthorRequest is null)
             {
                 throw new Exception(ErrorMessages.AuthorInfoRequired);
-            }
+                }
 
-            // Tính toán WorkHour và AuthorHour cho tác giả mới
+                // Tính toán WorkHour và AuthorHour cho tác giả mới
             var factor = await FindFactorAsync(work.WorkTypeId, work.WorkLevelId, request.AuthorRequest.PurposeId, request.AuthorRequest.ScoreLevel, cancellationToken);
 
-            var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
-            var authorHour = await CalculateAuthorHour(
-                workHour,
-                work.TotalAuthors ?? 0,
-                work.TotalMainAuthors ?? 0,
-                request.AuthorRequest.AuthorRoleId);
+                var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
+                var authorHour = await CalculateAuthorHour(
+                    workHour,
+                    work.TotalAuthors ?? 0,
+                    work.TotalMainAuthors ?? 0,
+                    request.AuthorRequest.AuthorRoleId);
 
-            // Tạo mới thông tin tác giả
+                // Tạo mới thông tin tác giả
             return new Author
-            {
-                UserId = userId,
+                {
+                    UserId = userId,
                 WorkId = work.Id,
-                AuthorRoleId = request.AuthorRequest.AuthorRoleId,
-                PurposeId = request.AuthorRequest.PurposeId,
-                Position = request.AuthorRequest.Position,
-                ScoreLevel = request.AuthorRequest.ScoreLevel,
-                WorkHour = workHour,
-                AuthorHour = authorHour,
+                    AuthorRoleId = request.AuthorRequest.AuthorRoleId,
+                    PurposeId = request.AuthorRequest.PurposeId,
+                    Position = request.AuthorRequest.Position,
+                    ScoreLevel = request.AuthorRequest.ScoreLevel,
+                    WorkHour = workHour,
+                    AuthorHour = authorHour,
                 SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
                 FieldId = request.AuthorRequest.FieldId,
-                ProofStatus = ProofStatus.ChuaXuLy,
-                CreatedDate = DateTime.UtcNow
-            };
+                    ProofStatus = ProofStatus.ChuaXuLy,
+                    CreatedDate = DateTime.UtcNow
+                };
         }
 
         private async Task<Factor> FindFactorAsync(Guid workTypeId, Guid? workLevelId, Guid purposeId, ScoreLevel? scoreLevel, CancellationToken cancellationToken)
@@ -533,11 +686,11 @@ namespace Application.Works
             if (request.AuthorRequest is not null)
             {
                 // AuthorRoleId và PurposeId là Guid không nullable, gán trực tiếp
-                author.AuthorRoleId = request.AuthorRequest.AuthorRoleId;
-                author.PurposeId = request.AuthorRequest.PurposeId;
+                    author.AuthorRoleId = request.AuthorRequest.AuthorRoleId;
+                    author.PurposeId = request.AuthorRequest.PurposeId;
                 
-                author.Position = request.AuthorRequest.Position ?? author.Position;
-                author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
+                    author.Position = request.AuthorRequest.Position ?? author.Position;
+                    author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
                 
                 // SCImagoFieldId và FieldId là nullable Guid
                 author.SCImagoFieldId = request.AuthorRequest.SCImagoFieldId;
@@ -550,25 +703,25 @@ namespace Application.Works
                 if (shouldRecalculate)
                 {
                     var factor = await _factorRepository.FirstOrDefaultAsync(f =>
-                        f.WorkTypeId == work.WorkTypeId &&
-                        f.WorkLevelId == work.WorkLevelId &&
-                        f.PurposeId == author.PurposeId &&
+                            f.WorkTypeId == work.WorkTypeId &&
+                            f.WorkLevelId == work.WorkLevelId &&
+                            f.PurposeId == author.PurposeId &&
                         f.ScoreLevel == author.ScoreLevel, cancellationToken);
-                        
+
                     if (factor is null)
                         throw new Exception(ErrorMessages.FactorNotFound);
 
                     author.WorkHour = CalculateWorkHour(author.ScoreLevel, factor);
-                    author.AuthorHour = await CalculateAuthorHour(
-                        author.WorkHour,
+                        author.AuthorHour = await CalculateAuthorHour(
+                            author.WorkHour,
                         work.TotalAuthors ?? 0,
                         work.TotalMainAuthors ?? 0,
-                        author.AuthorRoleId);
-                }
+                            author.AuthorRoleId);
+                    }
 
                 author.ModifiedDate = DateTime.UtcNow;
+                }
             }
-        }
 
         private async Task SaveChangesAsync(Work work, Author author, CancellationToken cancellationToken = default)
         {
@@ -707,24 +860,65 @@ namespace Application.Works
 
         private async Task FillCoAuthorUserIdsAsync(WorkDto workDto, CancellationToken cancellationToken = default)
         {
-            // Lấy tất cả UserId từ Author
-            var authors = await _unitOfWork.Repository<Author>()
-                .FindAsync(a => a.WorkId == workDto.Id);
-            var authorUserIds = authors.Select(a => a.UserId).ToList();
+            if (workDto is null)
+                return;
 
-            // Lấy tất cả UserId từ WorkAuthor
-            var workAuthors = await _unitOfWork.Repository<WorkAuthor>()
-                .FindAsync(wa => wa.WorkId == workDto.Id);
-            var coAuthorUserIds = workAuthors.Select(wa => wa.UserId).ToList();
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id")?.Value;
+            Guid currentUserId = Guid.Empty;
+            if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
+            {
+                currentUserId = userId;
+            }
 
-            // Kết hợp và loại bỏ trùng lặp
-            workDto.CoAuthorUserIds = authorUserIds.Union(coAuthorUserIds).Distinct().ToList();
+            logger.LogInformation("FillCoAuthorUserIdsAsync - WorkDto {WorkId}: Start", workDto.Id);
+
+            try {
+                // Lấy những UserId đã có thông tin Author
+                var authors = await _unitOfWork.Repository<Author>()
+                    .FindAsync(a => a.WorkId == workDto.Id);
+                var authorUserIds = authors.Select(a => a.UserId).ToList();
+
+                // Lấy những UserId trong bảng WorkAuthor
+                var workAuthors = await _unitOfWork.Repository<WorkAuthor>()
+                    .FindAsync(wa => wa.WorkId == workDto.Id);
+                var coAuthorUserIds = workAuthors.Select(wa => wa.UserId).ToList();
+
+                logger.LogInformation("FillCoAuthorUserIdsAsync - Authors found: {Count}", authors.Count());
+                logger.LogInformation("FillCoAuthorUserIdsAsync - WorkAuthors found: {Count}", workAuthors.Count());
+                logger.LogInformation("Authors UserIds: {AuthorIds}", string.Join(", ", authorUserIds));
+                logger.LogInformation("WorkAuthors UserIds: {WorkAuthors}", string.Join(", ", coAuthorUserIds));
+
+                // Kết hợp tất cả UserId, loại bỏ currentUserId, và đảm bảo không có trùng lặp
+                var combinedUserIds = authorUserIds.Union(coAuthorUserIds)
+                    .Where(uid => uid != currentUserId)
+                    .Distinct()
+                    .ToList();
+                    
+                workDto.CoAuthorUserIds = combinedUserIds;
+                
+                logger.LogInformation("Final CoAuthorUserIds: {Count} users - {FinalIds}", 
+                    workDto.CoAuthorUserIds.Count,
+                    string.Join(", ", workDto.CoAuthorUserIds));
+            }
+            catch (Exception ex) {
+                logger.LogError(ex, "Error filling CoAuthorUserIds for WorkDto {WorkId}", workDto.Id);
+                // Đảm bảo ít nhất trả về một danh sách rỗng thay vì null
+                workDto.CoAuthorUserIds = new List<Guid>();
+            }
         }
 
         private async Task FillCoAuthorUserIdsForMultipleWorksAsync(IEnumerable<WorkDto> workDtos, CancellationToken cancellationToken = default)
         {
             if (workDtos is null || !workDtos.Any())
                 return;
+
+            // Lấy userId của người đang đăng nhập
+            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id")?.Value;
+            Guid currentUserId = Guid.Empty;
+            if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
+            {
+                currentUserId = userId;
+            }
 
             // Lấy tất cả workIds
             var workIds = workDtos.Select(w => w.Id).Distinct().ToList();
@@ -756,8 +950,11 @@ namespace Application.Works
                     ? workAuthors 
                     : new List<Guid>();
 
-                // Kết hợp và loại bỏ trùng lặp
-                workDto.CoAuthorUserIds = authorUserIds.Union(coAuthorUserIds).Distinct().ToList();
+                // Kết hợp, loại bỏ trùng lặp và loại bỏ userId của người dùng đang đăng nhập
+                workDto.CoAuthorUserIds = authorUserIds.Union(coAuthorUserIds)
+                    .Where(uid => uid != currentUserId)
+                    .Distinct()
+                    .ToList();
             }
         }
 
@@ -911,7 +1108,6 @@ namespace Application.Works
             {
                 var author = w.Authors?.FirstOrDefault();
                 var coAuthorNames = string.Join(", ", w.CoAuthorUserIds
-                    .Where(uid => uid != userId)
                     .Select(uid => coAuthors.FirstOrDefault(u => u.Id == uid)?.FullName ?? "Không xác định"));
 
                 return new ExportExcelDto

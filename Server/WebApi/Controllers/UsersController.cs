@@ -83,7 +83,6 @@ namespace WebApi.Controllers
                   ));
         }
 
-        // Self update endpoint for a user to update their info without changing role.
         [HttpPut("me")]
         [Authorize]
         public async Task<ActionResult<ApiResponse<object>>> UpdateMyProfile([FromBody] UpdateUserRequestDto requestDto)

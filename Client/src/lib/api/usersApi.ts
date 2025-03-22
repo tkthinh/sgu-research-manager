@@ -11,3 +11,13 @@ export const getUserById = async (userId: string): Promise<ApiResponse<User>> =>
   const response = await apiClient.get<ApiResponse<User>>(`/users/${userId}`);
   return response.data;
 }; 
+
+export const getAllUsers = async (): Promise<ApiResponse<User[]>> => {
+  const response = await apiClient.get<ApiResponse<User[]>>(`/users`);
+  return response.data;
+}; 
+
+export const getUsersByDepartmentId = async (departmentId: string): Promise<ApiResponse<User[]>> => {
+  const response = await apiClient.get<ApiResponse<User[]>>(`/users/department/${departmentId}`);
+  return response.data;
+}; 
