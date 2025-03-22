@@ -79,5 +79,10 @@ namespace Infrastructure.Data.Repositories
         {
             return await dbSet.AnyAsync(predicate, cancellationToken);
         }
+
+        public IQueryable<T> GetQueryable()
+        {
+            return context.Set<T>();
+        }
     }
 }
