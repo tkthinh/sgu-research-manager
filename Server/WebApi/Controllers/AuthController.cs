@@ -52,15 +52,15 @@ public class AuthController : ControllerBase
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-      // Optionally, add roles as claims:
+      // Add roles as claims:
       var userRoles = await userManager.GetRolesAsync(identityUser);
       authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
+      // Add user id as claims
       var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
       if (user is not null)
       {
-         user.Role = userRoles.Any() ? userRoles.First() : "No Role";
-         authClaims.Add(new Claim("id", user.Id.ToString())); // Thêm UserId vào token
+         authClaims.Add(new Claim("id", user.Id.ToString()));
       }
 
       // Generate the token
@@ -135,8 +135,7 @@ public class AuthController : ControllerBase
             OfficerRank = request.OfficerRank,
             Specialization = request.Specialization,
             DepartmentId = request.DepartmentId,
-            FieldId = request.FieldId,
-            Role = "User"
+            FieldId = request.FieldId
          };
 
          // Create the domain user.

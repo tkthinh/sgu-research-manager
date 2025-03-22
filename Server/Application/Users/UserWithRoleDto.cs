@@ -2,7 +2,7 @@
 
 namespace Application.Users
 {
-   public class UserDto
+   public class UserWithRoleDto
    {
       public Guid Id { get; set; }
       public Guid DepartmentId { get; set; }
@@ -18,7 +18,9 @@ namespace Application.Users
       public string? DepartmentName { get; set; }
       public string? FieldName { get; set; }
 
-      // Identity
+      // Identity and Role
       public required string IdentityId { get; set; }
+      public bool IsApproved { get; set; }
+      public string? Role { get; set; }
    }
 }
