@@ -74,32 +74,16 @@ export const NAVIGATION: Navigation = [
     icon: <SettingsIcon />,
     children: [
       {
-        segment: 'loai-cong-trinh',
-        title: 'Loại công trình',
-      },
-      {
-        segment: 'cap-cong-trinh',
-        title: 'Cấp công trình',
-      },
-      {
-        segment: 'loai-cong-trinh',
-        title: 'Loại công trình',
-      },
-      {
-        segment: 'cap-cong-trinh',
-        title: 'Cấp công trình',
-      },
-      {
         segment: 'he-so-quy-doi',
         title: 'Hệ số quy đổi',
       },
       {
-        segment: 'vai-tro-tac-gia',
-        title: 'Vai trò tác giả',
-      },
-      {
         segment: 'muc-dich-quy-doi',
         title: 'Mục đích quy đổi',
+      },
+      {
+        segment: 'vai-tro-tac-gia',
+        title: 'Vai trò tác giả',
       },
       {
         kind: 'divider',
@@ -122,6 +106,10 @@ export const NAVIGATION: Navigation = [
       {
         segment: 'don-vi',
         title: 'Đơn vị',
+      },
+      {
+        segment: 'nganh',
+        title: 'Ngành',
       },
     ]
   },
