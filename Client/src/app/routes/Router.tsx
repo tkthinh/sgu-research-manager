@@ -11,6 +11,7 @@ import Setting from "../../features/settings/Setting";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 import WorksPage from "../../features/settings/works/WorksPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
+import UserPage from "../../features/settings/users/UserPage";
 
 export const router = createBrowserRouter([
   {
@@ -31,8 +32,8 @@ export const router = createBrowserRouter([
               // ============== BÁO CÁO ==============
               { path: "/bao-cao", element: <></> },
               // ============== HỆ THỐNG ==============
+              { path: "/quan-ly-tai-khoan", element: <UserPage /> },
               { path: "/he-thong", element: <Setting /> },
-              { path: "/he-thong/quan-ly-tai-khoan", element: <></> },
               { path: "/he-thong/quan-ly-thoi-gian", element: <></> },
               { path: "/he-thong/loai-cong-trinh", element: <WorkTypePage /> },
               { path: "/he-thong/don-vi", element: <DepartmentPage /> },
