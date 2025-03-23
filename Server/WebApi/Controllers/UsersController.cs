@@ -296,21 +296,6 @@ namespace WebApi.Controllers
                     ));
                 }
 
-                // Lấy vai trò (role) cho từng người dùng
-                foreach (var user in usersList)
-                {
-                    var identityUser = await userManager.FindByIdAsync(user.IdentityId);
-                    if (identityUser != null)
-                    {
-                        var roles = await userManager.GetRolesAsync(identityUser);
-                        user.Role = roles.Any() ? roles.First() : "No Role";
-                    }
-                    else
-                    {
-                        user.Role = "Unknown";
-                    }
-                }
-
                 return Ok(new ApiResponse<IEnumerable<UserDto>>(
                     true,
                     "Lấy danh sách người dùng theo phòng ban thành công",

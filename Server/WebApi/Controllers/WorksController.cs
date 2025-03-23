@@ -6,6 +6,10 @@ using Microsoft.AspNetCore.SignalR;
 using WebApi.Hubs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Domain.Entities;
+using Domain.Interfaces;
+using Domain.Enums;
 
 namespace WebApi.Controllers
 {
@@ -16,12 +20,14 @@ namespace WebApi.Controllers
         private readonly IWorkService _workService;
         private readonly ILogger<WorksController> _logger;
         private readonly IHubContext<NotificationHub> _hubContext;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public WorksController(IWorkService workService, ILogger<WorksController> logger, IHubContext<NotificationHub> hubContext)
+        public WorksController(IWorkService workService, ILogger<WorksController> logger, IHubContext<NotificationHub> hubContext, IUnitOfWork unitOfWork)
         {
             _workService = workService;
             _logger = logger;
             _hubContext = hubContext;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
@@ -247,7 +253,7 @@ namespace WebApi.Controllers
                 // Lấy userName để hiển thị trong thông báo
                 var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
 
-                // Kiểm tra xem userId có phải là tác giả hoặc đồng tác giả của công trình không
+                // Kiểm tra xem userId có phải là tác giả của công trình không
                 var work = await _workService.GetWorkByIdWithAuthorsAsync(workId);
 
                 if (work == null)
@@ -255,11 +261,23 @@ namespace WebApi.Controllers
                     return NotFound(new ApiResponse<object>(false, "Công trình không tồn tại"));
                 }
 
+                // Kiểm tra xem userId có phải là tác giả của công trình không
                 var isAuthor = work.Authors?.Any(a => a.UserId == userId) ?? false;
+                
+                // Kiểm tra xem userId có phải là đồng tác giả của công trình không
                 var isCoAuthor = work.CoAuthorUserIds?.Contains(userId) ?? false;
+                
                 if (!isAuthor && !isCoAuthor)
                 {
-                    return StatusCode(403, new ApiResponse<object>(false, "Bạn không có quyền cập nhật công trình này"));
+                    // Kiểm tra nếu userId nằm trong danh sách WorkAuthor nhưng không có trong CoAuthorUserIds (có thể do lỗi cập nhật)
+                    // Sử dụng Repository để kiểm tra thêm
+                    var workAuthorExists = await _unitOfWork.Repository<WorkAuthor>()
+                        .FirstOrDefaultAsync(wa => wa.WorkId == workId && wa.UserId == userId);
+                    
+                    if (workAuthorExists == null)
+                    {
+                        return StatusCode(403, new ApiResponse<object>(false, "Bạn không có quyền cập nhật công trình này"));
+                    }
                 }
 
                 // Cập nhật công trình

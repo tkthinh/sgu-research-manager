@@ -41,7 +41,7 @@ export const router = createBrowserRouter([
               // ============== HỆ THỐNG ==============
               { path: "/quan-ly-tai-khoan", element: <UserPage /> },
               { path: "/cau-hinh-he-thong", element: <SystemConfigPage /> },
-              { path: "/cai-dat", element: <Setting /> },
+              // { path: "/cai-dat", element: <Setting /> },
               { path: "/cai-dat/quan-ly-thoi-gian", element: <></> },
               { path: "/cai-dat/loai-cong-trinh", element: <WorkTypePage /> },
               { path: "/cai-dat/cap-cong-trinh", element: <WorkLevelPage /> },
