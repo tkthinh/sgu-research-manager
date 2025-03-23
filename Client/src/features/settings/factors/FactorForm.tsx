@@ -25,6 +25,7 @@ import { ScoreLevel } from "../../../lib/types/enums/ScoreLevel";
 
 // Define validation schema
 const schema = z.object({
+  name: z.string().min(1, "Tên hệ số không được để trống"),
   workTypeId: z.string().uuid("Vui lòng chọn loại công trình"),
   workLevelId: z.string().uuid("Vui lòng chọn cấp công trình").optional().nullable(),
   purposeId: z.string().uuid("Vui lòng chọn mục đích quy đổi"),
@@ -81,11 +82,12 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
   } = useForm<FactorFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      name: "",
       workTypeId: "",
       workLevelId: null,
       purposeId: "",
       authorRoleId: null,
-      scoreLevel: ScoreLevel.One,
+      scoreLevel: ScoreLevel.BaiBaoTopMuoi,
       convertHour: 0,
       maxAllowed: 0,
     },
@@ -102,6 +104,7 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
 
   useEffect(() => {
     if (data) {
+      setValue("name", data.name);
       setValue("workTypeId", data.workTypeId);
       setValue("workLevelId", data.workLevelId);
       setValue("purposeId", data.purposeId);
@@ -131,7 +134,8 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
       const payload: Partial<Factor> = {
         ...formData,
         workLevelId: formData.workLevelId || undefined,
-        authorRoleId: formData.authorRoleId || undefined
+        authorRoleId: formData.authorRoleId || undefined,
+        name: formData.name
       };
 
       if (data?.id) {
@@ -159,20 +163,52 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
   // Get score level text
   const getScoreLevelText = (level: number) => {
     switch (level) {
-      case ScoreLevel.One:
-        return "1 điểm";
-      case ScoreLevel.ZeroPointSevenFive:
-        return "0.75 điểm";
-      case ScoreLevel.ZeroPointFive:
-        return "0.5 điểm";
-      case ScoreLevel.TenPercent:
+      case ScoreLevel.BaiBaoTopMuoi:
         return "Top 10%";
-      case ScoreLevel.ThirtyPercent:
+      case ScoreLevel.BaiBaoTopBaMuoi:
         return "Top 30%";
-      case ScoreLevel.FiftyPercent:
+      case ScoreLevel.BaiBaoTopNamMuoi:
         return "Top 50%";
-      case ScoreLevel.HundredPercent:
-        return "Top 100%";
+      case ScoreLevel.BaiBaoTopConLai:
+        return "Top còn lại";
+      case ScoreLevel.BaiBaoMotDiem:
+        return "Bài báo 1 điểm";
+      case ScoreLevel.BaiBaoNuaDiem:
+        return "Bài báo 0.5 điểm";
+      case ScoreLevel.BaiBaoKhongBayNamDiem:
+        return "Bài báo 0.75 điểm";
+      case ScoreLevel.HDSVDatGiaiKK:
+        return "HDSV đạt giải KK";
+      case ScoreLevel.HDSVDatGiaiBa:
+        return "HDSV đạt giải Ba";
+      case ScoreLevel.HDSVDatGiaiNhi:
+        return "HDSV đạt giải Nhì";
+      case ScoreLevel.HDSVDatGiaiNhat:
+        return "HDSV đạt giải Nhất";
+      case ScoreLevel.HDSVConLai:
+        return "HDSV còn lại";
+      case ScoreLevel.TacPhamNgheThuatCapTruong:
+        return "Tác phẩm nghệ thuật cấp trường";
+      case ScoreLevel.TacPhamNgheThuatCapTinhThanhPho:
+        return "Tác phẩm nghệ thuật cấp tỉnh/thành phố";
+      case ScoreLevel.TacPhamNgheThuatCapQuocGia:
+        return "Tác phẩm nghệ thuật cấp quốc gia";
+      case ScoreLevel.TacPhamNgheThuatCapQuocTe:
+        return "Tác phẩm nghệ thuật cấp quốc tế";
+      case ScoreLevel.ThanhTichHuanLuyenCapQuocGia:
+        return "Thành tích huấn luyện cấp quốc gia";
+      case ScoreLevel.ThanhTichHuanLuyenCapQuocTe:
+        return "Thành tích huấn luyện cấp quốc tế";
+      case ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho:
+        return "Giải pháp hữu ích cấp tỉnh/thành phố";
+      case ScoreLevel.GiaiPhapHuuIchCapQuocGia:
+        return "Giải pháp hữu ích cấp quốc gia";
+      case ScoreLevel.GiaiPhapHuuIchCapQuocTe:
+        return "Giải pháp hữu ích cấp quốc tế";
+      case ScoreLevel.KetQuaNghienCuu:
+        return "Kết quả nghiên cứu";
+      case ScoreLevel.Sach:
+        return "Sách";
       default:
         return "Không xác định";
     }
@@ -183,6 +219,23 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
       <DialogTitle>{data ? "Cập nhật Hệ số quy đổi" : "Thêm Hệ số quy đổi"}</DialogTitle>
       <DialogContent>
         <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12}>
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Tên hệ số"
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
+                  fullWidth
+                  disabled={mutation.isPending}
+                />
+              )}
+            />
+          </Grid>
+
           <Grid item xs={12}>
             <Controller
               name="workTypeId"
@@ -315,13 +368,29 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
                   onChange={(e) => field.onChange(Number(e.target.value))}
                   value={field.value}
                 >
-                  <MenuItem value={ScoreLevel.One}>{getScoreLevelText(ScoreLevel.One)}</MenuItem>
-                  <MenuItem value={ScoreLevel.ZeroPointSevenFive}>{getScoreLevelText(ScoreLevel.ZeroPointSevenFive)}</MenuItem>
-                  <MenuItem value={ScoreLevel.ZeroPointFive}>{getScoreLevelText(ScoreLevel.ZeroPointFive)}</MenuItem>
-                  <MenuItem value={ScoreLevel.TenPercent}>{getScoreLevelText(ScoreLevel.TenPercent)}</MenuItem>
-                  <MenuItem value={ScoreLevel.ThirtyPercent}>{getScoreLevelText(ScoreLevel.ThirtyPercent)}</MenuItem>
-                  <MenuItem value={ScoreLevel.FiftyPercent}>{getScoreLevelText(ScoreLevel.FiftyPercent)}</MenuItem>
-                  <MenuItem value={ScoreLevel.HundredPercent}>{getScoreLevelText(ScoreLevel.HundredPercent)}</MenuItem>
+                  <MenuItem value={ScoreLevel.BaiBaoTopMuoi}>Top 10%</MenuItem>
+                  <MenuItem value={ScoreLevel.BaiBaoTopBaMuoi}>Top 30%</MenuItem>
+                  <MenuItem value={ScoreLevel.BaiBaoTopNamMuoi}>Top 50%</MenuItem>
+                  <MenuItem value={ScoreLevel.BaiBaoTopConLai}>Top còn lại</MenuItem>
+                  <MenuItem value={ScoreLevel.BaiBaoMotDiem}>Bài báo 1 điểm</MenuItem>
+                  <MenuItem value={ScoreLevel.BaiBaoNuaDiem}>Bài báo 0.5 điểm</MenuItem>
+                  <MenuItem value={ScoreLevel.BaiBaoKhongBayNamDiem}>Bài báo 0.75 điểm</MenuItem>
+                  <MenuItem value={ScoreLevel.HDSVDatGiaiKK}>HDSV đạt giải KK</MenuItem>
+                  <MenuItem value={ScoreLevel.HDSVDatGiaiBa}>HDSV đạt giải Ba</MenuItem>
+                  <MenuItem value={ScoreLevel.HDSVDatGiaiNhi}>HDSV đạt giải Nhì</MenuItem>
+                  <MenuItem value={ScoreLevel.HDSVDatGiaiNhat}>HDSV đạt giải Nhất</MenuItem>
+                  <MenuItem value={ScoreLevel.HDSVConLai}>HDSV còn lại</MenuItem>
+                  <MenuItem value={ScoreLevel.TacPhamNgheThuatCapTruong}>Tác phẩm nghệ thuật cấp trường</MenuItem>
+                  <MenuItem value={ScoreLevel.TacPhamNgheThuatCapTinhThanhPho}>Tác phẩm nghệ thuật cấp tỉnh/thành phố</MenuItem>
+                  <MenuItem value={ScoreLevel.TacPhamNgheThuatCapQuocGia}>Tác phẩm nghệ thuật cấp quốc gia</MenuItem>
+                  <MenuItem value={ScoreLevel.TacPhamNgheThuatCapQuocTe}>Tác phẩm nghệ thuật cấp quốc tế</MenuItem>
+                  <MenuItem value={ScoreLevel.ThanhTichHuanLuyenCapQuocGia}>Thành tích huấn luyện cấp quốc gia</MenuItem>
+                  <MenuItem value={ScoreLevel.ThanhTichHuanLuyenCapQuocTe}>Thành tích huấn luyện cấp quốc tế</MenuItem>
+                  <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho}>Giải pháp hữu ích cấp tỉnh/thành phố</MenuItem>
+                  <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapQuocGia}>Giải pháp hữu ích cấp quốc gia</MenuItem>
+                  <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapQuocTe}>Giải pháp hữu ích cấp quốc tế</MenuItem>
+                  <MenuItem value={ScoreLevel.KetQuaNghienCuu}>Kết quả nghiên cứu</MenuItem>
+                  <MenuItem value={ScoreLevel.Sach}>Sách</MenuItem>
                 </TextField>
               )}
             />

@@ -7,7 +7,7 @@ namespace Application.Authors
         public Guid Id { get; set; }
         public Guid WorkId { get; set; }
         public Guid UserId { get; set; }
-        public Guid AuthorRoleId { get; set; }
+        public Guid? AuthorRoleId { get; set; }
         public string? AuthorRoleName { get; set; }
         public Guid PurposeId { get; set; }
         public string? PurposeName { get; set; }

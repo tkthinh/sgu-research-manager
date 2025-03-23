@@ -1,14 +1,7 @@
 ﻿namespace Domain.Enums
 {
-    public enum ScoreLevel
+    public enum Achievement
     {
-        //One = 1,          // 1
-        //ZeroPointSevenFive = 2, // 0.75
-        //ZeroPointFive = 3,      // 0.5
-        //TenPercent = 4,   // 10%
-        //ThirtyPercent = 5, // 30%
-        //FiftyPercent = 6,  // 50%
-        //HundredPercent = 7 // 100%
         BaiBaoTopMuoi = 1,
         BaiBaoTopBaMuoi = 2,
         BaiBaoTopNamMuoi = 3,
@@ -34,7 +27,7 @@
 
         GiaiPhapHuuIchCapTinhThanhPho = 19,
         GiaiPhapHuuIchCapQuocGia = 20,
-        GiaiPhapHuuIchCapQuocTe = 21,
+        GiaiPhapHuuIchCapQuocTe= 21,
 
         KetQuaNghienCuu = 22,
 

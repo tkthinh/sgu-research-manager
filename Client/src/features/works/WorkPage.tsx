@@ -40,20 +40,52 @@ import { User } from "../../lib/types/models/User";
 // Hàm chuyển đổi ScoreLevel thành chuỗi hiển thị
 const getScoreLevelText = (scoreLevel: number): string => {
   switch (scoreLevel) {
-    case ScoreLevel.One:
-      return "1 điểm";
-    case ScoreLevel.ZeroPointSevenFive:
-      return "0.75 điểm";
-    case ScoreLevel.ZeroPointFive:
-      return "0.5 điểm";
-    case ScoreLevel.TenPercent:
+    case ScoreLevel.BaiBaoTopMuoi:
       return "Top 10%";
-    case ScoreLevel.ThirtyPercent:
+    case ScoreLevel.BaiBaoTopBaMuoi:
       return "Top 30%";
-    case ScoreLevel.FiftyPercent:
+    case ScoreLevel.BaiBaoTopNamMuoi:
       return "Top 50%";
-    case ScoreLevel.HundredPercent:
-      return "Top 100%";
+    case ScoreLevel.BaiBaoTopConLai:
+      return "Top còn lại";
+    case ScoreLevel.BaiBaoMotDiem:
+      return "Bài báo 1 điểm";
+    case ScoreLevel.BaiBaoNuaDiem:
+      return "Bài báo 0.5 điểm";
+    case ScoreLevel.BaiBaoKhongBayNamDiem:
+      return "Bài báo 0.75 điểm";
+    case ScoreLevel.HDSVDatGiaiKK:
+      return "HDSV đạt giải KK";
+    case ScoreLevel.HDSVDatGiaiBa:
+      return "HDSV đạt giải Ba";
+    case ScoreLevel.HDSVDatGiaiNhi:
+      return "HDSV đạt giải Nhì";
+    case ScoreLevel.HDSVDatGiaiNhat:
+      return "HDSV đạt giải Nhất";
+    case ScoreLevel.HDSVConLai:
+      return "HDSV còn lại";
+    case ScoreLevel.TacPhamNgheThuatCapTruong:
+      return "Tác phẩm nghệ thuật cấp trường";
+    case ScoreLevel.TacPhamNgheThuatCapTinhThanhPho:
+      return "Tác phẩm nghệ thuật cấp tỉnh/thành phố";
+    case ScoreLevel.TacPhamNgheThuatCapQuocGia:
+      return "Tác phẩm nghệ thuật cấp quốc gia";
+    case ScoreLevel.TacPhamNgheThuatCapQuocTe:
+      return "Tác phẩm nghệ thuật cấp quốc tế";
+    case ScoreLevel.ThanhTichHuanLuyenCapQuocGia:
+      return "Thành tích huấn luyện cấp quốc gia";
+    case ScoreLevel.ThanhTichHuanLuyenCapQuocTe:
+      return "Thành tích huấn luyện cấp quốc tế";
+    case ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho:
+      return "Giải pháp hữu ích cấp tỉnh/thành phố";
+    case ScoreLevel.GiaiPhapHuuIchCapQuocGia:
+      return "Giải pháp hữu ích cấp quốc gia";
+    case ScoreLevel.GiaiPhapHuuIchCapQuocTe:
+      return "Giải pháp hữu ích cấp quốc tế";
+    case ScoreLevel.KetQuaNghienCuu:
+      return "Kết quả nghiên cứu";
+    case ScoreLevel.Sach:
+      return "Sách";
     default:
       return "-";
   }
@@ -347,16 +379,16 @@ export default function WorksPage() {
           totalMainAuthors: data.totalMainAuthors ? Number(data.totalMainAuthors) : undefined,
           source: Number(data.source),
           workTypeId: data.workTypeId,
-          workLevelId: data.workLevelId || undefined,
+          workLevelId: data.workLevelId || null,
           details: data.details || {},
           coAuthorUserIds: coAuthorUserIds // QUAN TRỌNG: coAuthorUserIds phải nằm trong workRequest
         },
         authorRequest: {
-          authorRoleId: data.author.authorRoleId,
+          authorRoleId: data.author.authorRoleId || null,
           purposeId: data.author.purposeId,
           position: data.author.position ? parseInt(String(data.author.position)) : undefined,
-          scoreLevel: data.author.scoreLevel ? Number(data.author.scoreLevel) : undefined,
-          scImagoFieldId: scImagoFieldId ? String(scImagoFieldId) : undefined,
+          scoreLevel: data.author.scoreLevel ? Number(data.author.scoreLevel) : null,
+          scImagoFieldId: scImagoFieldId ? String(scImagoFieldId) : null,
           fieldId: data.author.fieldId ? String(data.author.fieldId) : undefined
         }
       };

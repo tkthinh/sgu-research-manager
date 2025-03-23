@@ -798,20 +798,20 @@ namespace Application.Works
             return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
         }
 
-        private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid authorRoleId, CancellationToken cancellationToken = default)
+        private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid? authorRoleId, CancellationToken cancellationToken = default)
         {
             // Hằng số tỷ lệ phân bổ giờ chuẩn
             const double MAIN_AUTHOR_RATIO = 1.0 / 3;
             const double REGULAR_RATIO = 2.0 / 3;
             
             // Kiểm tra các điều kiện không hợp lệ
-            if (workHour <= 0 || totalAuthors <= 0 || totalMainAuthors <= 0 || totalMainAuthors > totalAuthors)
+            if (workHour <= 0 || totalAuthors <= 0 || totalMainAuthors <= 0 || totalMainAuthors > totalAuthors || authorRoleId == null)
             {
                 return 0;
             }
 
             // Lấy thông tin vai trò tác giả
-            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId);
+            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId.Value);
             if (authorRole is null)
             {
                 throw new Exception(ErrorMessages.AuthorRoleNotFound);

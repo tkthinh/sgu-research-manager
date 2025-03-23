@@ -6,7 +6,7 @@ namespace Domain.Entities
     {
         public Guid WorkId { get; set; }
         public Guid UserId { get; set; }
-        public Guid AuthorRoleId { get; set; }
+        public Guid? AuthorRoleId { get; set; }
         public Guid PurposeId { get; set; }
         public Guid? SCImagoFieldId { get; set; }
         public Guid? FieldId { get; set; }

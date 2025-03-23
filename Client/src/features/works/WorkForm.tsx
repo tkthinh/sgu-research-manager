@@ -44,7 +44,7 @@ const schema = z.object({
   workLevelId: z.string().uuid("ID cấp độ công trình không hợp lệ").optional().nullable(),
   coAuthorUserIds: z.array(z.string().uuid("ID đồng tác giả không hợp lệ")).optional().default([]),
   author: z.object({
-    authorRoleId: z.string().uuid("ID vai trò tác giả không hợp lệ"),
+    authorRoleId: z.string().uuid("ID vai trò tác giả không hợp lệ").optional().nullable(),
     purposeId: z.string().uuid("ID mục đích không hợp lệ"),
     position: z.number().min(1, "Vị trí tác giả phải lớn hơn 0").optional().nullable(),
     scoreLevel: z.number().min(0, "Mức điểm không hợp lệ").optional().nullable(),
@@ -108,12 +108,12 @@ export default function WorkForm({
           source: initialData.source,
           coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
           author: {
-            authorRoleId: initialData.author?.authorRoleId || "",
+            authorRoleId: initialData.author?.authorRoleId || null,
             purposeId: initialData.author?.purposeId || "",
             position: initialData.author?.position || 1,
             scoreLevel: initialData.author?.scoreLevel ?? null,
-            sCImagoFieldId: initialData.author?.scImagoFieldId || "",
-            fieldId: initialData.author?.fieldId || "",
+            sCImagoFieldId: initialData.author?.scImagoFieldId || null,
+            fieldId: initialData.author?.fieldId || null,
           },
         }
       : {
@@ -124,15 +124,15 @@ export default function WorkForm({
           details: {},
           source: WorkSource.NguoiDungKeKhai,
           workTypeId: "",
-          workLevelId: "",
+          workLevelId: null,
           coAuthorUserIds: [],
           author: {
-            authorRoleId: "",
+            authorRoleId: null,
             purposeId: "",
             position: 1,
             scoreLevel: null,
-            sCImagoFieldId: "",
-            fieldId: "",
+            sCImagoFieldId: null,
+            fieldId: null,
           },
         },
   });
@@ -323,12 +323,12 @@ export default function WorkForm({
         source: initialData.source,
         coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
         author: {
-          authorRoleId: initialData.author?.authorRoleId || "",
+          authorRoleId: initialData.author?.authorRoleId || null,
           purposeId: initialData.author?.purposeId || "",
           position: initialData.author?.position || 1,
           scoreLevel: initialData.author?.scoreLevel ?? null,
-          sCImagoFieldId: initialData.author?.scImagoFieldId || "",
-          fieldId: initialData.author?.fieldId || "",
+          sCImagoFieldId: initialData.author?.scImagoFieldId || null,
+          fieldId: initialData.author?.fieldId || null,
         },
       });
   
@@ -363,42 +363,89 @@ export default function WorkForm({
 
   // Kiểm tra và thiết lập các mức điểm (scoreLevel) hiển thị dựa trên loại công trình và cấp công trình
   useEffect(() => {
-    // Nếu là loại công trình "Bài báo khoa học"
+    // Bài báo khoa học
     if (workTypeId === "2732c858-77dc-471d-bd9a-464a3142530a") {
       if (workLevelId) {
-        // Cấp độ WoS - ID: "86683a97-fc7a-4b46-a779-f625f7d809a8" hoặc Scopus - ID: "34f94668-7151-457d-aa06-4bf4e2b27df3"
-        if (workLevelId === "86683a97-fc7a-4b46-a779-f625f7d809a8" || workLevelId === "34f94668-7151-457d-aa06-4bf4e2b27df3") {
+        // Cấp WoS - ID: "0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"
+        if (workLevelId === "0b031a2d-4ac5-48fb-9759-f7a2fe2f7290" || workLevelId === "34f94668-7151-457d-aa06-4bf4e2b27df3") {
           // Các mức top
           setVisibleScoreLevels([
-            ScoreLevel.TenPercent,
-            ScoreLevel.ThirtyPercent,
-            ScoreLevel.FiftyPercent,
-            ScoreLevel.HundredPercent
-          ]);
-        } else {
-          // Các mức điểm: 1, 0.75, 0.5
-          setVisibleScoreLevels([
-            ScoreLevel.One,
-            ScoreLevel.ZeroPointSevenFive,
-            ScoreLevel.ZeroPointFive
+            ScoreLevel.BaiBaoTopMuoi,
+            ScoreLevel.BaiBaoTopBaMuoi,
+            ScoreLevel.BaiBaoTopNamMuoi,
+            ScoreLevel.BaiBaoTopConLai
           ]);
         }
-      } else {
-        // Nếu chưa chọn cấp công trình, hiển thị tất cả
+        // Các cấp khác
+        else {
+          setVisibleScoreLevels([
+            ScoreLevel.BaiBaoMotDiem,
+            ScoreLevel.BaiBaoKhongBayNamDiem,
+            ScoreLevel.BaiBaoNuaDiem
+          ]);
+        }
+      }
+    } 
+    // Báo cáo khoa học - không có ScoreLevel theo FactorSeeding
+    else if (workTypeId === "03412ca7-8ccf-4903-9018-457768060ab4") {
+      setVisibleScoreLevels([]);
+      setValue("author.scoreLevel", null);
+    }
+    // Hướng dẫn NCKH sinh viên
+    else if (workTypeId === "e2f7974c-47c3-478e-9b53-74093f6c621f") {
+      if (workLevelId === "e2f7974c-47c3-478e-9b53-74093f6c621f" || workLevelId === "e2f7974c-47c3-478e-9b53-74093f6c621f"){
         setVisibleScoreLevels([
-          ScoreLevel.One,
-          ScoreLevel.ZeroPointSevenFive,
-          ScoreLevel.ZeroPointFive,
-          ScoreLevel.TenPercent,
-          ScoreLevel.ThirtyPercent,
-          ScoreLevel.FiftyPercent,
-          ScoreLevel.HundredPercent
+          ScoreLevel.HDSVDatGiaiNhat,
+          ScoreLevel.HDSVDatGiaiNhi,
+          ScoreLevel.HDSVDatGiaiBa,
+          ScoreLevel.HDSVDatGiaiKK
         ]);
       }
-    } else {
-      // Các loại công trình khác không có mức điểm
+      else{
+        setVisibleScoreLevels([
+          ScoreLevel.HDSVConLai
+        ]);
+      }
+    }
+    // Tác phẩm nghệ thuật/Giải pháp hữu ích/các loại khác - "1ff8d087-e0c3-45df-befc-662c0a80c10c"
+    else if (workTypeId === "1ff8d087-e0c3-45df-befc-662c0a80c10c") {
+      if (workLevelId === "d84ac5f8-d533-48d6-b829-9cf3556ce5bb") { // Cấp tỉnh/thành phố
+        setVisibleScoreLevels([
+          ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho,
+          ScoreLevel.TacPhamNgheThuatCapTinhThanhPho
+        ]);
+      } else if (workLevelId === "b2302b5e-1614-484d-88ad-003c411ad248") { // Cấp quốc gia
+        setVisibleScoreLevels([
+          ScoreLevel.GiaiPhapHuuIchCapQuocGia,
+          ScoreLevel.TacPhamNgheThuatCapQuocGia,
+          ScoreLevel.ThanhTichHuanLuyenCapQuocGia
+        ]);
+      } else if (workLevelId === "13e5b0a5-727b-427b-b103-0d58db679dcd") { // Cấp quốc tế
+        setVisibleScoreLevels([
+          ScoreLevel.GiaiPhapHuuIchCapQuocTe,
+          ScoreLevel.TacPhamNgheThuatCapQuocTe,
+          ScoreLevel.ThanhTichHuanLuyenCapQuocTe
+        ]);
+      } else if (workLevelId === "ee81fe90-15e7-48a2-8d94-a46db55f5b8f") { // Cấp trường
+        setVisibleScoreLevels([
+          ScoreLevel.TacPhamNgheThuatCapTruong
+        ]);
+      }
+    }
+    // Sách - "323371c0-26c7-4549-90f2-11c881be402d"
+    else if (workTypeId === "84a14a8b-eae8-4720-bc7c-e1f93b35a256" || 
+      workTypeId === "d3707663-2b44-4d95-93b7-37756d3e302c" || 
+      workTypeId === "14b7a7e8-7327-450e-a5ca-f7d836b14499" || 
+      workTypeId === "b1131264-329f-4908-8e71-8b36088d3dde" ||
+      workTypeId === "b74daf03-dc04-4738-ae87-97ec0faa07c1"
+    ) {
+      setVisibleScoreLevels([
+        ScoreLevel.Sach
+      ]);
+    }
+    // Các loại công trình khác không có mức điểm
+    else {
       setVisibleScoreLevels([]);
-      // Reset scoreLevel khi chuyển loại công trình
       setValue("author.scoreLevel", null);
     }
   }, [workTypeId, workLevelId, setValue]);
@@ -427,10 +474,10 @@ export default function WorkForm({
   // Reset các trường phụ thuộc khi workTypeId thay đổi và không có initialData
   useEffect(() => {
     if (workTypeId && !initialData) {
-      setValue("workLevelId", "");
-      setValue("author.authorRoleId", "");
+      setValue("workLevelId", null);
+      setValue("author.authorRoleId", null);
       setValue("author.purposeId", "");
-      setValue("author.sCImagoFieldId", "");
+      setValue("author.sCImagoFieldId", null);
     }
   }, [workTypeId, setValue, initialData]);
 
@@ -737,16 +784,22 @@ export default function WorkForm({
                 <Controller
                 name="author.authorRoleId"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...field}
+                      {...restField}
                     select
                     label="Vai trò tác giả"
                     fullWidth
                     error={!!errors.author?.authorRoleId}
                     helperText={errors.author?.authorRoleId?.message?.toString()}
                     disabled={!workTypeId}
+                    value={value ?? ""}
+                    onChange={(e) => {
+                      const newValue = e.target.value === "" ? null : e.target.value;
+                      onChange(newValue);
+                    }}
                   >
+                    <MenuItem value="">Chọn vai trò tác giả</MenuItem>
                     {authorRolesData?.data?.map((role) => (
                       <MenuItem key={role.id} value={role.id}>
                         {role.name}
@@ -818,26 +871,74 @@ export default function WorkForm({
                     }}
                   >
                     <MenuItem value="">Chọn mức điểm</MenuItem>
-                    {visibleScoreLevels.includes(ScoreLevel.One) && (
-                      <MenuItem value={ScoreLevel.One}>1 điểm</MenuItem>
+                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoMotDiem) && (
+                      <MenuItem value={ScoreLevel.BaiBaoMotDiem}>Bài báo 1 điểm</MenuItem>
                     )}
-                    {visibleScoreLevels.includes(ScoreLevel.ZeroPointSevenFive) && (
-                      <MenuItem value={ScoreLevel.ZeroPointSevenFive}>0.75 điểm</MenuItem>
+                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoKhongBayNamDiem) && (
+                      <MenuItem value={ScoreLevel.BaiBaoKhongBayNamDiem}>Bài báo 0.75 điểm</MenuItem>
                     )}
-                    {visibleScoreLevels.includes(ScoreLevel.ZeroPointFive) && (
-                      <MenuItem value={ScoreLevel.ZeroPointFive}>0.5 điểm</MenuItem>
+                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoNuaDiem) && (
+                      <MenuItem value={ScoreLevel.BaiBaoNuaDiem}>Bài báo 0.5 điểm</MenuItem>
                     )}
-                    {visibleScoreLevels.includes(ScoreLevel.TenPercent) && (
-                      <MenuItem value={ScoreLevel.TenPercent}>Top 10%</MenuItem>
+                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoTopMuoi) && (
+                      <MenuItem value={ScoreLevel.BaiBaoTopMuoi}>Bài báo khoa học thuộc top 10% tạp chí hàng đầu</MenuItem>
                     )}
-                    {visibleScoreLevels.includes(ScoreLevel.ThirtyPercent) && (
-                      <MenuItem value={ScoreLevel.ThirtyPercent}>Top 30%</MenuItem>
+                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoTopBaMuoi) && (
+                      <MenuItem value={ScoreLevel.BaiBaoTopBaMuoi}>Bài báo khoa học thuộc top 30% tạp chí hàng đầu</MenuItem>
                     )}
-                    {visibleScoreLevels.includes(ScoreLevel.FiftyPercent) && (
-                      <MenuItem value={ScoreLevel.FiftyPercent}>Top 50%</MenuItem>
+                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoTopNamMuoi) && (
+                      <MenuItem value={ScoreLevel.BaiBaoTopNamMuoi}>Bài báo khoa học thuộc top 50% tạp chí hàng đầu</MenuItem>
                     )}
-                    {visibleScoreLevels.includes(ScoreLevel.HundredPercent) && (
-                      <MenuItem value={ScoreLevel.HundredPercent}>Top 100%</MenuItem>
+                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoTopConLai) && (
+                      <MenuItem value={ScoreLevel.BaiBaoTopConLai}>Bài báo khoa học thuộc top còn lại tạp chí hàng đầu</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.HDSVDatGiaiKK) && (
+                      <MenuItem value={ScoreLevel.HDSVDatGiaiKK}>Hướng dẫn đề tài NCKH đạt giải KK</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.HDSVDatGiaiBa) && (
+                      <MenuItem value={ScoreLevel.HDSVDatGiaiBa}>Hướng dẫn đề tài NCKH đạt giải Ba</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.HDSVDatGiaiNhi) && (
+                      <MenuItem value={ScoreLevel.HDSVDatGiaiNhi}>Hướng dẫn đề tài NCKH đạt giải Nhì</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.HDSVDatGiaiNhat) && (
+                      <MenuItem value={ScoreLevel.HDSVDatGiaiNhat}>Hướng dẫn đề tài NCKH đạt giải Nhất</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.HDSVConLai) && (
+                      <MenuItem value={ScoreLevel.HDSVConLai}>HDSV còn lại</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.TacPhamNgheThuatCapTruong) && (
+                      <MenuItem value={ScoreLevel.TacPhamNgheThuatCapTruong}>Tác phẩm nghệ thuật cấp trường</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.TacPhamNgheThuatCapTinhThanhPho) && (
+                      <MenuItem value={ScoreLevel.TacPhamNgheThuatCapTinhThanhPho}>Tác phẩm nghệ thuật cấp tỉnh/thành phố</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.TacPhamNgheThuatCapQuocGia) && (
+                      <MenuItem value={ScoreLevel.TacPhamNgheThuatCapQuocGia}>Tác phẩm nghệ thuật cấp quốc gia</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.TacPhamNgheThuatCapQuocTe) && (
+                      <MenuItem value={ScoreLevel.TacPhamNgheThuatCapQuocTe}>Tác phẩm nghệ thuật cấp quốc tế</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.ThanhTichHuanLuyenCapQuocGia) && (
+                      <MenuItem value={ScoreLevel.ThanhTichHuanLuyenCapQuocGia}>Thành tích huấn luyện cấp quốc gia</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.ThanhTichHuanLuyenCapQuocTe) && (
+                      <MenuItem value={ScoreLevel.ThanhTichHuanLuyenCapQuocTe}>Thành tích huấn luyện cấp quốc tế</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho) && (
+                      <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho}>Giải pháp hữu ích cấp Tỉnh/Thành phố</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.GiaiPhapHuuIchCapQuocGia) && (
+                      <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapQuocGia}>Giải pháp hữu ích cấp cấp Quốc gia</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.GiaiPhapHuuIchCapQuocTe) && (
+                      <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapQuocTe}>Giải pháp hữu ích cấp Quốc tế</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.KetQuaNghienCuu) && (
+                      <MenuItem value={ScoreLevel.KetQuaNghienCuu}>Kết quả nghiên cứu</MenuItem>
+                    )}
+                    {visibleScoreLevels.includes(ScoreLevel.Sach) && (
+                      <MenuItem value={ScoreLevel.Sach}>Sách</MenuItem>
                     )}
                   </TextField>
                 )}
@@ -848,16 +949,22 @@ export default function WorkForm({
               <Controller
                 name="author.sCImagoFieldId"
                 control={control}
-                render={({ field }) => (
-              <TextField
-                    {...field}
+                render={({ field: { value, onChange, ...restField } }) => (
+                  <TextField
+                      {...restField}
                     select
                     label="Ngành SCImago"
-                fullWidth
+                    fullWidth
                     error={!!errors.author?.sCImagoFieldId}
                     helperText={errors.author?.sCImagoFieldId?.message?.toString()}
                     disabled={!workTypeId}
+                    value={value ?? ""}
+                    onChange={(e) => {
+                      const newValue = e.target.value === "" ? null : e.target.value;
+                      onChange(newValue);
+                    }}
                   >
+                    <MenuItem value="">Chọn ngành SCImago</MenuItem>
                     {scimagoFieldsData?.data?.map((field) => (
                       <MenuItem key={field.id} value={field.id}>
                         {field.name}
@@ -872,15 +979,22 @@ export default function WorkForm({
                 <Controller
                 name="author.fieldId"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...field}
+                      {...restField}
                     select
                     label="Ngành tính điểm"
                     fullWidth
                     error={!!errors.author?.fieldId}
                     helperText={errors.author?.fieldId?.message?.toString()}
+                    value={value ?? ""}
+                    onChange={(e) => {
+                      const newValue = e.target.value === "" ? null : e.target.value;
+                      onChange(newValue);
+                    }}
+                    disabled={false}
                   >
+                    <MenuItem value="">Chọn ngành tính điểm</MenuItem>
                     {fields.map((field) => (
                       <MenuItem key={field.id} value={field.id}>
                         {field.name}

@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace Infrastructure.Data.Seeding
 {
 
-   public class FieldSeeding : IEntityTypeConfiguration<Field>
-   {
-      public void Configure(EntityTypeBuilder<Field> builder)
-      {
-         var fields = new List<Field>
+    public class FieldSeeding : IEntityTypeConfiguration<Field>
+    {
+        public void Configure(EntityTypeBuilder<Field> builder)
+        {
+            var fields = new List<Field>
                 {
                     new Field { Id = Guid.Parse("222af233-e26e-4e98-a509-4bafa2657512"), Name = "Chăn nuôi-Thú y-Thủy sản" },
                     new Field { Id = Guid.Parse("67d39e1d-7fda-4e2b-8e7a-36b945028cd1"), Name = "Cơ học" },
@@ -43,15 +43,15 @@ namespace Infrastructure.Data.Seeding
                     new Field { Id = Guid.Parse("baf4bd38-28de-407f-8eb0-44e255eac3b9"), Name = "Y học" }
                 };
 
-         builder.HasData(fields);
-      }
-   }
+            builder.HasData(fields);
+        }
+    }
 
-   public class DepartmentSeeding : IEntityTypeConfiguration<Department>
-   {
-      public void Configure(EntityTypeBuilder<Department> builder)
-      {
-         var departments = new List<Department>
+    public class DepartmentSeeding : IEntityTypeConfiguration<Department>
+    {
+        public void Configure(EntityTypeBuilder<Department> builder)
+        {
+            var departments = new List<Department>
                 {
                     new Department { Id = Guid.Parse("34d1324e-0f93-4483-83f9-ff0498482555"), Name = "KHOA CÔNG NGHỆ THÔNG TIN" },
                     new Department { Id = Guid.Parse("bb814b70-df6d-4584-b415-a009230eb3fa"), Name = "KHOA ĐIỆN TỬ VIỄN THÔNG" },
@@ -81,9 +81,9 @@ namespace Infrastructure.Data.Seeding
                     new Department { Id = Guid.Parse("3f39da19-a532-4759-abab-aad4bd56a3f8"), Name = "TRẠM Y TẾ" }
                 };
 
-         builder.HasData(departments);
-      }
-   }
+            builder.HasData(departments);
+        }
+    }
 
     public class WorkTypeSeeding : IEntityTypeConfiguration<WorkType>
     {
@@ -479,31 +479,31 @@ namespace Infrastructure.Data.Seeding
                     new AuthorRole {
                         Id = Guid.Parse("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"),
                         Name = "Trưởng ban",
-                        IsMainAuthor = true,
+                        IsMainAuthor = false,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
                         Id = Guid.Parse("822d8f31-2b1d-4367-8c50-e4535fac5b5f"),
                         Name = "Phó trưởng ban",
-                        IsMainAuthor = true,
+                        IsMainAuthor = false,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
                         Id = Guid.Parse("ad3aa473-c140-46cb-b8f4-faecdf2f338e"),
                         Name = "Ủy viên thường trực",
-                        IsMainAuthor = true,
+                        IsMainAuthor = false,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
                         Id = Guid.Parse("cd929fdb-3aa2-40dd-97ad-f46392ba1d30"),
                         Name = "Ban Chuyên môn",
-                        IsMainAuthor = false,
+                        IsMainAuthor = true,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
                         Id = Guid.Parse("4be849d3-b55d-429a-a0b3-78c4bbbcd7eb"),
                         Name = "Ban Biên tập kỹ yếu",
-                        IsMainAuthor = false,
+                        IsMainAuthor = true,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     }
                 };
@@ -633,554 +633,1496 @@ namespace Infrastructure.Data.Seeding
         {
             var factors = new List<Factor>
             {
-                // Báo cáo khoa học - Không có ScoreLevel (Score = 0 trước đây -> null)
+                // Bài báo khoa học
                 new Factor
                 {
-                    Id = Guid.Parse("ad619718-0937-4693-a40f-04e56241a52c"),
-                    Name = "Báo cáo khoa học - Trường - Quy đổi giờ nghĩa vụ",
-                    ScoreLevel = null, // Không có mức điểm
-                    ConvertHour = 40,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("3c21b247-16ce-40a9-a921-abef0e1bba56"),
-                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null, // Nếu không có AuthorRoleId, để null
-                    MaxAllowed = null
+                    Id = Guid.Parse("ad3bdf4e-4697-43bd-a20c-d7ab63e6e59e"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 10% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 800
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("60f6bc8a-05ff-4322-bccd-5ea9335139c1"),
-                    Name = "Báo cáo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ",
-                    ScoreLevel = null,
-                    ConvertHour = 80,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),
-                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("258a7107-baf3-4632-96be-ada15af33184"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 10% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 800
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("2ba0b318-cb6f-49a0-b6a3-9040dcc46a9b"),
-                    Name = "Báo cáo khoa học - Quốc gia - Quy đổi giờ nghĩa vụ",
-                    ScoreLevel = null,
-                    ConvertHour = 80,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),
-                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("c99d0edf-12db-45f4-bf9f-722074384101"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 10% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 600
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("146e3c5e-7bee-41a6-9f1b-8f00ee2a4eb7"),
-                    Name = "Báo cáo khoa học - Bộ/Ngành - Quy đổi vượt định mức",
-                    ScoreLevel = null,
-                    ConvertHour = 54,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),
-                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 1
+                    Id = Guid.Parse("d8f80823-6534-47c1-abaf-2ddeb4c4590b"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 10% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 600
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("3c39ab6a-8c61-4321-b498-4a3a469ea1cc"),
-                    Name = "Báo cáo khoa học - Quốc gia - Quy đổi vượt định mức",
-                    ScoreLevel = null,
-                    ConvertHour = 54,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),
-                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 1
+                    Id = Guid.Parse("4b04f15e-297a-47a8-a573-28615f19f042"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 30% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopBaMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 640
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("30775a5a-9282-4801-80f2-acaea95c5f71"),
-                    Name = "Báo cáo khoa học - Quốc tế - Quy đổi giờ nghĩa vụ",
-                    ScoreLevel = null,
-                    ConvertHour = 120,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),
-                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("a593c6f6-b82a-4415-bae9-309524e6f01e"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 30% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopBaMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 640
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("4f163c6f-ad7b-4f38-8125-0584678164b6"),
-                    Name = "Báo cáo khoa học - Quốc tế - Quy đổi vượt định mức",
-                    ScoreLevel = null,
-                    ConvertHour = 76,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),
-                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 2
+                    Id = Guid.Parse("18f442a7-0df2-4579-ad53-afe90aedf9b3"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 30% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopBaMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 400
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("cbd4799e-ec4b-41a7-8eb2-744841178857"),
-                    Name = "Báo cáo khoa học - WoS - Quy đổi giờ nghĩa vụ",
-                    ScoreLevel = null,
-                    ConvertHour = 200,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),
-                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("47ac6cea-5dfd-4f40-bb94-7be183fa9421"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 30% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopBaMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 400
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("415d12ed-7551-48fd-8a5c-87e02fee0dd3"),
-                    Name = "Báo cáo khoa học - WoS - Quy đổi vượt định mức",
-                    ScoreLevel = null,
-                    ConvertHour = 120,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),
-                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 6
+                    Id = Guid.Parse("9e6cf226-ce18-45f4-86e7-04cded49b021"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 50% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopNamMuoi,
+                    MaxAllowed = 8,
+                    ConvertHour = 560
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("86f1114c-73b7-4c4f-bac7-95b602bcc397"),
-                    Name = "Báo cáo khoa học - Scopus - Quy đổi giờ nghĩa vụ",
-                    ScoreLevel = null,
-                    ConvertHour = 200,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),
-                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("07153ca2-a9cd-44c6-9efa-fba5e65a046f"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 50% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopNamMuoi,
+                    MaxAllowed = 8,
+                    ConvertHour = 560
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("31673044-6195-4d65-a1f0-453cee604604"),
-                    Name = "Báo cáo khoa học - Scopus - Quy đổi vượt định mức",
-                    ScoreLevel = null,
-                    ConvertHour = 120,
-                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),
-                    WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),
-                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 6
-                },
-
-                // Bài báo khoa học - WoS và Scopus
-                new Factor
-                {
-                    Id = Guid.Parse("c5c436fe-fac7-4243-afd7-a07ba9fa6113"),
-                    Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 10",
-                    ScoreLevel = ScoreLevel.TenPercent, // 10%
-                    ConvertHour = 600,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("34769b69-b8b3-4bbd-a0a8-c789c333c134"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 50% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopNamMuoi,
+                    MaxAllowed = 8,
+                    ConvertHour = 240
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("c7fc7ef4-dc3e-473f-af05-5514f6c223e8"),
-                    Name = "Bài báo khoa học - WoS - Quy đổi giờ nghĩa vụ - Score 10",
-                    ScoreLevel = ScoreLevel.TenPercent,
-                    ConvertHour = 800,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("54064ab2-4172-4331-9c9f-68a7a384300a"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 50% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopNamMuoi,
+                    MaxAllowed = 8,
+                    ConvertHour = 240
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("849b4d7e-3928-45b6-8f4d-17c078bbcc7f"),
-                    Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 30",
-                    ScoreLevel = ScoreLevel.ThirtyPercent, // 30%
-                    ConvertHour = 400,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("c0f3763d-38c5-4016-aef7-9904d77841f0"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopConLai,
+                    MaxAllowed = 8,
+                    ConvertHour = 560
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("5e382f01-49b7-4910-bf99-cdcddd5042e3"),
-                    Name = "Bài báo khoa học - WoS - Quy đổi giờ nghĩa vụ - Score 30",
-                    ScoreLevel = ScoreLevel.ThirtyPercent,
-                    ConvertHour = 640,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("5a49b577-eb55-4729-a479-0d855d4ce2bd"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopConLai,
+                    MaxAllowed = 8,
+                    ConvertHour = 560
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("43454113-745b-4eee-b266-ff515ed9027b"),
-                    Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 50",
-                    ScoreLevel = ScoreLevel.FiftyPercent, // 50%
-                    ConvertHour = 240,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 8
+                    Id = Guid.Parse("b51b05e2-774d-476b-b26f-ebf8fc3b90a1"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopConLai,
+                    MaxAllowed = 8,
+                    ConvertHour = 240
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("aeb8a311-304e-4c6e-b944-7cdafac6947b"),
-                    Name = "Bài báo khoa học - WoS - Quy đổi giờ nghĩa vụ - Score 50",
-                    ScoreLevel = ScoreLevel.FiftyPercent,
-                    ConvertHour = 560,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("b0a80a7a-9703-4af2-b154-bb4a5bd9c315"),
-                    Name = "Bài báo khoa học - WoS - Quy đổi vượt định mức - Score 100",
-                    ScoreLevel = ScoreLevel.HundredPercent, // 100%
-                    ConvertHour = 120,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 6
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("35ba841d-42b2-425a-9e27-82b52a81dc73"),
-                    Name = "Bài báo khoa học - WoS - Quy đổi giờ nghĩa vụ - Score 100",
-                    ScoreLevel = ScoreLevel.HundredPercent,
-                    ConvertHour = 400,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("c2288e08-eb6b-4cd0-91ce-9adf4ee8e745"),
-                    Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 10",
-                    ScoreLevel = ScoreLevel.TenPercent,
-                    ConvertHour = 600,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("10c586ce-79ec-4859-881f-5d38245ce47b"),
-                    Name = "Bài báo khoa học - Scopus - Quy đổi giờ nghĩa vụ - Score 10",
-                    ScoreLevel = ScoreLevel.TenPercent,
-                    ConvertHour = 800,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("2fca54b4-555a-4d67-9e9a-f522e0c802cb"),
-                    Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 30",
-                    ScoreLevel = ScoreLevel.ThirtyPercent,
-                    ConvertHour = 400,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("0fa0aa31-978d-42be-8adc-a47729ff9b9d"),
-                    Name = "Bài báo khoa học - Scopus - Quy đổi giờ nghĩa vụ - Score 30",
-                    ScoreLevel = ScoreLevel.ThirtyPercent,
-                    ConvertHour = 640,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("85f22829-055a-4314-a8dc-649a14346610"),
-                    Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 50",
-                    ScoreLevel = ScoreLevel.FiftyPercent,
-                    ConvertHour = 240,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 8
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("38f2bbe7-8e32-477a-85bf-e2a08fb88c03"),
-                    Name = "Bài báo khoa học - Scopus - Quy đổi giờ nghĩa vụ - Score 50",
-                    ScoreLevel = ScoreLevel.FiftyPercent,
-                    ConvertHour = 560,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("9c4ed0a6-b71a-46ea-a27f-02b38bd0c544"),
-                    Name = "Bài báo khoa học - Scopus - Quy đổi vượt định mức - Score 100",
-                    ScoreLevel = ScoreLevel.HundredPercent,
-                    ConvertHour = 120,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 6
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("e4f74734-e0f5-446d-8221-cc3a519ad461"),
-                    Name = "Bài báo khoa học - Scopus - Quy đổi giờ nghĩa vụ - Score 100",
-                    ScoreLevel = ScoreLevel.HundredPercent,
-                    ConvertHour = 400,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("cc99e5e9-e74d-4b21-8603-6e93ddc0c56c"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopConLai,
+                    MaxAllowed = 8,
+                    ConvertHour = 240
                 },
 
-                // Bài báo khoa học - Trường, Bộ/Ngành, Quốc tế (Score = 1)
                 new Factor
                 {
-                    Id = Guid.Parse("92f2fdef-e1cf-4062-aa96-f01c1820bb98"),
-                    Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 1",
-                    ScoreLevel = ScoreLevel.One, // 1
-                    ConvertHour = 76,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 4
+                    Id = Guid.Parse("3f661984-45ac-45af-b665-d7c8f609d172"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 10% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 800
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("779bdc74-0043-46a0-84ad-940af4f4dc49"),
-                    Name = "Bài báo khoa học - Trường - Quy đổi giờ nghĩa vụ - Score 1",
-                    ScoreLevel = ScoreLevel.One,
-                    ConvertHour = 160,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("b611282d-b594-4e52-b2c5-058911f8a0fb"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 10% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 800
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("decaf6cd-fb66-440c-9cc3-155036dfc775"),
-                    Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 1",
-                    ScoreLevel = ScoreLevel.One,
-                    ConvertHour = 76,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 4
+                    Id = Guid.Parse("d1ddaeeb-532a-4037-9586-05af4446a390"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 10% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 600
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("f56495e4-eac2-47f5-b282-d3f39055fecb"),
-                    Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ - Score 1",
-                    ScoreLevel = ScoreLevel.One,
-                    ConvertHour = 160,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("8695bc4f-992a-4b44-ad3e-a373f88672f4"),
-                    Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 1",
-                    ScoreLevel = ScoreLevel.One,
-                    ConvertHour = 76,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 4
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("630d6ebe-34a2-4533-9a06-ec28ad6d1cd4"),
-                    Name = "Bài báo khoa học - Quốc tế - Quy đổi giờ nghĩa vụ - Score 1",
-                    ScoreLevel = ScoreLevel.One,
-                    ConvertHour = 160,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("b1139db5-197e-44a9-a5a1-418a01d36e53"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 10% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 600
                 },
 
-                // Bài báo khoa học - Trường, Bộ/Ngành, Quốc tế (Score = 0.75)
                 new Factor
                 {
-                    Id = Guid.Parse("5a01f52c-999f-447e-bb2d-2fb4c9161d25"),
-                    Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 0.75",
-                    ScoreLevel = ScoreLevel.ZeroPointSevenFive, // 0.75
-                    ConvertHour = 54,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 2
+                    Id = Guid.Parse("5e2924fb-9268-4ab0-8527-60096dd3d063"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 30% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopBaMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 640
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("4f47632f-9796-45fa-b4a5-e0c39be496e9"),
-                    Name = "Bài báo khoa học - Trường - Quy đổi giờ nghĩa vụ - Score 0.75",
-                    ScoreLevel = ScoreLevel.ZeroPointSevenFive,
-                    ConvertHour = 120,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("9632d54d-3a34-4a39-a388-0550a9ca4733"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 30% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopBaMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 640
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("d473791e-fb18-409a-be03-a0b60c75912c"),
-                    Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 0.75",
-                    ScoreLevel = ScoreLevel.ZeroPointSevenFive,
-                    ConvertHour = 54,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 2
+                    Id = Guid.Parse("ee76f503-a342-4699-a320-cd53a4767322"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 30% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopBaMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 400
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("45892e0d-6abb-41ea-8e29-c34c05b58068"),
-                    Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ - Score 0.75",
-                    ScoreLevel = ScoreLevel.ZeroPointSevenFive,
-                    ConvertHour = 120,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("54740838-3d63-43b4-a498-9c5152dd7528"),
-                    Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 0.75",
-                    ScoreLevel = ScoreLevel.ZeroPointSevenFive,
-                    ConvertHour = 54,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 2
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("c8785d2b-244a-40ac-9430-7c416adefbc9"),
-                    Name = "Bài báo khoa học - Quốc tế - Quy đổi giờ nghĩa vụ - Score 0.75",
-                    ScoreLevel = ScoreLevel.ZeroPointSevenFive,
-                    ConvertHour = 120,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("621a47fe-6337-4cf1-a79e-d997627dc1ee"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 30% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopBaMuoi,
+                    MaxAllowed = null,
+                    ConvertHour = 400
                 },
 
-                // Bài báo khoa học - Trường, Bộ/Ngành, Quốc tế (Score = 0.5)
                 new Factor
                 {
-                    Id = Guid.Parse("5386b122-9311-453e-ab70-de37d9673ef5"),
-                    Name = "Bài báo khoa học - Trường - Quy đổi vượt định mức - Score 0.5",
-                    ScoreLevel = ScoreLevel.ZeroPointFive, // 0.5
-                    ConvertHour = 34,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 2
+                    Id = Guid.Parse("56f1596d-64c5-437d-a22b-853266bbeb93"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 50% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopNamMuoi,
+                    MaxAllowed = 8,
+                    ConvertHour = 560
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("bd63c850-3c87-4836-9a7e-7c402ad436cf"),
-                    Name = "Bài báo khoa học - Trường - Quy đổi giờ nghĩa vụ - Score 0.5",
-                    ScoreLevel = ScoreLevel.ZeroPointFive,
-                    ConvertHour = 80,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = null
+                    Id = Guid.Parse("b2f41bf5-c1f0-488c-872a-82d3f0e06fae"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp WoS
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top 50% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopNamMuoi,
+                    MaxAllowed = 8,
+                    ConvertHour = 560
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("3236b11f-a2ac-4e51-85d1-fcc5594455b6"),
-                    Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi vượt định mức - Score 0.5",
-                    ScoreLevel = ScoreLevel.ZeroPointFive,
-                    ConvertHour = 34,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null
+                    Id = Guid.Parse("f029e7f1-69eb-4043-94f7-c9657b383793"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 50% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopNamMuoi,
+                    MaxAllowed = 8,
+                    ConvertHour = 240
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("fcd3b42b-7151-4100-8f08-0019c14a764c"),
-                    Name = "Bài báo khoa học - Bộ/Ngành - Quy đổi giờ nghĩa vụ - Score 0.5",
-                    ScoreLevel = ScoreLevel.ZeroPointFive,
-                    ConvertHour = 80,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 2
+                    Id = Guid.Parse("750d273d-b462-4e5c-87cb-266e7a8d201d"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top 50% tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopNamMuoi,
+                    MaxAllowed = 8,
+                    ConvertHour = 240
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("ce72ef2c-a629-40ea-9bab-d77b87421fdf"),
-                    Name = "Bài báo khoa học - Quốc tế - Quy đổi vượt định mức - Score 0.5",
-                    ScoreLevel = ScoreLevel.ZeroPointFive,
-                    ConvertHour = 34,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),
-                    AuthorRoleId = null,
-                    MaxAllowed = 2
+                    Id = Guid.Parse("d1028c26-d4c5-4643-91d1-50824a7ba47e"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopConLai,
+                    MaxAllowed = 8,
+                    ConvertHour = 560
                 },
                 new Factor
                 {
-                    Id = Guid.Parse("b7c82548-b2cd-4368-8b6e-919f7f6b1e5f"),
-                    Name = "Bài báo khoa học - Quốc tế - Quy đổi giờ nghĩa vụ - Score 0.5",
-                    ScoreLevel = ScoreLevel.ZeroPointFive,
-                    ConvertHour = 80,
-                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),
-                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
-                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
+                    Id = Guid.Parse("65309514-86ac-4ca2-a957-67616a478f0d"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopConLai,
+                    MaxAllowed = 8,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("35e25540-6ee6-49a1-8188-39b5d8beaa13"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp WoS
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu",
+                    ScoreLevel = ScoreLevel.BaiBaoTopConLai,
+                    MaxAllowed = 8,
+                    ConvertHour = 240
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("4eb5955a-db99-4a23-99a7-50a94d05ce3c"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Trường được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("a47f4c75-e5b0-4111-b9d2-beb250aa36a9"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("173671ca-9de0-4c91-84bb-ffe7dec887e5"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("6ede2fa2-0b00-4917-91a7-66bea34b8a9a"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Trường được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("fff69169-c768-4d01-b7d0-360b98899173"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("d30ad887-019a-4023-955c-bba587b424d7"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("47876171-baff-47c7-ba03-ab35ed7502b0"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Trường được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("80957f93-d4b1-431b-8287-4c3d55e9d26c"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("10bc8772-db03-494a-8564-3ddb8c80af4e"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("90b005be-d7fe-4e6a-acbc-157910884c08"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Trường được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("722f0278-63c0-4488-973f-dc8baa2729e8"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("e88c0e99-9eb0-4218-8310-7d7a95886634"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = 4,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("0f517009-94d4-488a-94d3-1d57bfd21964"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Trường được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("695a0787-7f2f-48b9-916e-3d1a5f0698c5"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("d9fc76b8-c3bf-4944-b625-971762b1dff6"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("166958e9-3e92-40d2-b7e6-f6cf019cbec0"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Trường được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("05644135-f75c-4d65-8c0f-2382c0533880"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("918bb01d-f02b-4c07-afda-fbb115b2533d"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("13610180-0d84-47c8-a280-1d342d52001b"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Trường được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("5a94c31b-93bb-43c3-ad13-f7cfc9c8d702"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("6482dbfa-e158-470b-ba51-d6322e7b9684"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("0286a29f-f60d-4ded-ad7e-0f145290f36a"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Trường được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("3a624e20-75c6-47f5-96e5-281ce6c63eaa"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("62c97efa-acb4-4e13-9887-881d79a57892"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 0.75 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoKhongBayNamDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("2f7c8dd0-91e5-4b5d-b1d0-fcd1be18bc54"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Trường được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("5590c2f4-733d-4482-85a0-12ed2b76a560"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("61ea9a32-4b56-452d-91ec-cf54ba2ee568"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 80
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("bec1ee6d-0f3d-4d7c-b868-66b130d1c60b"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Trường được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("c17fe0b3-0eb8-456c-9e75-ef441bd458c6"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("6dd9f77e-a652-4096-8523-71b8f6a4a389"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("34fe4df6-0a28-4ddf-930f-19e5febebdee"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 80
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("daff3e2a-5f02-435c-81a7-f4794ce32259"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Trường được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 34
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("73e5510c-66fa-45db-8c3c-245f3bc2b860"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 34
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("6b0be41d-b561-40f8-92cc-0c4957f3fc7c"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 34
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("ca590e0d-797b-46d4-87b7-a223e390b02c"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Trường được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 34
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("d9d00031-6a8d-4939-bc95-25a747ceeaec"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 34
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("2d69276a-cac9-49eb-8623-f5b55c5691d1"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "Bài báo khoa học cấp Quốc tế được tính đến 0.5 điểm theo Danh mục tạp chí khoa học",
+                    ScoreLevel = ScoreLevel.BaiBaoNuaDiem,
+                    MaxAllowed = 2,
+                    ConvertHour = 34
+                },
+
+                // Báo cáo khoa học
+                new Factor
+                {
+                    Id = Guid.Parse("8a94c350-df68-4f57-b57f-ae6dd7a0a3dc"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("3c21b247-16ce-40a9-a921-abef0e1bba56"),   // Cấp Trường
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Trường được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 40
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("0570292e-3849-4a0e-b66f-32fa34a97f48"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("3c21b247-16ce-40a9-a921-abef0e1bba56"),   // Cấp Trường
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Trường được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 40
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("1d749956-707f-4e55-ae63-7e8ad787d716"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 1,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("417cb0bf-ef69-423f-8fa4-3fd4bf3109ad"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 1,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("83cadff5-b7df-4745-81f8-2ee792b3e9b0"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 1,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("1a015081-cc66-48c4-b6eb-13ffe4aeb756"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 1,
+                    ConvertHour = 54
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("d70faba4-e61e-4dae-b683-2e46e73d4578"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),   // Cấp Quốc gia
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Quốc gia được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("bae86fa5-c497-4074-8439-db7b54ae6455"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),   // Cấp Quốc gia
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Quốc gia được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("7059bcf8-0d4e-4e9b-840f-33ea4350972c"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),   // Cấp Quốc gia
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Quốc gia được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("e19e5af4-d301-4881-949b-fa595d175b97"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),   // Cấp Quốc gia
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Quốc gia được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 54
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("9af34412-349c-4cad-a50f-0bf64bdf9eca"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Quốc tế được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("a523fa26-ee55-4576-92a8-35a7ed52f70e"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Quốc tế được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("d20c4ce0-a360-4f96-889a-49ed20ce0156"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Quốc tế được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 76
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("0d943cc8-f735-4b81-9038-7dfdac675d88"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Quốc tế được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 76
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("7bebd5b0-0101-420a-b6ac-5b1cdbce04ff"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),   // Cấp WoS
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp WoS được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 200
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("d4655ab5-d317-4056-a71c-d2d72b2580db"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),   // Cấp WoS
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp WoS được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 200
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("698099c7-4e76-41e4-a65c-98d07bd7da17"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),   // Cấp WoS
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp WoS được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("457f5822-625c-4ce2-81db-c5c5cc99d0ca"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),   // Cấp WoS
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp WoS được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("957e6f12-5644-4b54-ac9f-b582f7b11d7b"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Scopus được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 200
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("2bd93368-b474-44fc-8146-0bf872f6bb80"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("340bd6e7-9d49-4650-a4cf-f1928358aa7c"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Scopus được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 200
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("57b568a1-5447-4bb8-bc39-7bc870f86560"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Scopus được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("d3c389cc-db9d-4112-878e-48408364b467"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"),     // Giờ vượt định mức
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Scopus được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = 2,
+                    ConvertHour = 120
+                },
+
+                // Đề tài
+
+                // Giáo trình
+
+                // Hội thảo, hội nghị
+
+                // Hướng dẫn sinh viên NCKH
+                new Factor
+                {
+                    Id = Guid.Parse("b986e0d6-36c8-4b73-ab80-566d519bff16"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("6bbf7e31-bcca-4078-b894-7c8d3afba607"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
                     AuthorRoleId = null,
-                    MaxAllowed = null
-                }
+                    Name = "Hướng dẫn đề tài NCKH đạt giải Khuyến khích",
+                    ScoreLevel = ScoreLevel.HDSVDatGiaiKK,
+                    MaxAllowed = null,
+                    ConvertHour = 40
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("166988df-84b4-4b0f-a1e0-8d356a1f4346"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("08becbaf-2a92-4de1-8908-454c4659ad94"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
+                    AuthorRoleId = null,
+                    Name = "Hướng dẫn đề tài NCKH đạt giải Khuyến khích",
+                    ScoreLevel = ScoreLevel.HDSVDatGiaiKK,
+                    MaxAllowed = null,
+                    ConvertHour = 40
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("60772df7-9150-4219-9ee8-ce5439144b0c"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("6bbf7e31-bcca-4078-b894-7c8d3afba607"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
+                    AuthorRoleId = null,
+                    Name = "Hướng dẫn đề tài NCKH đạt giải Ba",
+                    ScoreLevel = ScoreLevel.HDSVDatGiaiBa,
+                    MaxAllowed = null,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("1ebfedcf-12c6-408a-82fd-170f9211d0d3"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("08becbaf-2a92-4de1-8908-454c4659ad94"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
+                    AuthorRoleId = null,
+                    Name = "Hướng dẫn đề tài NCKH đạt giải Ba",
+                    ScoreLevel = ScoreLevel.HDSVDatGiaiBa,
+                    MaxAllowed = null,
+                    ConvertHour = 80
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("5aeed66d-b2ae-448f-8e30-f7c005c54ff2"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("6bbf7e31-bcca-4078-b894-7c8d3afba607"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
+                    AuthorRoleId = null,
+                    Name = "Hướng dẫn đề tài NCKH đạt giải Nhì",
+                    ScoreLevel = ScoreLevel.HDSVDatGiaiNhi,
+                    MaxAllowed = null,
+                    ConvertHour = 120
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("dd1ea2c7-4cc5-442d-b8fa-c6a4f8a663a2"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("08becbaf-2a92-4de1-8908-454c4659ad94"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
+                    AuthorRoleId = null,
+                    Name = "Hướng dẫn đề tài NCKH đạt giải Nhì",
+                    ScoreLevel = ScoreLevel.HDSVDatGiaiNhi,
+                    MaxAllowed = null,
+                    ConvertHour = 120
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("aee0c04a-26bc-4ef6-92b7-3d78f6ccaa61"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("6bbf7e31-bcca-4078-b894-7c8d3afba607"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
+                    AuthorRoleId = null,
+                    Name = "Hướng dẫn đề tài NCKH đạt giải Nhất",
+                    ScoreLevel = ScoreLevel.HDSVDatGiaiNhat,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("41d45d0a-39ea-417f-ba73-888b495525de"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("08becbaf-2a92-4de1-8908-454c4659ad94"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
+                    AuthorRoleId = null,
+                    Name = "Hướng dẫn đề tài NCKH đạt giải Nhất",
+                    ScoreLevel = ScoreLevel.HDSVDatGiaiNhat,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("64780798-ffaf-48eb-be29-8a61fc4854a2"),
+                    WorkTypeId = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"),
+                    WorkLevelId = Guid.Parse("69cc26ee-f6b8-46a6-9229-e42219775d78"),
+                    PurposeId = Guid.Parse("bf7e1da9-bb9f-4b64-827c-9b5f114395db"),
+                    AuthorRoleId = null,
+                    Name = "Hướng dẫn đề tài NCKH trường hợp còn lại",
+                    ScoreLevel = ScoreLevel.HDSVConLai,
+                    MaxAllowed = null,
+                    ConvertHour = 20
+                },
+                // Khác
+                new Factor
+                {
+                    Id = Guid.Parse("7b1f83c1-2d6f-460f-8816-3510673d762a"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("ee81fe90-15e7-48a2-8d94-a46db55f5b8f"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Tác phẩm nghệ thuật",
+                    ScoreLevel = ScoreLevel.TacPhamNgheThuatCapTruong,
+                    MaxAllowed = null,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("1fabd534-9220-4fed-91bd-5559b286a20c"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("ee81fe90-15e7-48a2-8d94-a46db55f5b8f"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Tác phẩm nghệ thuật",
+                    ScoreLevel = ScoreLevel.TacPhamNgheThuatCapTruong,
+                    MaxAllowed = null,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("5f1f8da3-5209-485d-82fa-9c09db509e74"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("d84ac5f8-d533-48d6-b829-9cf3556ce5bb"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Tác phẩm nghệ thuật",
+                    ScoreLevel = ScoreLevel.TacPhamNgheThuatCapTinhThanhPho,
+                    MaxAllowed = null,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("ff6bd8d0-4772-49fc-a1d5-c2659b19c90e"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("d84ac5f8-d533-48d6-b829-9cf3556ce5bb"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Tác phẩm nghệ thuật",
+                    ScoreLevel = ScoreLevel.TacPhamNgheThuatCapTinhThanhPho,
+                    MaxAllowed = null,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("3f695362-7c44-4f17-a57e-614e68739b94"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("b2302b5e-1614-484d-88ad-003c411ad248"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Tác phẩm nghệ thuật",
+                    ScoreLevel = ScoreLevel.TacPhamNgheThuatCapQuocGia,
+                    MaxAllowed = null,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("7a633c7f-d43f-4cca-926a-1fa35c2d2e17"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("b2302b5e-1614-484d-88ad-003c411ad248"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Tác phẩm nghệ thuật",
+                    ScoreLevel = ScoreLevel.TacPhamNgheThuatCapQuocGia,
+                    MaxAllowed = null,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("96c19b54-7000-40c4-a6de-e8ecff319ae2"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("13e5b0a5-727b-427b-b103-0d58db679dcd"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Tác phẩm nghệ thuật",
+                    ScoreLevel = ScoreLevel.TacPhamNgheThuatCapQuocTe,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("cb5db759-7bf6-42d7-affb-9d8a89382cbc"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("13e5b0a5-727b-427b-b103-0d58db679dcd"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Tác phẩm nghệ thuật",
+                    ScoreLevel = ScoreLevel.TacPhamNgheThuatCapQuocTe,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("2c6c95c1-cda0-442b-8257-f2b5b94611a8"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("b2302b5e-1614-484d-88ad-003c411ad248"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Thành tích huấn luyện, thi đấu thể dục thể thao",
+                    ScoreLevel = ScoreLevel.ThanhTichHuanLuyenCapQuocGia,
+                    MaxAllowed = null,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("2971a16e-2ccc-4f36-a6f6-bf28269c2702"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("b2302b5e-1614-484d-88ad-003c411ad248"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Thành tích huấn luyện, thi đấu thể dục thể thao",
+                    ScoreLevel = ScoreLevel.ThanhTichHuanLuyenCapQuocGia,
+                    MaxAllowed = null,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("7fa77c29-26fb-4b31-b518-b0cb0f37f331"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("13e5b0a5-727b-427b-b103-0d58db679dcd"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Thành tích huấn luyện, thi đấu thể dục thể thao",
+                    ScoreLevel = ScoreLevel.ThanhTichHuanLuyenCapQuocTe,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("45ad2da3-47b8-4e71-9248-458192dd52c8"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("13e5b0a5-727b-427b-b103-0d58db679dcd"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Thành tích huấn luyện, thi đấu thể dục thể thao",
+                    ScoreLevel = ScoreLevel.ThanhTichHuanLuyenCapQuocTe,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("767bbcc5-cd12-4789-8677-428169b20d48"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("d84ac5f8-d533-48d6-b829-9cf3556ce5bb"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Giải pháp hữu ích",
+                    ScoreLevel = ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho,
+                    MaxAllowed = null,
+                    ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("c72c498b-37c6-46cd-b3e1-e82179fd8889"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("d84ac5f8-d533-48d6-b829-9cf3556ce5bb"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Giải pháp hữu ích",
+                    ScoreLevel = ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho,
+                    MaxAllowed = null,
+                    ConvertHour = 160
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("9ae95c37-54eb-415d-939a-d70008a33b28"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("b2302b5e-1614-484d-88ad-003c411ad248"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Giải pháp hữu ích",
+                    ScoreLevel = ScoreLevel.GiaiPhapHuuIchCapQuocGia,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("568d791f-0a4f-4097-b7e2-9ed9836c3131"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("b2302b5e-1614-484d-88ad-003c411ad248"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Giải pháp hữu ích",
+                    ScoreLevel = ScoreLevel.GiaiPhapHuuIchCapQuocGia,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("99f88266-0281-49b1-bf44-397cf86816d5"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("13e5b0a5-727b-427b-b103-0d58db679dcd"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("ee9e27af-859f-4de6-8678-6ae758654931"),
+                    Name = "Giải pháp hữu ích",
+                    ScoreLevel = ScoreLevel. GiaiPhapHuuIchCapQuocTe,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("12fcd9aa-301b-42f0-9195-d1ca60011613"),
+                    WorkTypeId = Guid.Parse("1ff8d087-e0c3-45df-befc-662c0a80c10c"),
+                    WorkLevelId = Guid.Parse("13e5b0a5-727b-427b-b103-0d58db679dcd"),
+                    PurposeId = Guid.Parse("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                    AuthorRoleId = Guid.Parse("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
+                    Name = "Giải pháp hữu ích",
+                    ScoreLevel = ScoreLevel. GiaiPhapHuuIchCapQuocTe,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+
+
+                // Giáo trình - Sách
+                new Factor
+                {
+                    Id = Guid.Parse("e2f96885-2bb7-4668-9c2f-6d6d313c09f7"),
+                    WorkTypeId = Guid.Parse("84a14a8b-eae8-4720-bc7c-e1f93b35a256"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("1e9aa201-0e1b-4214-9dbb-2c9eb59a428a"),
+                    AuthorRoleId = null,
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+
+                // Chương sách
+                new Factor
+                {
+                    Id = Guid.Parse("d3707663-2b44-4d95-93b7-37756d3e302c"),
+                    WorkTypeId = Guid.Parse("3bbfc66a-3144-4edf-959b-e049d7e33d97"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("494e049e-0972-4ff0-a786-6e00880955fc"),
+                    AuthorRoleId = null,
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+
+                // Tham khảo
+                new Factor
+                {
+                    Id = Guid.Parse("14b7a7e8-7327-450e-a5ca-f7d836b14499"),
+                    WorkTypeId = Guid.Parse("628a119e-324f-42b8-8ff4-e29ee5c643a9"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("3da2c117-b32f-4687-89b8-ba9544920f35"),
+                    AuthorRoleId = null,
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+
+                // Chuyên khảo
+                new Factor
+                {
+                    Id = Guid.Parse("b1131264-329f-4908-8e71-8b36088d3dde"),
+                    WorkTypeId = Guid.Parse("61bbbecc-038a-43b7-aafa-a95e25a93f38"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("32cce5b8-24aa-4a3e-9326-c853e5c50fd7"),
+                    AuthorRoleId = null,
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+
+                // Tài liệu hướng dẫn
+                new Factor
+                {
+                    Id = Guid.Parse("b74daf03-dc04-4738-ae87-97ec0faa07c1"),
+                    WorkTypeId = Guid.Parse("8aaf0a8a-35ed-4768-8fd4-44fc4a561cd0"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("fc948f99-b569-4265-b1c9-ba5aa31d730b"),
+                    AuthorRoleId = null,
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+
             };
 
             builder.HasData(factors);
