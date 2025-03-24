@@ -11,10 +11,10 @@ import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { getMyWorks, setMarkedForScoring } from "../../../lib/api/worksApi";
-import { Work } from "../../../lib/types/models/Work";
-import { ScoreLevel } from "../../../lib/types/enums/ScoreLevel";
+import GenericTable from "../../app/shared/components/tables/DataTable";
+import { getMyWorks, setMarkedForScoring } from "../../lib/api/worksApi";
+import { Work } from "../../lib/types/models/Work";
+import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
 
 const getScoreLevelText = (scoreLevel: number): string => {
   switch (scoreLevel) {

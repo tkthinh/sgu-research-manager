@@ -30,4 +30,9 @@ export const adminUpdateUser = async (userId: string, data: Partial<User>): Prom
 export const deleteUser = async (userId: string): Promise<ApiResponse<User>> => {
   const response = await apiClient.delete<ApiResponse<User>>(`/users/${userId}`);
   return response.data;
-}
+}; 
+
+export const getUsersByDepartmentId = async (departmentId: string): Promise<ApiResponse<User[]>> => {
+  const response = await apiClient.get<ApiResponse<User[]>>(`/users/department/${departmentId}`);
+  return response.data;
+}; 

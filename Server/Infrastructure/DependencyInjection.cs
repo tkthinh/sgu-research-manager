@@ -24,8 +24,6 @@ using Application.SCImagoFields;
 using Infrastructure.Data.Repositories;
 using Application.Users;
 using Application.SystemConfigs;
-using Application.ExcelOperations;
-using Application.Services;
 using Application.Caches;
 using StackExchange.Redis;
 
@@ -110,7 +108,6 @@ namespace Infrastructure
          services.AddScoped<ICacheManagementService, CacheManagementService>();
          services.AddSingleton(ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
 
-         services.AddScoped<IExcelService, ExcelService>();
          services.AddScoped<ISystemConfigService, SystemConfigService>();
 
          // Đăng ký các mapper

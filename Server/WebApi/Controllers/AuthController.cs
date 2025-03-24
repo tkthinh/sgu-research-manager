@@ -39,10 +39,10 @@ public class AuthController : ControllerBase
          return Unauthorized(new ApiResponse<object>(false, "Sai thông tin đăng nhập", null));
       }
 
-      if (!identityUser.IsApproved)
-      {
-         return Unauthorized(new ApiResponse<object>(false, "Tài khoản chưa được phê duyệt", null));
-      }
+      //if (!identityUser.IsApproved)
+      //{
+      //   return Unauthorized(new ApiResponse<object>(false, "Tài khoản chưa được phê duyệt", null));
+      //}
 
       // Create user claims
       var authClaims = new List<Claim>

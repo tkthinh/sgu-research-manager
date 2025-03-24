@@ -13,5 +13,6 @@ namespace Application.Works
 
         public Guid? WorkTypeId { get; set; }
         public Guid? WorkLevelId { get; set; }
+        public List<Guid> CoAuthorUserIds { get; set; } = new();
     }
 }

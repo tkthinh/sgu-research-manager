@@ -1,8 +1,8 @@
 ﻿using Domain.Enums;
 
-namespace Application.ExcelOperations.Dtos
+namespace Application.Works
 {
-    public class ExcelImportRowDto
+    public class ImportExcelDto
     {
         public string? Username { get; set; }
         public string? FullName { get; set; }

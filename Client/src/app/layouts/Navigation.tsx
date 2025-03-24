@@ -1,13 +1,15 @@
 import { Navigation } from "@toolpad/core";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import ConstructionIcon from "@mui/icons-material/Construction";
-import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
-import LeaderboardIcon from "@mui/icons-material/Leaderboard";
-import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
-import ManageHistoryIcon from "@mui/icons-material/ManageHistory";
-import SettingsIcon from "@mui/icons-material/Settings";
-import RateReviewIcon from "@mui/icons-material/RateReview";
-import LibraryAddCheckIcon from "@mui/icons-material/LibraryAddCheck";
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ConstructionIcon from '@mui/icons-material/Construction';
+import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
+import SettingsIcon from '@mui/icons-material/Settings';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import RestorePageIcon from '@mui/icons-material/RestorePage';
+import LibraryAddCheckIcon from '@mui/icons-material/LibraryAddCheck';
+import GroupIcon from '@mui/icons-material/Group';
 
 // Navigation for "User" role
 export const NAVIGATION_USER: Navigation = [
@@ -61,9 +63,9 @@ export const NAVIGATION_MANAGER: Navigation = [
     icon: <RateReviewIcon />,
   },
   {
-    segment: "phan-cong",
-    title: "Phân công chấm điểm",
-    icon: <AssignmentIndIcon />,
+    segment: 'danh-sach-nguoi-dung',
+    title: 'Danh sách người dùng',
+    icon: <GroupIcon />,
   },
   {
     kind: "header",
@@ -111,6 +113,11 @@ export const NAVIGATION_ADMIN: Navigation = [
     icon: <AssignmentIndIcon />,
   },
   {
+    segment: 'danh-sach-nguoi-dung',
+    title: 'Danh sách người dùng',
+    icon: <GroupIcon />,
+  },
+  {
     kind: "header",
     title: "Báo cáo",
   },
@@ -139,6 +146,14 @@ export const NAVIGATION_ADMIN: Navigation = [
     icon: <SettingsIcon />,
     children: [
       {
+        segment: 'loai-cong-trinh',
+        title: 'Loại công trình',
+      },
+      {
+        segment: 'cap-cong-trinh',
+        title: 'Cấp công trình',
+      },
+      {
         segment: "he-so-quy-doi",
         title: "Hệ số quy đổi",
       },
@@ -154,12 +169,12 @@ export const NAVIGATION_ADMIN: Navigation = [
         kind: "divider",
       },
       {
-        segment: "loai-cong-trinh",
-        title: "Loại công trình",
+        segment: 'loai-cong-trinh',
+        title: 'Loại công trình',
       },
       {
-        segment: "cap-cong-trinh",
-        title: "Cấp công trình",
+        segment: 'cap-cong-trinh',
+        title: 'Cấp công trình',
       },
       {
         segment: "nganh-scimago",

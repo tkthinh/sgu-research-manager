@@ -70,7 +70,7 @@ export const updateWorkByAdmin = async (workId: string, userId: string, data: Up
 export const updateWorkByAuthor = async (id: string, data: UpdateWorkByAuthorRequest): Promise<ApiResponse<Work>> => {
   try {
     console.log("WorksApi:updateWorkByAuthor - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
-    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${id}/update-by-author`, data);
+    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${id}`, data);
     console.log("WorksApi:updateWorkByAuthor - Phản hồi:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error: any) {
@@ -83,5 +83,45 @@ export const updateWorkByAuthor = async (id: string, data: UpdateWorkByAuthorReq
 // Get current user's works
 export const getMyWorks = async (): Promise<ApiResponse<Work[]>> => {
   const response = await apiClient.get<ApiResponse<Work[]>>("/works/my-works");
+  return response.data;
+};
+
+export const getMarkedWorks = async (): Promise<ApiResponse<Work[]>> => {
+  const response = await apiClient.get<ApiResponse<Work[]>>("/works/marked");
+  return response.data;
+};
+
+export const updateWorkStatus = async (
+  workId: string,
+  authorId: string,
+  status: number
+): Promise<ApiResponse<Work>> => {
+  const data = {
+    proofStatus: status
+  };
+  const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}/admin-update/${authorId}`, data);
+  return response.data;
+};
+
+export const updateWorkNote = async (
+  workId: string,
+  authorId: string,
+  note: string
+): Promise<ApiResponse<Work>> => {
+  const data = {
+    note: note
+  };
+  const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}/admin-update/${authorId}`, data);
+  return response.data;
+};
+
+export const markWorkForScoring = async (
+  id: string,
+  marked: boolean
+): Promise<ApiResponse<Work>> => {
+  const response = await apiClient.put<ApiResponse<Work>>(
+    `/works/${id}/mark`,
+    { marked }
+  );
   return response.data;
 };

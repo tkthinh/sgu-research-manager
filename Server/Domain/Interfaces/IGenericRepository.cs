@@ -15,5 +15,6 @@ namespace Domain.Interfaces
         Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
         IQueryable<T> Include(Expression<Func<T, object>> includeExpression);
+        IQueryable<T> GetQueryable();
     }
 }

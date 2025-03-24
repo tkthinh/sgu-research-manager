@@ -10,13 +10,17 @@ import AuthorRolePage from "../../features/settings/authorRoles/AuthorRolePage";
 import DepartmentPage from "../../features/settings/departments/DepartmentPage";
 import FactorPage from "../../features/settings/factors/FactorPage";
 import FieldPage from "../../features/settings/fields/FieldPage";
+import WorkPage from "../../features/works/WorkPage";
+
 import PurposePage from "../../features/settings/purposes/PurposePage";
 import ScimagoFieldPage from "../../features/settings/scimagoFields/ScimagoFieldPage";
-import UserPage from "../../features/settings/users/UserPage";
+
 import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
-import MarkedWorksPage from "../../features/settings/works/MarkedWorksPage";
-import WorkPage from "../../features/settings/works/WorkPage";
+
+import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
+import UserPage from "../../features/settings/users/UserPage";
+import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -65,7 +69,7 @@ export const router = createBrowserRouter([
                 path: "/cau-hinh-he-thong",
                 element: (
                   <ProtectedRoute allowedRoles={["Admin"]}>
-                    <ScimagoFieldPage />
+                    <SystemConfigPage />
                   </ProtectedRoute>
                 ),
               },
