@@ -21,10 +21,8 @@ import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 import AssignmentPage from "../../features/assignments/AssignmentPage";
 import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
 import UserPage from "../../features/settings/users/UserPage";
-import UserListPage from "../../features/users/UserListPage";
 import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
-import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
 import ScoreWorksPage from "../../features/users/UserListPage";
 import UserWorkDetailPage from "../../features/users/UserWorkDetailPage";
 
@@ -57,21 +55,27 @@ export const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
-              { path: "/cham-diem", element: <ScoreWorksPage /> },
-              { path: "/cham-diem/user/:userId", element: <UserWorkDetailPage /> },
+              { 
+                path: "/cham-diem", 
+                element: (
+                  <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
+                    <ScoreWorksPage /> 
+                  </ProtectedRoute>
+                )
+              },
+              { 
+                path: "/cham-diem/user/:userId", 
+                element: (
+                  <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
+                    <UserWorkDetailPage /> 
+                  </ProtectedRoute>
+                )
+              },
               {
                 path: "/phan-cong",
                 element: (
                   <ProtectedRoute allowedRoles={["Admin"]}>
                     <AssignmentPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: "/danh-sach-nguoi-dung",
-                element: (
-                  <ProtectedRoute allowedRoles={["Manager"]}>
-                    <UserListPage />
                   </ProtectedRoute>
                 ),
               },

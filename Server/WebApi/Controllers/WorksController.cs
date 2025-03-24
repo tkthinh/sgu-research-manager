@@ -1,15 +1,12 @@
-﻿using Application.Authors;
-using Application.Works;
+﻿using Application.Works;
 using Application.Shared.Response;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using WebApi.Hubs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
 using Domain.Interfaces;
-using Domain.Enums;
 
 namespace WebApi.Controllers
 {
@@ -90,15 +87,11 @@ namespace WebApi.Controllers
         {
             try
             {
-                // Lấy UserId từ token
-                var userIdClaim = User.FindFirst("id")?.Value;
-                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                var (isSuccess, userId, userName) = GetCurrentUser();
+                if (!isSuccess)
                 {
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
                 }
-
-                // Lấy userName để log (tùy chọn)
-                var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
 
                 // Kiểm tra xem userId có phải là tác giả của công trình không
                 var work = await _workService.GetWorkByIdWithAuthorsAsync(id);
@@ -116,19 +109,27 @@ namespace WebApi.Controllers
                 // Gọi service để xóa công trình
                 await _workService.DeleteWorkAsync(id, userId);
 
-                // Gửi thông báo đến các tác giả khác (tùy chọn, có thể bỏ nếu không cần)
+                // Gửi thông báo đến các tác giả khác
                 if (work.Authors != null && work.Authors.Any())
                 {
-                    var authorUserIds = work.Authors
+                    var recipientIds = new HashSet<string>();
+                    
+                    // Thêm các tác giả khác
+                    var authorIds = work.Authors
                         .Where(a => a.UserId != userId)
-                        .Select(a => a.UserId.ToString())
-                        .Distinct()
-                        .ToList();
+                        .Select(a => a.UserId.ToString());
+                    foreach (var authorId in authorIds) recipientIds.Add(authorId);
+                    
+                    // Thêm các đồng tác giả
+                    var coAuthorIds = work.CoAuthorUserIds?
+                        .Where(uid => uid != userId)
+                        .Select(uid => uid.ToString()) ?? Enumerable.Empty<string>();
+                    foreach (var coAuthorId in coAuthorIds) recipientIds.Add(coAuthorId);
 
-                    if (authorUserIds.Any())
+                    if (recipientIds.Any())
                     {
                         var notificationMessage = $"Công trình '{work.Title}' đã bị xóa bởi {userName}.";
-                        await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
+                        await _hubContext.Clients.Users(recipientIds.ToList()).SendAsync("ReceiveNotification", notificationMessage);
                     }
                 }
 
@@ -196,7 +197,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPatch("{workId}/admin-update/{userId}")]
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Manager")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAdmin(
             [FromRoute] Guid workId,
             [FromRoute] Guid userId,
@@ -243,34 +244,27 @@ namespace WebApi.Controllers
         {
             try
             {
-                // Lấy UserId từ token
-                var userIdClaim = User.FindFirst("id")?.Value;
-                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                // Lấy userId từ phương thức tiện ích
+                var (isSuccess, userId, userName) = GetCurrentUser();
+                if (!isSuccess)
                 {
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
                 }
 
-                // Lấy userName để hiển thị trong thông báo
-                var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
-
-                // Kiểm tra xem userId có phải là tác giả của công trình không
+                // Kiểm tra xem công trình có tồn tại không trước khi làm bất kỳ thứ gì khác
                 var work = await _workService.GetWorkByIdWithAuthorsAsync(workId);
-
                 if (work == null)
                 {
                     return NotFound(new ApiResponse<object>(false, "Công trình không tồn tại"));
                 }
 
-                // Kiểm tra xem userId có phải là tác giả của công trình không
-                var isAuthor = work.Authors?.Any(a => a.UserId == userId) ?? false;
+                // Kiểm tra quyền truy cập theo một truy vấn duy nhất
+                bool hasAccess = (work.Authors?.Any(a => a.UserId == userId) ?? false) || 
+                                 (work.CoAuthorUserIds?.Contains(userId) ?? false);
                 
-                // Kiểm tra xem userId có phải là đồng tác giả của công trình không
-                var isCoAuthor = work.CoAuthorUserIds?.Contains(userId) ?? false;
-                
-                if (!isAuthor && !isCoAuthor)
+                if (!hasAccess)
                 {
-                    // Kiểm tra nếu userId nằm trong danh sách WorkAuthor nhưng không có trong CoAuthorUserIds (có thể do lỗi cập nhật)
-                    // Sử dụng Repository để kiểm tra thêm
+                    // Kiểm tra bổ sung trong bảng WorkAuthor nếu không thấy trong danh sách authors/coAuthors
                     var workAuthorExists = await _unitOfWork.Repository<WorkAuthor>()
                         .FirstOrDefaultAsync(wa => wa.WorkId == workId && wa.UserId == userId);
                     
@@ -283,26 +277,32 @@ namespace WebApi.Controllers
                 // Cập nhật công trình
                 var updatedWork = await _workService.UpdateWorkByAuthorAsync(workId, request, userId);
 
-                // Gửi thông báo đến các tác giả khác
-                if (updatedWork.Authors != null && updatedWork.Authors.Any())
+                // Gửi thông báo đến tất cả các tác giả khác (đơn giản hóa logic)
+                var allRecipientsIds = new HashSet<string>();
+                
+                // Thêm UserId của tất cả tác giả
+                if (updatedWork.Authors?.Any() == true)
                 {
-                    var authorUserIds = updatedWork.Authors
+                    var authorIds = updatedWork.Authors
                         .Where(a => a.UserId != userId)
-                        .Select(a => a.UserId.ToString())
-                        .Distinct()
-                        .ToList();
-                    var coAuthorUserIds = updatedWork.CoAuthorUserIds
+                        .Select(a => a.UserId.ToString());
+                    foreach (var id in authorIds) allRecipientsIds.Add(id);
+                }
+                
+                // Thêm UserId của tất cả đồng tác giả
+                if (updatedWork.CoAuthorUserIds?.Any() == true)
+                {
+                    var coAuthorIds = updatedWork.CoAuthorUserIds
                         .Where(uid => uid != userId)
-                        .Select(uid => uid.ToString())
-                        .Distinct()
-                        .ToList();
-                    authorUserIds.AddRange(coAuthorUserIds);
+                        .Select(uid => uid.ToString());
+                    foreach (var id in coAuthorIds) allRecipientsIds.Add(id);
+                }
 
-                    if (authorUserIds.Any())
-                    {
-                        var notificationMessage = $"Công trình '{updatedWork.Title}' đã được cập nhật bởi {userName}.";
-                        await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
-                    }
+                // Gửi thông báo nếu có người nhận
+                if (allRecipientsIds.Any())
+                {
+                    var notificationMessage = $"Công trình '{updatedWork.Title}' đã được cập nhật bởi {userName}.";
+                    await _hubContext.Clients.Users(allRecipientsIds.ToList()).SendAsync("ReceiveNotification", notificationMessage);
                 }
 
                 return Ok(new ApiResponse<WorkDto>(
@@ -324,18 +324,18 @@ namespace WebApi.Controllers
         {
             try
             {
-                var useridclaim = User.FindFirst("id")?.Value;
-                if (string.IsNullOrEmpty(useridclaim) || !Guid.TryParse(useridclaim, out var userid))
+                var (isSuccess, userId, _) = GetCurrentUser();
+                if (!isSuccess)
                 {
-                    return Unauthorized(new ApiResponse<object>(false, "không xác định được người dùng"));
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
                 }
 
-                // lấy danh sách công trình mà user đã kê khai
-                var works = await _workService.GetWorksByCurrentUserAsync(userid);
+                // Lấy danh sách công trình mà user đã kê khai
+                var works = await _workService.GetWorksByCurrentUserAsync(userId);
 
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
-                    "lấy danh sách công trình của người dùng hiện tại thành công",
+                    "Lấy danh sách công trình của người dùng hiện tại thành công",
                     works
                 ));
             }
@@ -344,6 +344,19 @@ namespace WebApi.Controllers
                 _logger.LogError(ex, "Lỗi khi lấy danh sách công trình của người dùng hiện tại");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
+        }
+
+        // Phương thức tiện ích để lấy userId từ token
+        private (bool isSuccess, Guid userId, string userName) GetCurrentUser()
+        {
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return (false, Guid.Empty, string.Empty);
+            }
+
+            var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
+            return (true, userId, userName);
         }
     }
 }

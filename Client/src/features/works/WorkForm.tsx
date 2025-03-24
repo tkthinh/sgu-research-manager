@@ -31,6 +31,7 @@ import { getScimagoFieldsByWorkTypeId } from "../../lib/api/scimagoFieldsApi";
 import { searchUsers, getUserById } from "../../lib/api/usersApi";
 import { User } from "../../lib/types/models/User";
 import { useQuery } from "@tanstack/react-query";
+import { getScoreLevelsByFilters } from "../../lib/api/scoreLevelsApi";
 
 // Define validation schema
 const schema = z.object({
@@ -140,6 +141,8 @@ export default function WorkForm({
   // Watch workTypeId để lấy dữ liệu phù hợp
   const workTypeId = watch("workTypeId");
   const workLevelId = watch("workLevelId");
+  const authorRoleId = watch("author.authorRoleId");
+  const purposeId = watch("author.purposeId");
 
   // Khởi tạo các trường details dựa trên initialData
   useEffect(() => {
@@ -363,92 +366,37 @@ export default function WorkForm({
 
   // Kiểm tra và thiết lập các mức điểm (scoreLevel) hiển thị dựa trên loại công trình và cấp công trình
   useEffect(() => {
-    // Bài báo khoa học
-    if (workTypeId === "2732c858-77dc-471d-bd9a-464a3142530a") {
-      if (workLevelId) {
-        // Cấp WoS - ID: "0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"
-        if (workLevelId === "0b031a2d-4ac5-48fb-9759-f7a2fe2f7290" || workLevelId === "34f94668-7151-457d-aa06-4bf4e2b27df3") {
-          // Các mức top
-          setVisibleScoreLevels([
-            ScoreLevel.BaiBaoTopMuoi,
-            ScoreLevel.BaiBaoTopBaMuoi,
-            ScoreLevel.BaiBaoTopNamMuoi,
-            ScoreLevel.BaiBaoTopConLai
-          ]);
-        }
-        // Các cấp khác
-        else {
-          setVisibleScoreLevels([
-            ScoreLevel.BaiBaoMotDiem,
-            ScoreLevel.BaiBaoKhongBayNamDiem,
-            ScoreLevel.BaiBaoNuaDiem
-          ]);
-        }
-      }
-    } 
-    // Báo cáo khoa học - không có ScoreLevel theo FactorSeeding
-    else if (workTypeId === "03412ca7-8ccf-4903-9018-457768060ab4") {
+    if (!workTypeId) {
       setVisibleScoreLevels([]);
-      setValue("author.scoreLevel", null);
+      return;
     }
-    // Hướng dẫn NCKH sinh viên
-    else if (workTypeId === "e2f7974c-47c3-478e-9b53-74093f6c621f") {
-      if (workLevelId === "6bbf7e31-bcca-4078-b894-7c8d3afba607" || workLevelId === "08becbaf-2a92-4de1-8908-454c4659ad94"){
-        setVisibleScoreLevels([
-          ScoreLevel.HDSVDatGiaiNhat,
-          ScoreLevel.HDSVDatGiaiNhi,
-          ScoreLevel.HDSVDatGiaiBa,
-          ScoreLevel.HDSVDatGiaiKK
-        ]);
+
+    const fetchScoreLevels = async () => {
+      try {
+        // Gọi API để lấy danh sách mức điểm từ backend
+        const scoreLevels = await getScoreLevelsByFilters(
+          workTypeId,
+          workLevelId || undefined,
+          authorRoleId || undefined,
+          purposeId || undefined
+        );
+        
+        console.log("Đã lấy được danh sách mức điểm:", scoreLevels);
+        setVisibleScoreLevels(scoreLevels);
+        
+        // Nếu không có mức điểm nào, reset giá trị scoreLevel về null
+        if (scoreLevels.length === 0) {
+          setValue("author.scoreLevel", null);
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy danh sách mức điểm:", error);
+        setVisibleScoreLevels([]);
+        setValue("author.scoreLevel", null);
       }
-      else{
-        setVisibleScoreLevels([
-          ScoreLevel.HDSVConLai
-        ]);
-      }
-    }
-    // Tác phẩm nghệ thuật/Giải pháp hữu ích/các loại khác - "1ff8d087-e0c3-45df-befc-662c0a80c10c"
-    else if (workTypeId === "1ff8d087-e0c3-45df-befc-662c0a80c10c") {
-      if (workLevelId === "d84ac5f8-d533-48d6-b829-9cf3556ce5bb") { // Cấp tỉnh/thành phố
-        setVisibleScoreLevels([
-          ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho,
-          ScoreLevel.TacPhamNgheThuatCapTinhThanhPho
-        ]);
-      } else if (workLevelId === "b2302b5e-1614-484d-88ad-003c411ad248") { // Cấp quốc gia
-        setVisibleScoreLevels([
-          ScoreLevel.GiaiPhapHuuIchCapQuocGia,
-          ScoreLevel.TacPhamNgheThuatCapQuocGia,
-          ScoreLevel.ThanhTichHuanLuyenCapQuocGia
-        ]);
-      } else if (workLevelId === "13e5b0a5-727b-427b-b103-0d58db679dcd") { // Cấp quốc tế
-        setVisibleScoreLevels([
-          ScoreLevel.GiaiPhapHuuIchCapQuocTe,
-          ScoreLevel.TacPhamNgheThuatCapQuocTe,
-          ScoreLevel.ThanhTichHuanLuyenCapQuocTe
-        ]);
-      } else if (workLevelId === "ee81fe90-15e7-48a2-8d94-a46db55f5b8f") { // Cấp trường
-        setVisibleScoreLevels([
-          ScoreLevel.TacPhamNgheThuatCapTruong
-        ]);
-      }
-    }
-    // Sách - "323371c0-26c7-4549-90f2-11c881be402d"
-    else if (workTypeId === "84a14a8b-eae8-4720-bc7c-e1f93b35a256" || 
-      workTypeId === "d3707663-2b44-4d95-93b7-37756d3e302c" || 
-      workTypeId === "14b7a7e8-7327-450e-a5ca-f7d836b14499" || 
-      workTypeId === "b1131264-329f-4908-8e71-8b36088d3dde" ||
-      workTypeId === "b74daf03-dc04-4738-ae87-97ec0faa07c1"
-    ) {
-      setVisibleScoreLevels([
-        ScoreLevel.Sach
-      ]);
-    }
-    // Các loại công trình khác không có mức điểm
-    else {
-      setVisibleScoreLevels([]);
-      setValue("author.scoreLevel", null);
-    }
-  }, [workTypeId, workLevelId, setValue]);
+    };
+    
+    fetchScoreLevels();
+  }, [workTypeId, workLevelId, authorRoleId, purposeId, setValue]);
 
   // Kiểm tra xem loại công trình có cấp công trình hay không
   const [hasWorkLevels, setHasWorkLevels] = useState(true);

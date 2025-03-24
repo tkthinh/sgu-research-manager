@@ -10,10 +10,7 @@ using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 using System.Globalization;
 using System.Data;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
+using System.Linq.Expressions;
 
 namespace Application.Works
 {
@@ -383,6 +380,11 @@ namespace Application.Works
         {
             var effectiveScoreLevel = newScoreLevel ?? author.ScoreLevel;
 
+            // Ghi log thông tin trước khi tính toán
+            logger.LogInformation(
+                "UpdateAuthorHoursAsync - Bắt đầu tính giờ quy đổi: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
+                work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, effectiveScoreLevel);
+
             // Sử dụng phương thức mới để tìm factor
             var factor = await FindFactorAsync(
                 work.WorkTypeId,
@@ -393,14 +395,27 @@ namespace Application.Works
                 cancellationToken);
 
             if (factor is null)
+            {
+                logger.LogError("UpdateAuthorHoursAsync - Không tìm thấy Factor phù hợp");
                 throw new Exception(ErrorMessages.FactorNotFound);
+            }
 
+            // Tính toán WorkHour và AuthorHour
             author.WorkHour = CalculateWorkHour(effectiveScoreLevel, factor);
+            
+            // Sử dụng các giá trị từ workRequest nếu có, nếu không thì dùng các giá trị từ work
+            int totalAuthors = workRequest?.TotalAuthors ?? work.TotalAuthors ?? 0;
+            int totalMainAuthors = workRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0;
+            
             author.AuthorHour = await CalculateAuthorHour(
                 author.WorkHour,
-                workRequest?.TotalAuthors ?? work.TotalAuthors ?? 0,
-                workRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0,
+                totalAuthors,
+                totalMainAuthors,
                 author.AuthorRoleId);
+                
+            logger.LogInformation(
+                "UpdateAuthorHoursAsync - Kết quả: Factor.ConvertHour={ConvertHour}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, TotalAuthors={TotalAuthors}, TotalMainAuthors={TotalMainAuthors}",
+                factor.ConvertHour, author.WorkHour, author.AuthorHour, totalAuthors, totalMainAuthors);
         }
 
         private void UpdateAuthorProofStatus(Author author, UpdateAuthorRequestDto authorRequest)
@@ -710,23 +725,37 @@ namespace Application.Works
             // Cập nhật thông tin tác giả
             if (request.AuthorRequest is not null)
             {
+                // Ghi log trạng thái ban đầu
+                logger.LogInformation(
+                    "UpdateExistingAuthorAsync - Trạng thái ban đầu: AuthorId={AuthorId}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, ScoreLevel={ScoreLevel}",
+                    author.Id, author.WorkHour, author.AuthorHour, author.ScoreLevel);
+                
                 // AuthorRoleId và PurposeId là Guid không nullable, gán trực tiếp
                 author.AuthorRoleId = request.AuthorRequest.AuthorRoleId;
                 author.PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty;
 
                 author.Position = request.AuthorRequest.Position ?? author.Position;
+                
+                // Lưu trữ giá trị ScoreLevel ban đầu và mới để so sánh
+                var oldScoreLevel = author.ScoreLevel;
                 author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
+                var hasScoreLevelChanged = request.AuthorRequest.ScoreLevel.HasValue;
 
                 // SCImagoFieldId và FieldId là nullable Guid
                 author.SCImagoFieldId = request.AuthorRequest.SCImagoFieldId;
                 author.FieldId = request.AuthorRequest.FieldId;
 
-                // Tính lại WorkHour và AuthorHour nếu có thay đổi liên quan
-                bool shouldRecalculate = request.AuthorRequest.ScoreLevel.HasValue ||
+                // Tính lại WorkHour và AuthorHour khi có thay đổi liên quan
+                // Luôn tính toán lại nếu ScoreLevel thay đổi
+                bool shouldRecalculate = hasScoreLevelChanged ||
                     (request.WorkRequest is not null && (request.WorkRequest.TotalAuthors.HasValue || request.WorkRequest.TotalMainAuthors.HasValue));
 
                 if (shouldRecalculate)
                 {
+                    logger.LogInformation(
+                        "UpdateExistingAuthorAsync - Tính toán lại giờ quy đổi: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
+                        work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, author.ScoreLevel);
+                        
                     var factor = await FindFactorAsync(
                         work.WorkTypeId,
                         work.WorkLevelId,
@@ -736,17 +765,35 @@ namespace Application.Works
                         cancellationToken);
 
                     if (factor is null)
+                    {
+                        logger.LogError(
+                            "UpdateExistingAuthorAsync - Không tìm thấy Factor: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
+                            work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, author.ScoreLevel);
                         throw new Exception(ErrorMessages.FactorNotFound);
+                    }
 
+                    // Tính giờ quy đổi
                     author.WorkHour = CalculateWorkHour(author.ScoreLevel, factor);
                     author.AuthorHour = await CalculateAuthorHour(
                         author.WorkHour,
                         work.TotalAuthors ?? 0,
                         work.TotalMainAuthors ?? 0,
                         author.AuthorRoleId);
+                        
+                    logger.LogInformation(
+                        "UpdateExistingAuthorAsync - Kết quả tính toán: Factor.ConvertHour={ConvertHour}, WorkHour={WorkHour}, AuthorHour={AuthorHour}",
+                        factor.ConvertHour, author.WorkHour, author.AuthorHour);
+                }
+                else
+                {
+                    logger.LogInformation("UpdateExistingAuthorAsync - Không cần tính lại giờ quy đổi");
                 }
 
                 author.ModifiedDate = DateTime.UtcNow;
+                
+                logger.LogInformation(
+                    "UpdateExistingAuthorAsync - Trạng thái sau cập nhật: AuthorId={AuthorId}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, ScoreLevel={ScoreLevel}",
+                    author.Id, author.WorkHour, author.AuthorHour, author.ScoreLevel);
             }
         }
 
@@ -815,36 +862,30 @@ namespace Application.Works
 
         private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
         {
-            // Nếu factor không hợp lệ
+            // Nếu factor không tồn tại, trả về 0
             if (factor is null)
             {
                 logger.LogWarning("CalculateWorkHour - Factor is null, returning 0");
                 return 0;
             }
-
-            // Kiểm tra ScoreLevel chỉ khi nó có giá trị và factor.ScoreLevel cũng có giá trị
-            if (scoreLevel.HasValue && factor.ScoreLevel.HasValue)
+            
+            // Kiểm tra xem ScoreLevel có khớp không
+            if ((scoreLevel.HasValue != factor.ScoreLevel.HasValue) || 
+                (scoreLevel.HasValue && factor.ScoreLevel.HasValue && scoreLevel.Value != factor.ScoreLevel.Value))
             {
-                // So sánh chỉ khi cả hai đều có giá trị
-                if (scoreLevel.Value != factor.ScoreLevel.Value)
-                {
-                    logger.LogWarning("CalculateWorkHour - ScoreLevel mismatch: Request={RequestScoreLevel}, Factor={FactorScoreLevel}, returning 0",
-                        scoreLevel, factor.ScoreLevel);
-                    return 0;
-                }
+                logger.LogWarning("CalculateWorkHour - ScoreLevel mismatch: Request={RequestLevel}, Factor={FactorLevel}, nhưng vẫn trả về ConvertHour={ConvertHour}",
+                    scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null",
+                    factor.ScoreLevel.HasValue ? factor.ScoreLevel.Value.ToString() : "null",
+                    factor.ConvertHour);
+                    
+                // Vẫn trả về ConvertHour của Factor nếu Factor được tìm thấy
+                return factor.ConvertHour;
             }
-            else if ((scoreLevel.HasValue && !factor.ScoreLevel.HasValue) ||
-                     (!scoreLevel.HasValue && factor.ScoreLevel.HasValue))
-            {
-                // Một trong hai có giá trị, một không có -> không khớp
-                logger.LogWarning("CalculateWorkHour - ScoreLevel nullability mismatch: Request={RequestScoreLevel}, Factor={FactorScoreLevel}, returning 0",
-                    scoreLevel.HasValue ? scoreLevel.ToString() : "null",
-                    factor.ScoreLevel.HasValue ? factor.ScoreLevel.ToString() : "null");
-                return 0;
-            }
-
-            // Cả hai đều null hoặc cả hai đều có giá trị và bằng nhau
-            logger.LogInformation("CalculateWorkHour - Returning ConvertHour={ConvertHour}", factor.ConvertHour);
+            
+            // Nếu mọi thứ khớp hoặc cả hai đều null, trả về ConvertHour
+            logger.LogInformation("CalculateWorkHour - Returning ConvertHour={ConvertHour} cho ScoreLevel={ScoreLevel}", 
+                factor.ConvertHour, 
+                scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null");
             return factor.ConvertHour;
         }
 

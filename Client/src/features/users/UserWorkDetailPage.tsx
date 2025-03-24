@@ -8,12 +8,11 @@ import {
   Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
 import { getUserById } from "../../lib/api/usersApi";
 import { getWorksByUserId } from "../../lib/api/worksApi";
@@ -90,7 +89,6 @@ const getScoreLevelText = (scoreLevel: number): string => {
 export default function UserWorkDetailPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
 
   // Sử dụng hook để lấy dữ liệu form
