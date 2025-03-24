@@ -200,7 +200,7 @@ namespace WebApi.Controllers
         public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAdmin(
             [FromRoute] Guid workId,
             [FromRoute] Guid userId,
-            [FromBody] UpdateWorkByAdminRequestDto request)
+            [FromBody] UpdateWorkWithAuthorRequestDto request)
         {
             try
             {
@@ -239,7 +239,7 @@ namespace WebApi.Controllers
         [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> UpdateWorkByAuthor(
               [FromRoute] Guid workId,
-              [FromBody] UpdateWorkByAuthorRequestDto request)
+              [FromBody] UpdateWorkWithAuthorRequestDto request)
         {
             try
             {

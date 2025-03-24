@@ -287,7 +287,7 @@ namespace Application.Works
             await SafeInvalidateCacheAsync(author.WorkId);
         }
 
-        public async Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkByAdminRequestDto request, CancellationToken cancellationToken = default)
+        public async Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken = default)
         {
             // Truy vấn tuần tự để tránh xung đột DbContext
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
@@ -337,7 +337,7 @@ namespace Application.Works
         private async Task UpdateAuthorDetailsByAdminAsync(
             Author author, 
             Work work, 
-            UpdateAuthorByAdminRequestDto authorRequest, 
+            UpdateAuthorRequestDto authorRequest, 
             UpdateWorkRequestDto? workRequest,
             CancellationToken cancellationToken)
         {
@@ -356,7 +356,7 @@ namespace Application.Works
             author.ModifiedDate = DateTime.UtcNow;
         }
 
-        private void UpdateAuthorBasicProperties(Author author, UpdateAuthorByAdminRequestDto authorRequest)
+        private void UpdateAuthorBasicProperties(Author author, UpdateAuthorRequestDto authorRequest)
         {
             author.AuthorRoleId = authorRequest.AuthorRoleId ?? author.AuthorRoleId;
             author.PurposeId = authorRequest.PurposeId ?? author.PurposeId;
@@ -366,7 +366,7 @@ namespace Application.Works
             author.FieldId = authorRequest.FieldId ?? author.FieldId;
         }
 
-        private bool ShouldRecalculateAuthorHours(UpdateAuthorByAdminRequestDto authorRequest, UpdateWorkRequestDto? workRequest)
+        private bool ShouldRecalculateAuthorHours(UpdateAuthorRequestDto authorRequest, UpdateWorkRequestDto? workRequest)
         {
             return authorRequest.ScoreLevel.HasValue ||
                 (workRequest is not null && (workRequest.TotalAuthors.HasValue || workRequest.TotalMainAuthors.HasValue));
@@ -399,7 +399,7 @@ namespace Application.Works
                         author.AuthorRoleId);
                 }
 
-        private void UpdateAuthorProofStatus(Author author, UpdateAuthorByAdminRequestDto authorRequest)
+        private void UpdateAuthorProofStatus(Author author, UpdateAuthorRequestDto authorRequest)
         {
             if (authorRequest.ProofStatus.HasValue)
             {
@@ -408,7 +408,7 @@ namespace Application.Works
             }
         }
 
-        public async Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
+        public async Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkWithAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
         {
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
             if (work is null)
@@ -612,7 +612,7 @@ namespace Application.Works
                 work.ModifiedDate = DateTime.UtcNow;
             }
 
-        private async Task<Author> GetOrCreateAuthorAsync(Work work, Guid userId, UpdateWorkByAuthorRequestDto request, CancellationToken cancellationToken)
+        private async Task<Author> GetOrCreateAuthorAsync(Work work, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken)
         {
             var author = await _unitOfWork.Repository<Author>()
                 .FirstOrDefaultAsync(a => a.WorkId == work.Id && a.UserId == userId, cancellationToken);
@@ -631,7 +631,7 @@ namespace Application.Works
             return author;
         }
 
-        private async Task<Author> CreateNewAuthorAsync(Work work, Guid userId, UpdateWorkByAuthorRequestDto request, CancellationToken cancellationToken)
+        private async Task<Author> CreateNewAuthorAsync(Work work, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken)
         {
             if (request.AuthorRequest is null)
             {
@@ -639,7 +639,7 @@ namespace Application.Works
                 }
 
                 // Tính toán WorkHour và AuthorHour cho tác giả mới
-            var factor = await FindFactorAsync(work.WorkTypeId, work.WorkLevelId, request.AuthorRequest.PurposeId, request.AuthorRequest.ScoreLevel, cancellationToken);
+            var factor = await FindFactorAsync(work.WorkTypeId, work.WorkLevelId, request.AuthorRequest.PurposeId ?? Guid.Empty, request.AuthorRequest.ScoreLevel, cancellationToken);
 
                 var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
                 var authorHour = await CalculateAuthorHour(
@@ -652,15 +652,15 @@ namespace Application.Works
             return new Author
                 {
                     UserId = userId,
-                WorkId = work.Id,
+                    WorkId = work.Id,
                     AuthorRoleId = request.AuthorRequest.AuthorRoleId,
-                    PurposeId = request.AuthorRequest.PurposeId,
+                    PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty,
                     Position = request.AuthorRequest.Position,
                     ScoreLevel = request.AuthorRequest.ScoreLevel,
                     WorkHour = workHour,
                     AuthorHour = authorHour,
-                SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
-                FieldId = request.AuthorRequest.FieldId,
+                    SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
+                    FieldId = request.AuthorRequest.FieldId,
                     ProofStatus = ProofStatus.ChuaXuLy,
                     CreatedDate = DateTime.UtcNow
                 };
@@ -680,14 +680,14 @@ namespace Application.Works
             return factor;
         }
 
-        private async Task UpdateExistingAuthorAsync(Author author, Work work, UpdateWorkByAuthorRequestDto request, CancellationToken cancellationToken)
+        private async Task UpdateExistingAuthorAsync(Author author, Work work, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken)
         {
             // Cập nhật thông tin tác giả
             if (request.AuthorRequest is not null)
             {
                 // AuthorRoleId và PurposeId là Guid không nullable, gán trực tiếp
                     author.AuthorRoleId = request.AuthorRequest.AuthorRoleId;
-                    author.PurposeId = request.AuthorRequest.PurposeId;
+                    author.PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty;
                 
                     author.Position = request.AuthorRequest.Position ?? author.Position;
                     author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;

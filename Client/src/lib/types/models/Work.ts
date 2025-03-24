@@ -1,5 +1,5 @@
-import { ProofStatus } from "../enums/ProofStatus";
 import { WorkSource } from "../enums/WorkSource";
+import { Author, UpdateAuthorRequest } from "./Author";
 
 export interface Work {
   id: string;
@@ -25,29 +25,6 @@ export interface Work {
     fieldId?: string;
   };
   authors?: Author[];
-}
-
-export interface Author {
-  id: string;
-  workId: string;
-  userId: string;
-  authorRoleId: string;
-  authorRoleName: string;
-  purposeId: string;
-  purposeName: string;
-  scImagoFieldId?: string;
-  scImagoFieldName?: string;
-  fieldId?: string;
-  fieldName?: string;
-  position?: number;
-  scoreLevel?: number;
-  authorHour?: number;
-  workHour?: number;
-  markedForScoring: boolean;
-  proofStatus: ProofStatus;
-  note?: string | null;
-  createdDate: string;
-  modifiedDate?: string | null;
 }
 
 export interface CreateWorkRequest {
@@ -76,40 +53,13 @@ export interface UpdateWorkRequest {
   totalAuthors?: number;
   totalMainAuthors?: number;
   details?: Record<string, string>;
-  source?: number;
+  source: number;
   workTypeId?: string;
   workLevelId?: string;
+  coAuthorUserIds: string[];
 }
 
-export interface UpdateAuthorRequest {
-  authorRoleId?: string;
-  purposeId?: string;
-  position?: number;
-  scoreLevel?: number;
-  proofStatus?: ProofStatus;
-  note?: string;
-  scImagoFieldId?: string;
-  fieldId?: string;
-}
-
-export interface AddCoAuthorRequest {
-  workRequest?: UpdateWorkRequest;
-  authorRequest: {
-    authorRoleId: string;
-    purposeId: string;
-    position?: number;
-    scoreLevel?: number;
-    scImagoFieldId?: string;
-    fieldId?: string;
-  };
-}
-
-export interface UpdateWorkByAuthorRequest {
+export interface UpdateWorkWithAuthorRequest {
   workRequest?: UpdateWorkRequest;
   authorRequest?: UpdateAuthorRequest;
 }
-
-export interface UpdateWorkByAdminRequest {
-  workRequest?: UpdateWorkRequest;
-  authorRequest?: UpdateAuthorRequest;
-} 
