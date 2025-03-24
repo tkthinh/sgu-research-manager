@@ -95,12 +95,14 @@ namespace Application.Works
                 CreatedDate = DateTime.UtcNow
             };
 
-            var factor = (await _factorRepository.FindAsync(f =>
-                f.WorkTypeId == work.WorkTypeId &&
-                f.WorkLevelId == work.WorkLevelId &&
-                f.PurposeId == request.Author.PurposeId &&
-                f.ScoreLevel == request.Author.ScoreLevel))
-                .FirstOrDefault();
+            var factor = await FindFactorAsync(
+                work.WorkTypeId,
+                work.WorkLevelId,
+                request.Author.PurposeId,
+                request.Author.AuthorRoleId,
+                request.Author.ScoreLevel,
+                cancellationToken);
+
             if (factor == null)
                 throw new Exception(ErrorMessages.FactorNotFound);
 
@@ -373,31 +375,33 @@ namespace Application.Works
         }
 
         private async Task UpdateAuthorHoursAsync(
-            Author author, 
-            Work work, 
-            ScoreLevel? newScoreLevel, 
+            Author author,
+            Work work,
+            ScoreLevel? newScoreLevel,
             UpdateWorkRequestDto? workRequest,
             CancellationToken cancellationToken)
         {
             var effectiveScoreLevel = newScoreLevel ?? author.ScoreLevel;
-            
-                    var factor = (await _factorRepository.FindAsync(f =>
-                        f.WorkTypeId == work.WorkTypeId &&
-                        f.WorkLevelId == work.WorkLevelId &&
-                        f.PurposeId == author.PurposeId &&
-                f.ScoreLevel == effectiveScoreLevel))
-                        .FirstOrDefault();
+
+            // Sử dụng phương thức mới để tìm factor
+            var factor = await FindFactorAsync(
+                work.WorkTypeId,
+                work.WorkLevelId,
+                author.PurposeId,
+                author.AuthorRoleId,
+                effectiveScoreLevel,
+                cancellationToken);
 
             if (factor is null)
                 throw new Exception(ErrorMessages.FactorNotFound);
 
             author.WorkHour = CalculateWorkHour(effectiveScoreLevel, factor);
-                    author.AuthorHour = await CalculateAuthorHour(
-                        author.WorkHour,
+            author.AuthorHour = await CalculateAuthorHour(
+                author.WorkHour,
                 workRequest?.TotalAuthors ?? work.TotalAuthors ?? 0,
                 workRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0,
-                        author.AuthorRoleId);
-                }
+                author.AuthorRoleId);
+        }
 
         private void UpdateAuthorProofStatus(Author author, UpdateAuthorRequestDto authorRequest)
         {
@@ -503,9 +507,7 @@ namespace Application.Works
             try {
                 // Đảm bảo newCoAuthorUserIds không bao gồm currentUserId
                 newCoAuthorUserIds = newCoAuthorUserIds.Where(id => id != currentUserId).Distinct().ToList();
-                
-                logger.LogInformation("UpdateCoAuthorsAsync - Work {WorkId}: Processing {Count} new coauthors: {NewCoauthors}", 
-                    work.Id, newCoAuthorUserIds.Count, string.Join(", ", newCoAuthorUserIds));
+
 
                 // Lấy tất cả WorkAuthor hiện có của công trình
                 var existingWorkAuthors = await _unitOfWork.Repository<WorkAuthor>()
@@ -520,22 +522,9 @@ namespace Application.Works
                 // Tổng hợp tất cả User IDs hiện có (từ cả WorkAuthor và Author)
                 var allExistingUserIds = existingCoAuthorIds.Union(existingAuthorUserIds).Distinct().ToList();
 
-                logger.LogInformation("Existing WorkAuthors: {Count} users - {ExistingIds}", 
-                    existingCoAuthorIds.Count, string.Join(", ", existingCoAuthorIds));
-                logger.LogInformation("Existing Authors: {Count} users - {ExistingAuthorIds}", 
-                    existingAuthorUserIds.Count, string.Join(", ", existingAuthorUserIds));
-                logger.LogInformation("Combined existing: {Count} users - {AllExistingUserIds}", 
-                    allExistingUserIds.Count, string.Join(", ", allExistingUserIds));
-
                 // 1. Xóa các WorkAuthor không còn trong danh sách mới
                 var workAuthorsToRemove = existingWorkAuthors.Where(wa => 
                     wa.UserId != currentUserId && !newCoAuthorUserIds.Contains(wa.UserId)).ToList();
-                
-                foreach (var wAuthor in workAuthorsToRemove)
-                {
-                    logger.LogInformation("Removing WorkAuthor with UserId: {UserId}", wAuthor.UserId);
-                    work.WorkAuthors.Remove(wAuthor);
-                }
 
                 // 2. Xóa các Author không còn trong danh sách mới
                 // * Quan trọng: Không xóa Author của người dùng hiện tại (currentUserId)
@@ -552,9 +541,6 @@ namespace Application.Works
                 // Tìm các userId cần thêm mới: những userId có trong newCoAuthorUserIds nhưng không có trong allExistingUserIds
                 var userIdsToAdd = newCoAuthorUserIds.Where(id => 
                     !allExistingUserIds.Contains(id) && id != currentUserId).ToList();
-                
-                logger.LogInformation("UserIds to add as new coauthors: {Count} users - {UserIdsToAdd}", 
-                    userIdsToAdd.Count, string.Join(", ", userIdsToAdd));
 
                 // Thêm các đồng tác giả mới
                 foreach (var coAuthorId in userIdsToAdd)
@@ -567,7 +553,6 @@ namespace Application.Works
                             WorkId = work.Id,
                             UserId = coAuthorId
                         };
-                        logger.LogInformation("Creating WorkAuthor for UserId: {UserId}", coAuthorId);
                         await _unitOfWork.Repository<WorkAuthor>().CreateAsync(workAuthor);
                         
                         // Thêm vào danh sách WorkAuthors của đối tượng Work
@@ -636,46 +621,86 @@ namespace Application.Works
             if (request.AuthorRequest is null)
             {
                 throw new Exception(ErrorMessages.AuthorInfoRequired);
-                }
+            }
 
-                // Tính toán WorkHour và AuthorHour cho tác giả mới
-            var factor = await FindFactorAsync(work.WorkTypeId, work.WorkLevelId, request.AuthorRequest.PurposeId ?? Guid.Empty, request.AuthorRequest.ScoreLevel, cancellationToken);
-
-                var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
-                var authorHour = await CalculateAuthorHour(
-                    workHour,
-                    work.TotalAuthors ?? 0,
-                    work.TotalMainAuthors ?? 0,
-                    request.AuthorRequest.AuthorRoleId);
-
-                // Tạo mới thông tin tác giả
-            return new Author
-                {
-                    UserId = userId,
-                    WorkId = work.Id,
-                    AuthorRoleId = request.AuthorRequest.AuthorRoleId,
-                    PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty,
-                    Position = request.AuthorRequest.Position,
-                    ScoreLevel = request.AuthorRequest.ScoreLevel,
-                    WorkHour = workHour,
-                    AuthorHour = authorHour,
-                    SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
-                    FieldId = request.AuthorRequest.FieldId,
-                    ProofStatus = ProofStatus.ChuaXuLy,
-                    CreatedDate = DateTime.UtcNow
-                };
-        }
-
-        private async Task<Factor> FindFactorAsync(Guid workTypeId, Guid? workLevelId, Guid purposeId, ScoreLevel? scoreLevel, CancellationToken cancellationToken)
-        {
-            var factor = await _factorRepository.FirstOrDefaultAsync(f =>
-                f.WorkTypeId == workTypeId &&
-                f.WorkLevelId == workLevelId &&
-                f.PurposeId == purposeId &&
-                f.ScoreLevel == scoreLevel, cancellationToken);
+            // Tính toán WorkHour và AuthorHour cho tác giả mới
+            var factor = await FindFactorAsync(
+                work.WorkTypeId,
+                work.WorkLevelId,
+                request.AuthorRequest.PurposeId ?? Guid.Empty,
+                request.AuthorRequest.AuthorRoleId,
+                request.AuthorRequest.ScoreLevel,
+                cancellationToken);
 
             if (factor is null)
                 throw new Exception(ErrorMessages.FactorNotFound);
+
+            var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
+            var authorHour = await CalculateAuthorHour(
+                workHour,
+                work.TotalAuthors ?? 0,
+                work.TotalMainAuthors ?? 0,
+                request.AuthorRequest.AuthorRoleId);
+
+            // Tạo mới thông tin tác giả
+            return new Author
+            {
+                UserId = userId,
+                WorkId = work.Id,
+                AuthorRoleId = request.AuthorRequest.AuthorRoleId,
+                PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty,
+                Position = request.AuthorRequest.Position,
+                ScoreLevel = request.AuthorRequest.ScoreLevel,
+                WorkHour = workHour,
+                AuthorHour = authorHour,
+                SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
+                FieldId = request.AuthorRequest.FieldId,
+                ProofStatus = ProofStatus.ChuaXuLy,
+                CreatedDate = DateTime.UtcNow
+            };
+        }
+
+        private async Task<Factor> FindFactorAsync(Guid workTypeId, Guid? workLevelId, Guid purposeId, Guid? authorRoleId, ScoreLevel? scoreLevel, CancellationToken cancellationToken = default)
+        {
+            // Tìm kiếm chính xác theo tất cả điều kiện
+            var factors = await _factorRepository.FindAsync(f =>
+                f.WorkTypeId == workTypeId &&
+                // Xử lý WorkLevelId null
+                ((workLevelId == null && f.WorkLevelId == null) || (workLevelId != null && f.WorkLevelId == workLevelId)) &&
+                f.PurposeId == purposeId &&
+                // Xử lý AuthorRoleId null
+                ((authorRoleId == null && f.AuthorRoleId == null) || (authorRoleId != null && f.AuthorRoleId == authorRoleId)) &&
+                // Xử lý ScoreLevel null
+                ((scoreLevel == null && f.ScoreLevel == null) || (scoreLevel != null && f.ScoreLevel == scoreLevel)));
+
+            var factor = factors.FirstOrDefault();
+
+            // Nếu không tìm thấy và authorRoleId có giá trị, thử tìm với authorRoleId = null
+            if (factor == null && authorRoleId.HasValue)
+            {
+                factors = await _factorRepository.FindAsync(f =>
+                    f.WorkTypeId == workTypeId &&
+                    ((workLevelId == null && f.WorkLevelId == null) || (workLevelId != null && f.WorkLevelId == workLevelId)) &&
+                    f.PurposeId == purposeId &&
+                    f.AuthorRoleId == null &&
+                    ((scoreLevel == null && f.ScoreLevel == null) || (scoreLevel != null && f.ScoreLevel == scoreLevel)));
+
+                factor = factors.FirstOrDefault();
+            }
+
+            // Log thông tin debug
+            if (factor != null)
+            {
+                logger.LogInformation(
+                    "Tìm thấy Factor với WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}. ConvertHour={ConvertHour}",
+                    workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel, factor.ConvertHour);
+            }
+            else
+            {
+                logger.LogWarning(
+                    "Không tìm thấy Factor cho WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
+                    workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel);
+            }
 
             return factor;
         }
@@ -686,42 +711,44 @@ namespace Application.Works
             if (request.AuthorRequest is not null)
             {
                 // AuthorRoleId và PurposeId là Guid không nullable, gán trực tiếp
-                    author.AuthorRoleId = request.AuthorRequest.AuthorRoleId;
-                    author.PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty;
-                
-                    author.Position = request.AuthorRequest.Position ?? author.Position;
-                    author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
-                
+                author.AuthorRoleId = request.AuthorRequest.AuthorRoleId;
+                author.PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty;
+
+                author.Position = request.AuthorRequest.Position ?? author.Position;
+                author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
+
                 // SCImagoFieldId và FieldId là nullable Guid
                 author.SCImagoFieldId = request.AuthorRequest.SCImagoFieldId;
                 author.FieldId = request.AuthorRequest.FieldId;
 
                 // Tính lại WorkHour và AuthorHour nếu có thay đổi liên quan
-                bool shouldRecalculate = request.AuthorRequest.ScoreLevel.HasValue || 
+                bool shouldRecalculate = request.AuthorRequest.ScoreLevel.HasValue ||
                     (request.WorkRequest is not null && (request.WorkRequest.TotalAuthors.HasValue || request.WorkRequest.TotalMainAuthors.HasValue));
-                    
+
                 if (shouldRecalculate)
                 {
-                    var factor = await _factorRepository.FirstOrDefaultAsync(f =>
-                            f.WorkTypeId == work.WorkTypeId &&
-                            f.WorkLevelId == work.WorkLevelId &&
-                            f.PurposeId == author.PurposeId &&
-                        f.ScoreLevel == author.ScoreLevel, cancellationToken);
+                    var factor = await FindFactorAsync(
+                        work.WorkTypeId,
+                        work.WorkLevelId,
+                        author.PurposeId,
+                        author.AuthorRoleId,
+                        author.ScoreLevel,
+                        cancellationToken);
 
                     if (factor is null)
                         throw new Exception(ErrorMessages.FactorNotFound);
 
                     author.WorkHour = CalculateWorkHour(author.ScoreLevel, factor);
-                        author.AuthorHour = await CalculateAuthorHour(
-                            author.WorkHour,
+                    author.AuthorHour = await CalculateAuthorHour(
+                        author.WorkHour,
                         work.TotalAuthors ?? 0,
                         work.TotalMainAuthors ?? 0,
-                            author.AuthorRoleId);
-                    }
+                        author.AuthorRoleId);
+                }
 
                 author.ModifiedDate = DateTime.UtcNow;
-                }
             }
+        }
 
         private async Task SaveChangesAsync(Work work, Author author, CancellationToken cancellationToken = default)
         {
@@ -788,14 +815,37 @@ namespace Application.Works
 
         private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
         {
-            // Kiểm tra nếu scoreLevel là null hoặc factor không hợp lệ
-            if (scoreLevel is null || factor is null)
+            // Nếu factor không hợp lệ
+            if (factor is null)
             {
+                logger.LogWarning("CalculateWorkHour - Factor is null, returning 0");
                 return 0;
             }
 
-            // Chỉ tính giờ chuẩn khi mức điểm khớp với mức được cấu hình trong hệ số
-            return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
+            // Kiểm tra ScoreLevel chỉ khi nó có giá trị và factor.ScoreLevel cũng có giá trị
+            if (scoreLevel.HasValue && factor.ScoreLevel.HasValue)
+            {
+                // So sánh chỉ khi cả hai đều có giá trị
+                if (scoreLevel.Value != factor.ScoreLevel.Value)
+                {
+                    logger.LogWarning("CalculateWorkHour - ScoreLevel mismatch: Request={RequestScoreLevel}, Factor={FactorScoreLevel}, returning 0",
+                        scoreLevel, factor.ScoreLevel);
+                    return 0;
+                }
+            }
+            else if ((scoreLevel.HasValue && !factor.ScoreLevel.HasValue) ||
+                     (!scoreLevel.HasValue && factor.ScoreLevel.HasValue))
+            {
+                // Một trong hai có giá trị, một không có -> không khớp
+                logger.LogWarning("CalculateWorkHour - ScoreLevel nullability mismatch: Request={RequestScoreLevel}, Factor={FactorScoreLevel}, returning 0",
+                    scoreLevel.HasValue ? scoreLevel.ToString() : "null",
+                    factor.ScoreLevel.HasValue ? factor.ScoreLevel.ToString() : "null");
+                return 0;
+            }
+
+            // Cả hai đều null hoặc cả hai đều có giá trị và bằng nhau
+            logger.LogInformation("CalculateWorkHour - Returning ConvertHour={ConvertHour}", factor.ConvertHour);
+            return factor.ConvertHour;
         }
 
         private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid? authorRoleId, CancellationToken cancellationToken = default)
