@@ -2,7 +2,7 @@
 {
     public class CreateAssignmentRequestDto
     {
-        public Guid UserId { get; set; }
+        public Guid ManagerId { get; set; }
         public Guid DepartmentId { get; set; }
     }
 }
