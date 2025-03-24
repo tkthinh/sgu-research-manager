@@ -131,6 +131,7 @@ namespace Infrastructure
          services.AddScoped<IWorkTypeRepository, WorkTypeRepository>();
          services.AddScoped<IUserRepository, UserRepository>();
          services.AddScoped<IWorkRepository, WorkRepository>();
+         services.AddScoped<IAssignmentRepository, AssignmentRepository>();
 
          return services;
       }

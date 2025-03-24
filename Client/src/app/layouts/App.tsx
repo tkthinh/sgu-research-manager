@@ -7,7 +7,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { User } from "../../lib/types/models/User";
 import SessionExpiredDialog from "../shared/components/dialogs/SessionExpiredDialog";
-import { NAVIGATION } from "./Navigation";
+import { useAuth } from "../shared/contexts/AuthContext";
+import { NAVIGATION_ADMIN, NAVIGATION_MANAGER, NAVIGATION_USER } from "./Navigation";
 
 interface CustomSession extends Session {
   user: User;
@@ -23,6 +24,22 @@ export default function App() {
     null,
   );
   const [showDialog, setShowDialog] = useState(false);
+
+  const { user } = useAuth();
+  const userRole = user?.role;
+
+  const navigation = useMemo(() => {
+    switch (userRole) {
+      case "Admin":
+        return NAVIGATION_ADMIN;
+      case "Manager":
+        return NAVIGATION_MANAGER;
+      case "User":
+        return NAVIGATION_USER;
+      default:
+        return [];
+    }
+  }, [userRole]);
 
   const queryClient = new QueryClient();
   const location = useLocation();
@@ -76,7 +93,7 @@ export default function App() {
 
   return (
     <ReactRouterAppProvider
-      navigation={NAVIGATION}
+      navigation={navigation}
       branding={BRANDING}
       session={customSession}
       authentication={authentication}
