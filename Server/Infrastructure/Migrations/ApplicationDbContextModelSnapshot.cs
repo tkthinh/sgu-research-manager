@@ -59,7 +59,7 @@ namespace Infrastructure.Migrations
                         .HasPrecision(10, 1)
                         .HasColumnType("decimal(10,1)");
 
-                    b.Property<Guid>("AuthorRoleId")
+                    b.Property<Guid?>("AuthorRoleId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedDate")
@@ -1739,6 +1739,450 @@ namespace Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = new Guid("c1233f27-8e66-4c73-9efc-121eb07979f9"),
+                            AuthorRoleId = new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"),
+                            ConvertHour = 80,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp khoa",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("ba83391f-9d8f-48a9-87d9-b67ebe5be696"),
+                            AuthorRoleId = new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"),
+                            ConvertHour = 80,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp khoa",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("455360e6-693a-47e9-8671-8a83393149ad"),
+                            AuthorRoleId = new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp trường",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("b386e9ba-8844-42eb-b910-6cb360c5485b"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("a80a0cd2-2bab-4e32-8cf3-a56d5a33cacc"),
+                            AuthorRoleId = new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp trường",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("b386e9ba-8844-42eb-b910-6cb360c5485b"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("4f68bc47-df55-4fa5-80e7-457e984f4850"),
+                            AuthorRoleId = new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp Cơ sở",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("a210b965-4e0d-41be-a84d-4480bea000f1"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("877b45f8-db8c-4148-84f1-565319312ca2"),
+                            AuthorRoleId = new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp Cơ sở",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("a210b965-4e0d-41be-a84d-4480bea000f1"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("56119049-182c-4e4e-8fe2-f0ee3eade9b7"),
+                            AuthorRoleId = new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp Cơ sở",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("0485b444-1c9c-4f7f-a576-7cdddd0ca1db"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("81ecbcbc-6b7b-470c-9ae8-ab745c7106fe"),
+                            AuthorRoleId = new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp Cơ sở",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("0485b444-1c9c-4f7f-a576-7cdddd0ca1db"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("9d0bcefd-06c5-427c-a967-64c0a11e2326"),
+                            AuthorRoleId = new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp Cơ sở",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("98c20000-d8e8-4325-93d4-c2d238ac2151"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("7d26c014-1711-459e-8e18-0da00972dd40"),
+                            AuthorRoleId = new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp Cơ sở",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("98c20000-d8e8-4325-93d4-c2d238ac2151"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("5aac86cc-aa1e-4a24-895e-f5fe61b76f18"),
+                            AuthorRoleId = new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp Cơ sở",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("b2581ebc-a310-460b-9721-f88c92ed2c81"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("510e035d-f66a-4489-accd-4c259520c507"),
+                            AuthorRoleId = new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Đề tài nghiên cứu cấp Cơ sở",
+                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
+                            WorkLevelId = new Guid("b2581ebc-a310-460b-9721-f88c92ed2c81"),
+                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("60c6a668-ef9f-4e1f-ad70-737f5f23756c"),
+                            AuthorRoleId = new Guid("6dbe3055-a0af-4ea2-971f-f3dbcfb58370"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("483f26c2-8218-4d4b-a374-1fbd3a4fc250"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("5f4545c3-9f56-4f17-8b74-3ea21825fd50"),
+                            AuthorRoleId = new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("483f26c2-8218-4d4b-a374-1fbd3a4fc250"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("9333b444-ec14-423b-9cab-4a8facf075f5"),
+                            AuthorRoleId = new Guid("6dbe3055-a0af-4ea2-971f-f3dbcfb58370"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("0e011f57-5ff7-476f-b2bc-46243468fdcb"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("7493c3a8-923e-45c5-83e3-45baf67107e2"),
+                            AuthorRoleId = new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("0e011f57-5ff7-476f-b2bc-46243468fdcb"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("fda36ff3-5b58-410a-965c-134ffe46f6ab"),
+                            AuthorRoleId = new Guid("6dbe3055-a0af-4ea2-971f-f3dbcfb58370"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("d588e361-97a2-44cf-a507-24255430dbe7"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("b7464c59-7774-4f77-9bdb-c3ad962d2067"),
+                            AuthorRoleId = new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("d588e361-97a2-44cf-a507-24255430dbe7"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("c991b3fb-3d52-4896-8ea7-429b21b5dbe9"),
+                            AuthorRoleId = new Guid("6dbe3055-a0af-4ea2-971f-f3dbcfb58370"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("c81240d2-dd87-4949-8252-0116cb5a0cc8"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("7cc503bc-ad8c-4f97-abe4-7987a115d5d8"),
+                            AuthorRoleId = new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("c81240d2-dd87-4949-8252-0116cb5a0cc8"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("bc3ae1fa-70eb-4385-a14f-7a820de27846"),
+                            AuthorRoleId = new Guid("6dbe3055-a0af-4ea2-971f-f3dbcfb58370"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("e0264c17-7865-4e6d-b707-6e5227bc63d1"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("9cde2653-dcc6-4297-91d4-218f0829ae35"),
+                            AuthorRoleId = new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("e0264c17-7865-4e6d-b707-6e5227bc63d1"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("8b8fe062-6735-4c5f-a0e6-d0d061737a89"),
+                            AuthorRoleId = new Guid("6dbe3055-a0af-4ea2-971f-f3dbcfb58370"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("057a8b2a-7283-43f9-926d-838c7be46987"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("902745db-0845-44e7-9f41-f7b44faddb34"),
+                            AuthorRoleId = new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Nhiệm vụ biên soạn, chỉnh lý giáo trình",
+                            PurposeId = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
+                            WorkLevelId = new Guid("057a8b2a-7283-43f9-926d-838c7be46987"),
+                            WorkTypeId = new Guid("323371c0-26c7-4549-90f2-11c881be402d")
+                        },
+                        new
+                        {
+                            Id = new Guid("62155dde-e5d3-4497-898d-b9765212fade"),
+                            AuthorRoleId = new Guid("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("071464ae-332b-4426-9b03-cbdd05c2d5bc"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("b52a5fbe-bb11-4026-9d2d-70654e4fefb8"),
+                            AuthorRoleId = new Guid("822d8f31-2b1d-4367-8c50-e4535fac5b5f"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("071464ae-332b-4426-9b03-cbdd05c2d5bc"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("7c3cd464-8742-4f93-abff-57073711d1c4"),
+                            AuthorRoleId = new Guid("ad3aa473-c140-46cb-b8f4-faecdf2f338e"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("071464ae-332b-4426-9b03-cbdd05c2d5bc"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("fe73778c-1757-4ad7-92da-470154b1c01d"),
+                            AuthorRoleId = new Guid("cd929fdb-3aa2-40dd-97ad-f46392ba1d30"),
+                            ConvertHour = 10,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("071464ae-332b-4426-9b03-cbdd05c2d5bc"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("f325d698-f4d1-4ab4-915d-f871b509ec92"),
+                            AuthorRoleId = new Guid("4be849d3-b55d-429a-a0b3-78c4bbbcd7eb"),
+                            ConvertHour = 10,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("071464ae-332b-4426-9b03-cbdd05c2d5bc"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("a4d78d2d-7561-4cfd-b042-c7d37f26df39"),
+                            AuthorRoleId = new Guid("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("d94f2107-409a-4b2a-a5ae-960d7cc6f3a0"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("b15d18ef-55c6-42ba-815b-9d8855a20563"),
+                            AuthorRoleId = new Guid("822d8f31-2b1d-4367-8c50-e4535fac5b5f"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("d94f2107-409a-4b2a-a5ae-960d7cc6f3a0"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("34cb99bf-5011-401f-b53c-13448c4ab1bf"),
+                            AuthorRoleId = new Guid("ad3aa473-c140-46cb-b8f4-faecdf2f338e"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("d94f2107-409a-4b2a-a5ae-960d7cc6f3a0"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("10b587a5-dff5-4d64-8238-18b45348557d"),
+                            AuthorRoleId = new Guid("cd929fdb-3aa2-40dd-97ad-f46392ba1d30"),
+                            ConvertHour = 10,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("d94f2107-409a-4b2a-a5ae-960d7cc6f3a0"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("68ecc77b-b90c-49cc-adc7-09e5f1257523"),
+                            AuthorRoleId = new Guid("4be849d3-b55d-429a-a0b3-78c4bbbcd7eb"),
+                            ConvertHour = 10,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("d94f2107-409a-4b2a-a5ae-960d7cc6f3a0"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("fcac02d5-8f7b-4e0e-aa97-c1d63d86fcc6"),
+                            AuthorRoleId = new Guid("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("bec79373-6f38-4f53-ba87-e986b83ce3b2"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("8f8a1b3d-3f7e-4fc8-9e8e-9f3f8ead1eaf"),
+                            AuthorRoleId = new Guid("822d8f31-2b1d-4367-8c50-e4535fac5b5f"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("bec79373-6f38-4f53-ba87-e986b83ce3b2"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("b9a61a17-0e15-44a6-b77c-e8804f31bf4b"),
+                            AuthorRoleId = new Guid("ad3aa473-c140-46cb-b8f4-faecdf2f338e"),
+                            ConvertHour = 5,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("bec79373-6f38-4f53-ba87-e986b83ce3b2"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("bbd4e0d2-e4ab-4cf8-b4a3-953142b5efc5"),
+                            AuthorRoleId = new Guid("cd929fdb-3aa2-40dd-97ad-f46392ba1d30"),
+                            ConvertHour = 10,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("bec79373-6f38-4f53-ba87-e986b83ce3b2"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
+                            Id = new Guid("0a45fdcf-34d4-4709-9d55-53e6380c8ccc"),
+                            AuthorRoleId = new Guid("4be849d3-b55d-429a-a0b3-78c4bbbcd7eb"),
+                            ConvertHour = 10,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            MaxAllowed = 2,
+                            Name = "Tham gia tổ chức Hội thảo khoa học",
+                            PurposeId = new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"),
+                            WorkLevelId = new Guid("bec79373-6f38-4f53-ba87-e986b83ce3b2"),
+                            WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
+                        },
+                        new
+                        {
                             Id = new Guid("b986e0d6-36c8-4b73-ab80-566d519bff16"),
                             ConvertHour = 40,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -2010,7 +2454,7 @@ namespace Infrastructure.Migrations
                             AuthorRoleId = new Guid("ee9e27af-859f-4de6-8678-6ae758654931"),
                             ConvertHour = 240,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Tác phẩm nghệ thuật",
+                            Name = "Giải pháp hữu ích",
                             PurposeId = new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
                             ScoreLevel = 20,
                             WorkLevelId = new Guid("b2302b5e-1614-484d-88ad-003c411ad248"),
@@ -2022,7 +2466,7 @@ namespace Infrastructure.Migrations
                             AuthorRoleId = new Guid("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
                             ConvertHour = 240,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Tác phẩm nghệ thuật",
+                            Name = "Giải pháp hữu ích",
                             PurposeId = new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
                             ScoreLevel = 20,
                             WorkLevelId = new Guid("b2302b5e-1614-484d-88ad-003c411ad248"),
@@ -2034,7 +2478,7 @@ namespace Infrastructure.Migrations
                             AuthorRoleId = new Guid("ee9e27af-859f-4de6-8678-6ae758654931"),
                             ConvertHour = 240,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Tác phẩm nghệ thuật",
+                            Name = "Giải pháp hữu ích",
                             PurposeId = new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
                             ScoreLevel = 21,
                             WorkLevelId = new Guid("13e5b0a5-727b-427b-b103-0d58db679dcd"),
@@ -2046,9 +2490,53 @@ namespace Infrastructure.Migrations
                             AuthorRoleId = new Guid("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"),
                             ConvertHour = 240,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Tác phẩm nghệ thuật",
+                            Name = "Giải pháp hữu ích",
                             PurposeId = new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
                             ScoreLevel = 21,
+                            WorkLevelId = new Guid("13e5b0a5-727b-427b-b103-0d58db679dcd"),
+                            WorkTypeId = new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c")
+                        },
+                        new
+                        {
+                            Id = new Guid("e256917b-cb09-4732-bab1-ad10ac407776"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Kết quả nghiên cứu, ứng dụng khoa học",
+                            PurposeId = new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                            ScoreLevel = 22,
+                            WorkLevelId = new Guid("13e5b0a5-727b-427b-b103-0d58db679dcd"),
+                            WorkTypeId = new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c")
+                        },
+                        new
+                        {
+                            Id = new Guid("216ac8a5-228f-47c3-a2c7-451fbba219b7"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Kết quả nghiên cứu, ứng dụng khoa học",
+                            PurposeId = new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                            ScoreLevel = 22,
+                            WorkLevelId = new Guid("d84ac5f8-d533-48d6-b829-9cf3556ce5bb"),
+                            WorkTypeId = new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c")
+                        },
+                        new
+                        {
+                            Id = new Guid("50d33869-97bc-45a7-a36d-1b031a3c83b5"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Kết quả nghiên cứu, ứng dụng khoa học",
+                            PurposeId = new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                            ScoreLevel = 22,
+                            WorkLevelId = new Guid("b2302b5e-1614-484d-88ad-003c411ad248"),
+                            WorkTypeId = new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c")
+                        },
+                        new
+                        {
+                            Id = new Guid("8b9c89a7-d95e-45c9-ae7e-9779eed7a225"),
+                            ConvertHour = 240,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Kết quả nghiên cứu, ứng dụng khoa học",
+                            PurposeId = new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"),
+                            ScoreLevel = 22,
                             WorkLevelId = new Guid("13e5b0a5-727b-427b-b103-0d58db679dcd"),
                             WorkTypeId = new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c")
                         },
@@ -3702,8 +4190,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.AuthorRole", "AuthorRole")
                         .WithMany("Authors")
                         .HasForeignKey("AuthorRoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Entities.Field", "Field")
                         .WithMany()
