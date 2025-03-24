@@ -146,14 +146,6 @@ export const NAVIGATION_ADMIN: Navigation = [
     icon: <SettingsIcon />,
     children: [
       {
-        segment: 'loai-cong-trinh',
-        title: 'Loại công trình',
-      },
-      {
-        segment: 'cap-cong-trinh',
-        title: 'Cấp công trình',
-      },
-      {
         segment: "he-so-quy-doi",
         title: "Hệ số quy đổi",
       },
