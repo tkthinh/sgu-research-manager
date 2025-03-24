@@ -18,6 +18,8 @@ import ProtectedRoute from "../shared/components/ProtectedRoute";
 import UserPage from "../../features/settings/users/UserPage";
 import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
+import ScoreWorksPage from "../../features/users/UserListPage";
+import UserWorkDetailPage from "../../features/users/UserWorkDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -34,7 +36,8 @@ export const router = createBrowserRouter([
               { path: "/", element: <Dashboard /> },
               { path: "/cong-trinh", element: <WorkPage /> },
               { path: "dang-ky-quy-doi", element: <MarkedWorksPage /> },
-              { path: "/cham-diem", element: <></> },
+              { path: "/cham-diem", element: <ScoreWorksPage /> },
+              { path: "/cham-diem/user/:userId", element: <UserWorkDetailPage /> },
               { path: "/phan-cong", element: <></> },
               // ============== BÁO CÁO ==============
               { path: "/bao-cao", element: <></> },

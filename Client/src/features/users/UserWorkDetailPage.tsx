@@ -1,635 +1,621 @@
-import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
+  Container,
   Paper,
-  Select,
-  SelectChangeEvent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
   Tooltip,
   Typography,
-} from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { getUserById } from '../../lib/api/usersApi';
-import { 
-  getWorksByUserId, 
-  updateWorkByAdmin, 
-  updateWorkStatus, 
-  updateWorkNote,
-  deleteWork
-} from '../../lib/api/worksApi';
-import { User } from '../../lib/types/models/User';
-import { Work } from '../../lib/types/models/Work';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import InfoIcon from '@mui/icons-material/Info';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import HistoryIcon from '@mui/icons-material/History';
-import { ScoreLevel } from '../../lib/types/enums/ScoreLevel';
-import { ProofStatus } from '../../lib/types/enums/ProofStatus';
+} from "@mui/material";
+import { GridColDef } from "@mui/x-data-grid";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import GenericTable from "../../app/shared/components/tables/DataTable";
+import { getUserById } from "../../lib/api/usersApi";
+import { getWorksByUserId } from "../../lib/api/worksApi";
+import { ProofStatus } from "../../lib/types/enums/ProofStatus";
+import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
+import { User } from "../../lib/types/models/User";
+import EditIcon from "@mui/icons-material/Edit";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import NoteIcon from "@mui/icons-material/Note";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import HistoryIcon from "@mui/icons-material/History";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useWorkFormData } from "../../hooks/useWorkData";
+import { useWorkDialogs } from "../../hooks/useWorkDialogs";
+import WorkStatusDialog from "../../app/shared/components/dialogs/WorkStatusDialog";
+import WorkNoteDialog from "../../app/shared/components/dialogs/WorkNoteDialog";
+import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDialog";
 
 // Hàm chuyển đổi ScoreLevel thành chuỗi hiển thị
 const getScoreLevelText = (scoreLevel: number): string => {
   switch (scoreLevel) {
-    case ScoreLevel.One:
-      return "1 điểm";
-    case ScoreLevel.ZeroPointSevenFive:
-      return "0.75 điểm";
-    case ScoreLevel.ZeroPointFive:
-      return "0.5 điểm";
-    case ScoreLevel.TenPercent:
+    case ScoreLevel.BaiBaoTopMuoi:
       return "Top 10%";
-    case ScoreLevel.ThirtyPercent:
+    case ScoreLevel.BaiBaoTopBaMuoi:
       return "Top 30%";
-    case ScoreLevel.FiftyPercent:
+    case ScoreLevel.BaiBaoTopNamMuoi:
       return "Top 50%";
-    case ScoreLevel.HundredPercent:
-      return "Top 100%";
+    case ScoreLevel.BaiBaoTopConLai:
+      return "Top còn lại";
+    case ScoreLevel.BaiBaoMotDiem:
+      return "Bài báo 1 điểm";
+    case ScoreLevel.BaiBaoNuaDiem:
+      return "Bài báo 0.5 điểm";
+    case ScoreLevel.BaiBaoKhongBayNamDiem:
+      return "Bài báo 0.75 điểm";
+    case ScoreLevel.HDSVDatGiaiKK:
+      return "HDSV đạt giải KK";
+    case ScoreLevel.HDSVDatGiaiBa:
+      return "HDSV đạt giải Ba";
+    case ScoreLevel.HDSVDatGiaiNhi:
+      return "HDSV đạt giải Nhì";
+    case ScoreLevel.HDSVDatGiaiNhat:
+      return "HDSV đạt giải Nhất";
+    case ScoreLevel.HDSVConLai:
+      return "HDSV còn lại";
+    case ScoreLevel.TacPhamNgheThuatCapTruong:
+      return "Tác phẩm nghệ thuật cấp trường";
+    case ScoreLevel.TacPhamNgheThuatCapTinhThanhPho:
+      return "Tác phẩm nghệ thuật cấp tỉnh/thành phố";
+    case ScoreLevel.TacPhamNgheThuatCapQuocGia:
+      return "Tác phẩm nghệ thuật cấp quốc gia";
+    case ScoreLevel.TacPhamNgheThuatCapQuocTe:
+      return "Tác phẩm nghệ thuật cấp quốc tế";
+    case ScoreLevel.ThanhTichHuanLuyenCapQuocGia:
+      return "Thành tích huấn luyện cấp quốc gia";
+    case ScoreLevel.ThanhTichHuanLuyenCapQuocTe:
+      return "Thành tích huấn luyện cấp quốc tế";
+    case ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho:
+      return "Giải pháp hữu ích cấp tỉnh/thành phố";
+    case ScoreLevel.GiaiPhapHuuIchCapQuocGia:
+      return "Giải pháp hữu ích cấp quốc gia";
+    case ScoreLevel.GiaiPhapHuuIchCapQuocTe:
+      return "Giải pháp hữu ích cấp quốc tế";
+    case ScoreLevel.KetQuaNghienCuu:
+      return "Kết quả nghiên cứu";
+    case ScoreLevel.Sach:
+      return "Sách";
     default:
       return "-";
   }
 };
 
-const UserWorkDetailPage: React.FC = () => {
+export default function UserWorkDetailPage() {
   const { userId } = useParams<{ userId: string }>();
-  const [user, setUser] = useState<User | null>(null);
-  const [works, setWorks] = useState<Work[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  
-  // Dialog states
-  const [openStatusDialog, setOpenStatusDialog] = useState(false);
-  const [openNoteDialog, setOpenNoteDialog] = useState(false);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [selectedWork, setSelectedWork] = useState<Work | null>(null);
-  const [newStatus, setNewStatus] = useState<number>(ProofStatus.ChuaXuLy);
-  const [newNote, setNewNote] = useState<string>('');
-  const [formData, setFormData] = useState({
-    workHour: 0,
-    authorHour: 0
+  const queryClient = useQueryClient();
+  const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
+
+  // Sử dụng hook để lấy dữ liệu form
+  const formData = useWorkFormData();
+
+  // Fetch user information
+  const {
+    data: userData,
+    isLoading: isLoadingUser,
+    error: userError,
+  } = useQuery({
+    queryKey: ["users", userId],
+    queryFn: () => getUserById(userId || ""),
+    enabled: !!userId,
   });
 
+  // Fetch user's works
+  const {
+    data: worksData,
+    isLoading: isLoadingWorks,
+    error: worksError,
+    refetch: refetchWorks,
+  } = useQuery({
+    queryKey: ["works", "user", userId],
+    queryFn: () => getWorksByUserId(userId || ""),
+    enabled: !!userId,
+  });
+
+  // Lấy thông tin đồng tác giả khi có dữ liệu công trình
   useEffect(() => {
-    const fetchData = async () => {
-      if (!userId) return;
-      
-      try {
-        setLoading(true);
-        const [userResponse, worksResponse] = await Promise.all([
-          getUserById(userId),
-          getWorksByUserId(userId)
-        ]);
+    if (worksData?.data && worksData.data.length > 0) {
+      const fetchCoAuthors = async () => {
+        const newCoAuthorsMap: Record<string, User[]> = {};
+        
+        for (const work of worksData.data) {
+          if (work.coAuthorUserIds && work.coAuthorUserIds.length > 0) {
+            const coAuthors: User[] = [];
+            
+            // Lấy thông tin từng đồng tác giả
+            for (const userId of work.coAuthorUserIds) {
+              try {
+                const response = await getUserById(userId);
+                if (response.success && response.data) {
+                  coAuthors.push(response.data);
+                }
+              } catch (error) {
+                console.error("Lỗi khi lấy thông tin đồng tác giả:", error);
+              }
+            }
+            
+            newCoAuthorsMap[work.id] = coAuthors;
+          }
+        }
+        
+        setCoAuthorsMap(newCoAuthorsMap);
+      };
 
-        if (userResponse.success && worksResponse.success) {
-          setUser(userResponse.data);
-          setWorks(worksResponse.data || []);
+      fetchCoAuthors();
+    }
+  }, [worksData]);
+
+  // Sử dụng hook để quản lý các dialog và logic cập nhật công trình
+  const {
+    selectedWork,
+    openUpdateDialog, 
+    openStatusDialog,
+    openNoteDialog,
+    newStatus,
+    newNote,
+    activeTab,
+    updateWorkMutation,
+    createWorkMutation,
+    handleOpenUpdateDialog,
+    handleCloseUpdateDialog,
+    handleOpenStatusDialog,
+    handleCloseStatusDialog,
+    handleOpenNoteDialog,
+    handleCloseNoteDialog,
+    handleStatusChange,
+    handleNoteChange,
+    handleStatusSubmit,
+    handleNoteSubmit,
+    handleUpdateSubmit,
+    setActiveTab,
+  } = useWorkDialogs({
+    userId,
+    worksData,
+    refetchWorks,
+    isAuthorPage: false
+  });
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: "stt",
+      headerName: "STT",
+      width: 70,
+      renderCell: (params) => {
+        const rowIds = params.api.getAllRowIds();
+        const index = rowIds.indexOf(params.id);
+        return <div>{index + 1}</div>;
+      },
+    },
+    {
+      field: "title",
+      headerName: "Tên công trình",
+      type: "string",
+      width: 250,
+    },
+    {
+      field: "timePublished",
+      headerName: "Thời gian xuất bản",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        if (!params.value) return <div>-</div>;
+        try {
+          const formattedDate = format(new Date(params.value), "dd/MM/yyyy", { locale: vi });
+          return <div>{formattedDate}</div>;
+        } catch (error) {
+          return <div>{params.value}</div>;
+        }
+      },
+    },
+    {
+      field: "workTypeName",
+      headerName: "Loại công trình",
+      type: "string",
+      width: 150,
+    },
+    {
+      field: "workLevelName",
+      headerName: "Cấp công trình",
+      type: "string",
+      width: 150,
+    },
+    {
+      field: "details",
+      headerName: "Thông tin chi tiết",
+      type: "string",
+      width: 300,
+      renderCell: (params: any) => {
+        if (!params.row.details) return <div>-</div>;
+        
+        const details = params.row.details;
+        const detailsText = Object.entries(details)
+          .map(([key, value]) => `${key}: ${String(value)}`)
+          .join('\n');
+        
+        return (
+          <Tooltip 
+            title={
+              <div style={{ whiteSpace: 'pre-line', fontSize: '0.8rem' }}>
+                {detailsText}
+              </div>
+            } 
+            arrow
+          >
+            <div style={{ 
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              width: '100%'
+            }}>
+              {Object.entries(details).map(([key, value], index) => (
+                <span key={index}>
+                  {index > 0 && '; '}
+                  <b>{key}</b>: {String(value)}
+                </span>
+              ))}
+            </div>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      field: "totalAuthors",
+      headerName: "Số tác giả",
+      type: "number",
+      width: 140,
+      align: "center",
+      headerAlign: "left"
+    },
+    {
+      field: "totalMainAuthors",
+      headerName: "Số tác giả chính",
+      type: "number",
+      width: 140,
+      align: "center",
+      headerAlign: "left"
+    },
+    {
+      field: "coAuthors",
+      headerName: "Đồng tác giả",
+      type: "string",
+      width: 140,
+      renderCell: (params: any) => {
+        const workId = params.row.id;
+        const coAuthors = coAuthorsMap[workId] || [];
+        
+        if (coAuthors.length === 0) return <div>-</div>;
+        
+        const coAuthorsText = `${coAuthors.length} tác giả`;
+        
+        return (
+          <Tooltip 
+            title={
+              <div>
+                <Typography variant="subtitle2">Danh sách đồng tác giả:</Typography>
+                {coAuthors.map((user, index) => (
+                  <Typography key={index} variant="body2">
+                    • {user.fullName} - {user.userName} - {user.departmentName || "Chưa có phòng ban"}
+                  </Typography>
+                ))}
+              </div>
+            }
+          >
+            <div>{coAuthorsText}</div>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      field: "authorRoleName",
+      headerName: "Vai trò tác giả",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author ? author.authorRoleName : "-"}</div>;
+      },
+    },
+    {
+      field: "position",
+      headerName: "Vị trí",
+      type: "string",
+      width: 80,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author?.position !== undefined && author?.position !== null ? author.position : "-"}</div>;
+      },
+    },
+    {
+      field: "purposeName",
+      headerName: "Mục đích quy đổi",
+      type: "string",
+      width: 180,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author ? author.purposeName : "-"}</div>;
+      },
+    },
+    {
+      field: "fieldName",
+      headerName: "Ngành tính điểm",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author ? author.fieldName : "-"}</div>;
+      },
+    },
+    {
+      field: "scImagoFieldName",
+      headerName: "Ngành SCImago",
+      type: "string",
+      width: 180,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author ? author.scImagoFieldName : "-"}</div>;
+      },
+    },
+    {
+      field: "scoreLevel",
+      headerName: "Mức điểm",
+      type: "string",
+      width: 120,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
+          return <div>-</div>;
+        }
+        return <div>{getScoreLevelText(author.scoreLevel)}</div>;
+      },
+    },
+    {
+      field: "workHour",
+      headerName: "Giờ công trình",
+      type: "string",
+      width: 120,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author?.workHour !== undefined && author?.workHour !== null ? author.workHour : "-"}</div>;
+      },
+    },
+    {
+      field: "authorHour",
+      headerName: "Giờ tác giả",
+      type: "string",
+      width: 120,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
+      },
+    },
+    {
+      field: "note",
+      headerName: "Ghi chú",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        const noteText = author?.note || "";
+    
+        // Nếu không có ghi chú, hiển thị "-"
+        if (!noteText) {
+          return <div>-</div>;
+        }
+    
+        return (
+          <Tooltip 
+            title={
+              <div style={{ whiteSpace: 'pre-line', fontSize: '0.8rem' }}>
+                {noteText}
+              </div>
+            } 
+            arrow
+          >
+            <div style={{ 
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              width: '100%'
+            }}>
+              {noteText}
+            </div>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      field: "proofStatus",
+      headerName: "Trạng thái",
+      type: "string",
+      width: 140,
+      renderCell: (params: any) => {
+        // Lấy proofStatus từ author đầu tiên
+        const author = params.row.authors && params.row.authors[0];
+        const proofStatus = author ? author.proofStatus : undefined;
+                
+        if (proofStatus === undefined || proofStatus === null) {
+          return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
+        }
+        
+        // Kiểm tra giá trị và áp dụng trạng thái tương ứng
+        if (proofStatus === ProofStatus.HopLe) {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <CheckCircleIcon color="success" />
+              Hợp lệ
+            </div>
+          );
+        } else if (proofStatus === ProofStatus.KhongHopLe) {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <CancelIcon color="error" />
+              Không hợp lệ
+            </div>
+          );
+        } else if (proofStatus === ProofStatus.ChuaXuLy) {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <HistoryIcon color="action" />
+              Chưa xử lý
+            </div>
+          );
         } else {
-          toast.error("Lỗi khi tải dữ liệu");
+          return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
         }
-      } catch (error) {
-        console.error("Lỗi khi tải dữ liệu:", error);
-        toast.error("Lỗi khi tải dữ liệu");
-      } finally {
-        setLoading(false);
-      }
-    };
+      },
+    },
+    {
+      field: "actions",
+      headerName: "Thao tác",
+      width: 350,
+      renderCell: (params: any) => (
+        <Box display="flex" gap={1} alignItems="center" height="100%">
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={() => handleOpenUpdateDialog(params.row)}
+            startIcon={<EditIcon />}
+          >
+            Cập nhật
+          </Button>
+          <Button
+            variant="contained"
+            color="info"
+            size="small"
+            onClick={() => handleOpenStatusDialog(params.row)}
+            startIcon={<AssignmentTurnedInIcon />}
+          >
+            Trạng thái
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            onClick={() => handleOpenNoteDialog(params.row)}
+            startIcon={<NoteIcon />}
+          >
+            Ghi chú
+          </Button>
+        </Box>
+      ),
+    },
+  ];
 
-    fetchData();
-  }, [userId]);
-
-  const refreshData = async () => {
-    if (!userId) return;
-    
-    try {
-      setLoading(true);
-      const worksResponse = await getWorksByUserId(userId);
-      if (worksResponse.success) {
-        setWorks(worksResponse.data || []);
-      } else {
-        toast.error("Lỗi khi tải lại dữ liệu");
-      }
-    } catch (error) {
-      console.error("Lỗi khi tải lại dữ liệu:", error);
-      toast.error("Lỗi khi tải lại dữ liệu");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBack = () => {
-    navigate('/danh-sach-nguoi-dung');
-  };
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: vi });
-    } catch (error) {
-      return dateString;
-    }
-  };
-
-  const showWorkDetails = (work: Work) => {
-    if (!work.details) {
-      toast.info("Không có thông tin chi tiết cho công trình này");
-      return;
-    }
-    
-    const details = work.details || {};
-    const detailsArray = Object.entries(details).map(([key, value]) => `${key}: ${value}`);
-    toast.info(
-      <div>
-        <Typography variant="subtitle1">Chi tiết công trình</Typography>
-        <ul style={{ marginTop: 8, paddingLeft: 16 }}>
-          {detailsArray.map((detail, index) => (
-            <li key={index}>{detail}</li>
-          ))}
-          {detailsArray.length === 0 && <li>Không có thông tin chi tiết</li>}
-        </ul>
-      </div>,
-      { autoClose: false }
+  if (isLoadingUser || isLoadingWorks) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+        <CircularProgress />
+      </Box>
     );
-  };
+  }
 
-  // Status Dialog handlers
-  const handleOpenStatusDialog = (work: Work) => {
-    setSelectedWork(work);
-    const author = work.authors && work.authors.length > 0 ? work.authors[0] : null;
-    setNewStatus(author?.proofStatus !== undefined ? author.proofStatus : ProofStatus.ChuaXuLy);
-    setOpenStatusDialog(true);
-  };
-
-  const handleCloseStatusDialog = () => {
-    setOpenStatusDialog(false);
-    setSelectedWork(null);
-  };
-
-  const handleStatusChange = (event: SelectChangeEvent<number>) => {
-    setNewStatus(Number(event.target.value));
-  };
-
-  const handleStatusSubmit = async () => {
-    if (!selectedWork || !userId) return;
-    
-    try {
-      const author = selectedWork.authors?.find(a => a.userId === userId);
-      if (!author) {
-        toast.error("Không tìm thấy thông tin tác giả");
-        return;
-      }
-      
-      const response = await updateWorkStatus(selectedWork.id, userId, newStatus);
-      if (response.success) {
-        toast.success("Cập nhật trạng thái thành công");
-        await refreshData();
-      } else {
-        toast.error("Lỗi khi cập nhật trạng thái");
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái:", error);
-      toast.error("Lỗi khi cập nhật trạng thái");
-    } finally {
-      handleCloseStatusDialog();
-    }
-  };
-
-  // Note Dialog handlers
-  const handleOpenNoteDialog = (work: Work) => {
-    setSelectedWork(work);
-    const author = work.authors && work.authors.length > 0 ? work.authors[0] : null;
-    setNewNote(author?.note || '');
-    setOpenNoteDialog(true);
-  };
-
-  const handleCloseNoteDialog = () => {
-    setOpenNoteDialog(false);
-    setSelectedWork(null);
-  };
-
-  const handleNoteChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setNewNote(event.target.value);
-  };
-
-  const handleNoteSubmit = async () => {
-    if (!selectedWork || !userId) return;
-    
-    try {
-      const author = selectedWork.authors?.find(a => a.userId === userId);
-      if (!author) {
-        toast.error("Không tìm thấy thông tin tác giả");
-        return;
-      }
-      
-      const response = await updateWorkNote(selectedWork.id, userId, newNote);
-      if (response.success) {
-        toast.success("Cập nhật ghi chú thành công");
-        await refreshData();
-      } else {
-        toast.error("Lỗi khi cập nhật ghi chú");
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật ghi chú:", error);
-      toast.error("Lỗi khi cập nhật ghi chú");
-    } finally {
-      handleCloseNoteDialog();
-    }
-  };
-
-  // Edit Dialog handlers
-  const handleOpenEditDialog = (work: Work) => {
-    setSelectedWork(work);
-    const author = work.authors?.find(a => a.userId === userId);
-    if (author) {
-      setFormData({
-        workHour: author.workHour || 0,
-        authorHour: author.authorHour || 0
-      });
-    }
-    setOpenEditDialog(true);
-  };
-
-  const handleCloseEditDialog = () => {
-    setOpenEditDialog(false);
-    setSelectedWork(null);
-  };
-
-  const handleFormChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    setFormData({
-      ...formData,
-      [name]: parseFloat(value)
-    });
-  };
-
-  const handleEditSubmit = async () => {
-    if (!selectedWork || !userId) return;
-    
-    try {
-      const response = await updateWorkByAdmin(selectedWork.id, userId, {
-        authorRequest: {
-          workHour: formData.workHour,
-          authorHour: formData.authorHour
-        }
-      });
-      
-      if (response.success) {
-        toast.success("Cập nhật thông tin công trình thành công");
-        await refreshData();
-      } else {
-        toast.error("Lỗi khi cập nhật thông tin");
-      }
-    } catch (error) {
-      console.error("Lỗi khi cập nhật thông tin:", error);
-      toast.error("Lỗi khi cập nhật thông tin");
-    } finally {
-      handleCloseEditDialog();
-    }
-  };
-
-  // Delete Dialog handlers
-  const handleOpenDeleteDialog = (work: Work) => {
-    setSelectedWork(work);
-    setOpenDeleteDialog(true);
-  };
-
-  const handleCloseDeleteDialog = () => {
-    setOpenDeleteDialog(false);
-    setSelectedWork(null);
-  };
-
-  const handleDeleteWork = async () => {
-    if (!selectedWork) return;
-    
-    try {
-      const response = await deleteWork(selectedWork.id);
-      if (response.success) {
-        toast.success("Xóa công trình thành công");
-        await refreshData();
-      } else {
-        toast.error("Lỗi khi xóa công trình");
-      }
-    } catch (error) {
-      console.error("Lỗi khi xóa công trình:", error);
-      toast.error("Lỗi khi xóa công trình");
-    } finally {
-      handleCloseDeleteDialog();
-    }
-  };
-
-  // Render status with icon
-  const renderProofStatus = (proofStatus?: number) => {
-    if (proofStatus === undefined || proofStatus === null) {
-      return <div>-</div>;
-    }
-    
-    switch (proofStatus) {
-      case ProofStatus.HopLe:
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <CheckCircleIcon color="success" />
-            <span>Hợp lệ</span>
-          </Box>
-        );
-      case ProofStatus.KhongHopLe:
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <CancelIcon color="error" />
-            <span>Không hợp lệ</span>
-          </Box>
-        );
-      case ProofStatus.ChuaXuLy:
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <HistoryIcon color="action" />
-            <span>Chưa xử lý</span>
-          </Box>
-        );
-      default:
-        return <div>-</div>;
-    }
-  };
-
-  return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <IconButton onClick={handleBack} sx={{ mr: 2 }}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h4">
-          Danh sách công trình của {user?.fullName || ''}
+  if (userError || worksError) {
+    return (
+      <Box p={3}>
+        <Typography color="error">
+          {userError ? "Lỗi khi tải thông tin người dùng: " + (userError as Error).message : ""}
+          {worksError ? "Lỗi khi tải danh sách công trình: " + (worksError as Error).message : ""}
         </Typography>
       </Box>
+    );
+  }
 
-      {user && (
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1">
-            Mã số viên chức: {user.userName}
-          </Typography>
-          <Typography variant="subtitle1">
-            Đơn vị: {user.departmentName}
-          </Typography>
-          <Typography variant="subtitle1">
-            Ngành: {user.fieldName}
-          </Typography>
-        </Box>
-      )}
+  const user = userData?.data;
+  const works = worksData?.data || [];
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>STT</TableCell>
-                <TableCell>Tên công trình</TableCell>
-                <TableCell>Thời gian xuất bản</TableCell>
-                <TableCell>Loại công trình</TableCell>
-                <TableCell>Cấp công trình</TableCell>
-                <TableCell>Thông tin chi tiết</TableCell>
-                <TableCell>Số tác giả</TableCell>
-                <TableCell>Vai trò tác giả</TableCell>
-                <TableCell>Vị trí</TableCell>
-                <TableCell>Mục đích quy đổi</TableCell>
-                <TableCell>Ngành tính điểm</TableCell>
-                <TableCell>Ngành SCImago</TableCell>
-                <TableCell>Mức điểm</TableCell>
-                <TableCell>Giờ công trình</TableCell>
-                <TableCell>Giờ tác giả</TableCell>
-                <TableCell>Ghi chú</TableCell>
-                <TableCell>Trạng thái</TableCell>
-                <TableCell align="center">Thao tác</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {works.map((work, index) => {
-                const author = work.authors?.find(a => a.userId === userId);
-                return (
-                  <TableRow key={work.id} hover>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
-                      <Tooltip title={work.title}>
-                        <span>{work.title.length > 30 ? `${work.title.substring(0, 30)}...` : work.title}</span>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell>{formatDate(work.timePublished)}</TableCell>
-                    <TableCell>{work.workTypeName || '-'}</TableCell>
-                    <TableCell>{work.workLevelName || '-'}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        color="info"
-                        size="small"
-                        onClick={() => showWorkDetails(work)}
-                      >
-                        <InfoIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                    <TableCell>{work.totalAuthors || '-'}</TableCell>
-                    <TableCell>{author?.authorRoleName || '-'}</TableCell>
-                    <TableCell>{author?.position !== undefined ? author.position : '-'}</TableCell>
-                    <TableCell>{author?.purposeName || '-'}</TableCell>
-                    <TableCell>{author?.fieldName || '-'}</TableCell>
-                    <TableCell>{author?.scImagoFieldName || '-'}</TableCell>
-                    <TableCell>{author?.scoreLevel !== undefined ? getScoreLevelText(author.scoreLevel) : '-'}</TableCell>
-                    <TableCell>
-                      <Box 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          cursor: 'pointer' 
-                        }}
-                        onClick={() => handleOpenEditDialog(work)}
-                      >
-                        {author?.workHour !== undefined ? author.workHour : '-'}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box 
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          cursor: 'pointer' 
-                        }}
-                        onClick={() => handleOpenEditDialog(work)}
-                      >
-                        {author?.authorHour !== undefined ? author.authorHour : '-'}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Tooltip title={author?.note || 'Không có ghi chú'}>
-                        <IconButton
-                          color="primary"
-                          size="small"
-                          onClick={() => handleOpenNoteDialog(work)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ cursor: 'pointer' }} onClick={() => handleOpenStatusDialog(work)}>
-                        {renderProofStatus(author?.proofStatus)}
-                      </Box>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                        <Tooltip title="Chỉnh sửa công trình">
-                          <IconButton
-                            color="primary"
-                            size="small"
-                            onClick={() => handleOpenEditDialog(work)}
-                            sx={{ mr: 1 }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Xóa công trình">
-                          <IconButton
-                            color="error"
-                            size="small"
-                            onClick={() => handleOpenDeleteDialog(work)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {works.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={18} align="center">
-                    Người dùng này chưa có công trình nào
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+  return (
+    <Container maxWidth="xl">
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <Button 
+          variant="outlined" 
+          startIcon={<ArrowBackIcon />} 
+          onClick={handleGoBack}
+          sx={{ mr: 2 }}
+        >
+          Quay lại
+        </Button>
+        <Typography variant="h4">Chấm điểm công trình - {user?.fullName}</Typography>
+      </Box>
 
-      {/* Edit Hours Dialog */}
-      <Dialog open={openEditDialog} onClose={handleCloseEditDialog}>
-        <DialogTitle>Chỉnh sửa thông tin công trình</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Giờ công trình"
-              name="workHour"
-              type="number"
-              value={formData.workHour}
-              onChange={handleFormChange}
-              InputProps={{ inputProps: { min: 0, step: 0.5 } }}
-            />
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Giờ tác giả"
-              name="authorHour"
-              type="number"
-              value={formData.authorHour}
-              onChange={handleFormChange}
-              InputProps={{ inputProps: { min: 0, step: 0.5 } }}
-            />
+      <Box sx={{ mb: 3 }}>
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Thông tin người dùng
+          </Typography>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <Typography variant="body1">
+              <strong>Mã số viên chức:</strong> {user?.userName}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Họ và tên:</strong> {user?.fullName}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Đơn vị công tác:</strong> {user?.departmentName || "Chưa có phòng ban"}
+            </Typography>
+            <Typography variant="body1">
+              <strong>Ngành:</strong> {user?.fieldName || "Chưa phân ngành"}
+            </Typography>
           </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditDialog}>Hủy</Button>
-          <Button onClick={handleEditSubmit} variant="contained" color="primary">
-            Cập nhật
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Paper>
+      </Box>
 
-      {/* Status Dialog */}
-      <Dialog open={openStatusDialog} onClose={handleCloseStatusDialog}>
-        <DialogTitle>Cập nhật trạng thái công trình</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth margin="normal">
-            <InputLabel id="status-select-label">Trạng thái</InputLabel>
-            <Select
-              labelId="status-select-label"
-              value={newStatus}
-              onChange={handleStatusChange}
-              label="Trạng thái"
-            >
-              <MenuItem value={ProofStatus.HopLe}>Hợp lệ</MenuItem>
-              <MenuItem value={ProofStatus.KhongHopLe}>Không hợp lệ</MenuItem>
-              <MenuItem value={ProofStatus.ChuaXuLy}>Chưa xử lý</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseStatusDialog}>Hủy</Button>
-          <Button onClick={handleStatusSubmit} variant="contained" color="primary">
-            Cập nhật
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Danh sách công trình
+        </Typography>
+        <Paper sx={{ width: "100%", overflow: "hidden" }}>
+          <Box sx={{ height: 600 }}>
+            <GenericTable columns={columns} data={works} />
+          </Box>
+        </Paper>
+      </Box>
 
-      {/* Note Dialog */}
-      <Dialog open={openNoteDialog} onClose={handleCloseNoteDialog} fullWidth maxWidth="sm">
-        <DialogTitle>Cập nhật ghi chú</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            margin="normal"
-            label="Ghi chú"
-            value={newNote}
-            onChange={handleNoteChange}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseNoteDialog}>Hủy</Button>
-          <Button onClick={handleNoteSubmit} variant="contained" color="primary">
-            Cập nhật
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Sử dụng component dialog tái sử dụng */}
+      <WorkStatusDialog 
+        open={openStatusDialog}
+        onClose={handleCloseStatusDialog}
+        status={newStatus}
+        onStatusChange={(event) => handleStatusChange(Number(event.target.value))}
+        onSubmit={handleStatusSubmit}
+        isPending={updateWorkMutation.isPending}
+      />
 
-      {/* Delete Dialog */}
-      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>Xác nhận xóa công trình</DialogTitle>
-        <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa công trình này không?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Hủy</Button>
-          <Button onClick={handleDeleteWork} variant="contained" color="error">
-            Xóa
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      <WorkNoteDialog
+        open={openNoteDialog}
+        onClose={handleCloseNoteDialog}
+        note={newNote}
+        onNoteChange={(event) => handleNoteChange(event.target.value)}
+        onSubmit={handleNoteSubmit}
+        isPending={updateWorkMutation.isPending}
+      />
+
+      <WorkUpdateDialog
+        open={openUpdateDialog}
+        onClose={handleCloseUpdateDialog}
+        selectedWork={selectedWork}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onSubmit={handleUpdateSubmit}
+        isPending={createWorkMutation.isPending || updateWorkMutation.isPending}
+        workTypes={formData.workTypes}
+        workLevels={formData.workLevels}
+        authorRoles={formData.authorRoles}
+        purposes={formData.purposes}
+        scimagoFields={formData.scimagoFields}
+        fields={formData.fields}
+      />
+    </Container>
   );
-};
-
-export default UserWorkDetailPage; 
+} 
