@@ -9,25 +9,21 @@ import {
   Typography,
   Tooltip,
   Container,
-  Tabs,
-  Tab,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
-import { deleteWork, getMyWorks, createWork, updateWorkByAuthor } from "../../lib/api/worksApi";
+import { deleteWork, getMyWorks } from "../../lib/api/worksApi";
 import { getWorkTypes } from "../../lib/api/workTypesApi";
 import { getWorkLevels } from "../../lib/api/workLevelsApi";
 import { getAuthorRoles } from "../../lib/api/authorRolesApi";
 import { getPurposes } from "../../lib/api/purposesApi";
 import { getScimagoFields } from "../../lib/api/scimagoFieldsApi";
 import { getFields } from "../../lib/api/fieldsApi";
-import WorkForm from "./WorkForm";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Work } from "../../lib/types/models/Work";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
 import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -39,60 +35,7 @@ import { User } from "../../lib/types/models/User";
 import { useWorkFormData } from "../../hooks/useWorkData";
 import { useWorkDialogs } from "../../hooks/useWorkDialogs";
 import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDialog";
-
-// Hàm chuyển đổi ScoreLevel thành chuỗi hiển thị
-const getScoreLevelText = (scoreLevel: number): string => {
-  switch (scoreLevel) {
-    case ScoreLevel.BaiBaoTopMuoi:
-      return "Top 10%";
-    case ScoreLevel.BaiBaoTopBaMuoi:
-      return "Top 30%";
-    case ScoreLevel.BaiBaoTopNamMuoi:
-      return "Top 50%";
-    case ScoreLevel.BaiBaoTopConLai:
-      return "Top còn lại";
-    case ScoreLevel.BaiBaoMotDiem:
-      return "Bài báo 1 điểm";
-    case ScoreLevel.BaiBaoNuaDiem:
-      return "Bài báo 0.5 điểm";
-    case ScoreLevel.BaiBaoKhongBayNamDiem:
-      return "Bài báo 0.75 điểm";
-    case ScoreLevel.HDSVDatGiaiKK:
-      return "HDSV đạt giải KK";
-    case ScoreLevel.HDSVDatGiaiBa:
-      return "HDSV đạt giải Ba";
-    case ScoreLevel.HDSVDatGiaiNhi:
-      return "HDSV đạt giải Nhì";
-    case ScoreLevel.HDSVDatGiaiNhat:
-      return "HDSV đạt giải Nhất";
-    case ScoreLevel.HDSVConLai:
-      return "HDSV còn lại";
-    case ScoreLevel.TacPhamNgheThuatCapTruong:
-      return "Tác phẩm nghệ thuật cấp trường";
-    case ScoreLevel.TacPhamNgheThuatCapTinhThanhPho:
-      return "Tác phẩm nghệ thuật cấp tỉnh/thành phố";
-    case ScoreLevel.TacPhamNgheThuatCapQuocGia:
-      return "Tác phẩm nghệ thuật cấp quốc gia";
-    case ScoreLevel.TacPhamNgheThuatCapQuocTe:
-      return "Tác phẩm nghệ thuật cấp quốc tế";
-    case ScoreLevel.ThanhTichHuanLuyenCapQuocGia:
-      return "Thành tích huấn luyện cấp quốc gia";
-    case ScoreLevel.ThanhTichHuanLuyenCapQuocTe:
-      return "Thành tích huấn luyện cấp quốc tế";
-    case ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho:
-      return "Giải pháp hữu ích cấp tỉnh/thành phố";
-    case ScoreLevel.GiaiPhapHuuIchCapQuocGia:
-      return "Giải pháp hữu ích cấp quốc gia";
-    case ScoreLevel.GiaiPhapHuuIchCapQuocTe:
-      return "Giải pháp hữu ích cấp quốc tế";
-    case ScoreLevel.KetQuaNghienCuu:
-      return "Kết quả nghiên cứu";
-    case ScoreLevel.Sach:
-      return "Sách";
-    default:
-      return "-";
-  }
-};
+import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 
 export default function WorksPage() {
   const queryClient = useQueryClient();

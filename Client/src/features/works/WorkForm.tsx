@@ -1,18 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
-  DialogActions,
   TextField,
   Grid,
   MenuItem,
   CircularProgress,
-  Box,
   Autocomplete,
   Chip,
-  Stack,
-  FormControlLabel,
-  Checkbox,
-  Typography
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -32,6 +26,7 @@ import { searchUsers, getUserById } from "../../lib/api/usersApi";
 import { User } from "../../lib/types/models/User";
 import { useQuery } from "@tanstack/react-query";
 import { getScoreLevelsByFilters } from "../../lib/api/scoreLevelsApi";
+import { getScoreLevelFullDescription } from '../../lib/utils/scoreLevelUtils';
 
 // Define validation schema
 const schema = z.object({
@@ -74,10 +69,6 @@ export default function WorkForm({
   onSubmit,
   isLoading,
   workTypes,
-  workLevels,
-  authorRoles,
-  purposes,
-  scimagoFields,
   fields,
   activeTab,
 }: WorkFormProps) {
@@ -819,75 +810,11 @@ export default function WorkForm({
                     }}
                   >
                     <MenuItem value="">Chọn mức điểm</MenuItem>
-                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoMotDiem) && (
-                      <MenuItem value={ScoreLevel.BaiBaoMotDiem}>Bài báo 1 điểm</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoKhongBayNamDiem) && (
-                      <MenuItem value={ScoreLevel.BaiBaoKhongBayNamDiem}>Bài báo 0.75 điểm</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoNuaDiem) && (
-                      <MenuItem value={ScoreLevel.BaiBaoNuaDiem}>Bài báo 0.5 điểm</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoTopMuoi) && (
-                      <MenuItem value={ScoreLevel.BaiBaoTopMuoi}>Bài báo khoa học thuộc top 10% tạp chí hàng đầu</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoTopBaMuoi) && (
-                      <MenuItem value={ScoreLevel.BaiBaoTopBaMuoi}>Bài báo khoa học thuộc top 30% tạp chí hàng đầu</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoTopNamMuoi) && (
-                      <MenuItem value={ScoreLevel.BaiBaoTopNamMuoi}>Bài báo khoa học thuộc top 50% tạp chí hàng đầu</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.BaiBaoTopConLai) && (
-                      <MenuItem value={ScoreLevel.BaiBaoTopConLai}>Bài báo khoa học thuộc top còn lại tạp chí hàng đầu</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.HDSVDatGiaiKK) && (
-                      <MenuItem value={ScoreLevel.HDSVDatGiaiKK}>Hướng dẫn đề tài NCKH đạt giải KK</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.HDSVDatGiaiBa) && (
-                      <MenuItem value={ScoreLevel.HDSVDatGiaiBa}>Hướng dẫn đề tài NCKH đạt giải Ba</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.HDSVDatGiaiNhi) && (
-                      <MenuItem value={ScoreLevel.HDSVDatGiaiNhi}>Hướng dẫn đề tài NCKH đạt giải Nhì</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.HDSVDatGiaiNhat) && (
-                      <MenuItem value={ScoreLevel.HDSVDatGiaiNhat}>Hướng dẫn đề tài NCKH đạt giải Nhất</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.HDSVConLai) && (
-                      <MenuItem value={ScoreLevel.HDSVConLai}>HDSV còn lại</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.TacPhamNgheThuatCapTruong) && (
-                      <MenuItem value={ScoreLevel.TacPhamNgheThuatCapTruong}>Tác phẩm nghệ thuật cấp trường</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.TacPhamNgheThuatCapTinhThanhPho) && (
-                      <MenuItem value={ScoreLevel.TacPhamNgheThuatCapTinhThanhPho}>Tác phẩm nghệ thuật cấp tỉnh/thành phố</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.TacPhamNgheThuatCapQuocGia) && (
-                      <MenuItem value={ScoreLevel.TacPhamNgheThuatCapQuocGia}>Tác phẩm nghệ thuật cấp quốc gia</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.TacPhamNgheThuatCapQuocTe) && (
-                      <MenuItem value={ScoreLevel.TacPhamNgheThuatCapQuocTe}>Tác phẩm nghệ thuật cấp quốc tế</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.ThanhTichHuanLuyenCapQuocGia) && (
-                      <MenuItem value={ScoreLevel.ThanhTichHuanLuyenCapQuocGia}>Thành tích huấn luyện cấp quốc gia</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.ThanhTichHuanLuyenCapQuocTe) && (
-                      <MenuItem value={ScoreLevel.ThanhTichHuanLuyenCapQuocTe}>Thành tích huấn luyện cấp quốc tế</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho) && (
-                      <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho}>Giải pháp hữu ích cấp Tỉnh/Thành phố</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.GiaiPhapHuuIchCapQuocGia) && (
-                      <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapQuocGia}>Giải pháp hữu ích cấp cấp Quốc gia</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.GiaiPhapHuuIchCapQuocTe) && (
-                      <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapQuocTe}>Giải pháp hữu ích cấp Quốc tế</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.KetQuaNghienCuu) && (
-                      <MenuItem value={ScoreLevel.KetQuaNghienCuu}>Kết quả nghiên cứu</MenuItem>
-                    )}
-                    {visibleScoreLevels.includes(ScoreLevel.Sach) && (
-                      <MenuItem value={ScoreLevel.Sach}>Sách</MenuItem>
-                    )}
+                    {visibleScoreLevels.map((level) => (
+                      <MenuItem key={level} value={level}>
+                        {getScoreLevelFullDescription(level)}
+                      </MenuItem>
+                    ))}
                   </TextField>
                 )}
               />

@@ -15,60 +15,7 @@ import GenericTable from "../../app/shared/components/tables/DataTable";
 import { getMyWorks, setMarkedForScoring } from "../../lib/api/worksApi";
 import { Work } from "../../lib/types/models/Work";
 import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
-
-// Hàm chuyển đổi ScoreLevel thành chuỗi hiển thị
-const getScoreLevelText = (scoreLevel: number): string => {
-  switch (scoreLevel) {
-    case ScoreLevel.BaiBaoTopMuoi:
-      return "Top 10%";
-    case ScoreLevel.BaiBaoTopBaMuoi:
-      return "Top 30%";
-    case ScoreLevel.BaiBaoTopNamMuoi:
-      return "Top 50%";
-    case ScoreLevel.BaiBaoTopConLai:
-      return "Top còn lại";
-    case ScoreLevel.BaiBaoMotDiem:
-      return "Bài báo 1 điểm";
-    case ScoreLevel.BaiBaoNuaDiem:
-      return "Bài báo 0.5 điểm";
-    case ScoreLevel.BaiBaoKhongBayNamDiem:
-      return "Bài báo 0.75 điểm";
-    case ScoreLevel.HDSVDatGiaiKK:
-      return "HDSV đạt giải KK";
-    case ScoreLevel.HDSVDatGiaiBa:
-      return "HDSV đạt giải Ba";
-    case ScoreLevel.HDSVDatGiaiNhi:
-      return "HDSV đạt giải Nhì";
-    case ScoreLevel.HDSVDatGiaiNhat:
-      return "HDSV đạt giải Nhất";
-    case ScoreLevel.HDSVConLai:
-      return "HDSV còn lại";
-    case ScoreLevel.TacPhamNgheThuatCapTruong:
-      return "Tác phẩm nghệ thuật cấp trường";
-    case ScoreLevel.TacPhamNgheThuatCapTinhThanhPho:
-      return "Tác phẩm nghệ thuật cấp tỉnh/thành phố";
-    case ScoreLevel.TacPhamNgheThuatCapQuocGia:
-      return "Tác phẩm nghệ thuật cấp quốc gia";
-    case ScoreLevel.TacPhamNgheThuatCapQuocTe:
-      return "Tác phẩm nghệ thuật cấp quốc tế";
-    case ScoreLevel.ThanhTichHuanLuyenCapQuocGia:
-      return "Thành tích huấn luyện cấp quốc gia";
-    case ScoreLevel.ThanhTichHuanLuyenCapQuocTe:
-      return "Thành tích huấn luyện cấp quốc tế";
-    case ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho:
-      return "Giải pháp hữu ích cấp tỉnh/thành phố";
-    case ScoreLevel.GiaiPhapHuuIchCapQuocGia:
-      return "Giải pháp hữu ích cấp quốc gia";
-    case ScoreLevel.GiaiPhapHuuIchCapQuocTe:
-      return "Giải pháp hữu ích cấp quốc tế";
-    case ScoreLevel.KetQuaNghienCuu:
-      return "Kết quả nghiên cứu";
-    case ScoreLevel.Sach:
-      return "Sách";
-    default:
-      return "-";
-  }
-};
+import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 
 export default function MarkedWorksPage() {
   const queryClient = useQueryClient();
