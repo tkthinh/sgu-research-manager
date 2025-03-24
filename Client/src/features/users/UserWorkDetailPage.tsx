@@ -17,7 +17,6 @@ import GenericTable from "../../app/shared/components/tables/DataTable";
 import { getUserById } from "../../lib/api/usersApi";
 import { getWorksByUserId } from "../../lib/api/worksApi";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
-import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
 import { User } from "../../lib/types/models/User";
 import EditIcon from "@mui/icons-material/Edit";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";

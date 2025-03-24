@@ -14,7 +14,6 @@ import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
 import { getMyWorks, setMarkedForScoring } from "../../lib/api/worksApi";
 import { Work } from "../../lib/types/models/Work";
-import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
 import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 
 export default function MarkedWorksPage() {
