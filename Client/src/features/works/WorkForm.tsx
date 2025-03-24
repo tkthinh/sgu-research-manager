@@ -393,7 +393,7 @@ export default function WorkForm({
     }
     // Hướng dẫn NCKH sinh viên
     else if (workTypeId === "e2f7974c-47c3-478e-9b53-74093f6c621f") {
-      if (workLevelId === "e2f7974c-47c3-478e-9b53-74093f6c621f" || workLevelId === "e2f7974c-47c3-478e-9b53-74093f6c621f"){
+      if (workLevelId === "6bbf7e31-bcca-4078-b894-7c8d3afba607" || workLevelId === "08becbaf-2a92-4de1-8908-454c4659ad94"){
         setVisibleScoreLevels([
           ScoreLevel.HDSVDatGiaiNhat,
           ScoreLevel.HDSVDatGiaiNhi,

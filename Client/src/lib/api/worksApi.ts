@@ -62,8 +62,16 @@ export const setMarkedForScoring = async (authorId: string, marked: boolean): Pr
 
 // Update work by admin
 export const updateWorkByAdmin = async (workId: string, userId: string, data: UpdateWorkWithAuthorRequest): Promise<ApiResponse<Work>> => {
-  const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}/admin-update/${userId}`, data);
-  return response.data;
+  try {
+    console.log("WorksApi:updateWorkByAdmin - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
+    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}/admin-update/${userId}`, data);
+    console.log("WorksApi:updateWorkByAdmin - Phản hồi:", JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error: any) {
+    console.error("WorksApi:updateWorkByAdmin - Chi tiết lỗi:", error.response?.data);
+    console.error("WorksApi:updateWorkByAdmin - Status code:", error.response?.status);
+    throw error;
+  }
 };
 
 // Update work by author

@@ -606,11 +606,11 @@ namespace Application.Works
             work.TotalAuthors = workRequest.TotalAuthors ?? work.TotalAuthors;
             work.TotalMainAuthors = workRequest.TotalMainAuthors ?? work.TotalMainAuthors;
             work.Details = workRequest.Details ?? work.Details;
-                work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
+            work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
-                work.ModifiedDate = DateTime.UtcNow;
-            }
+            work.ModifiedDate = DateTime.UtcNow;
+        }
 
         private async Task<Author> GetOrCreateAuthorAsync(Work work, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken)
         {

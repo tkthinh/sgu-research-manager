@@ -1,5 +1,4 @@
 import { ProofStatus } from "../enums/ProofStatus";
-import { ScoreLevel } from "../enums/ScoreLevel";
 export interface Author {
   id: string;
   workId: string;
