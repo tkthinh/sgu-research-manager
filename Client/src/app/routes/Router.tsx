@@ -18,8 +18,10 @@ import ScimagoFieldPage from "../../features/settings/scimagoFields/ScimagoField
 import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 
+import AssignmentPage from "../../features/assignments/AssignmentPage";
 import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
 import UserPage from "../../features/settings/users/UserPage";
+import UserListPage from "../../features/users/UserListPage";
 import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 
@@ -53,14 +55,29 @@ export const router = createBrowserRouter([
                 ),
               },
               { path: "/cham-diem", element: <></> },
-              { path: "/phan-cong", element: <></> },
+              {
+                path: "/phan-cong",
+                element: (
+                  <ProtectedRoute allowedRoles={["Admin"]}>
+                    <AssignmentPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: "/danh-sach-nguoi-dung",
+                element: (
+                  <ProtectedRoute allowedRoles={["Manager"]}>
+                    <UserListPage />
+                  </ProtectedRoute>
+                ),
+              },
               // ============== BÁO CÁO ==============
               { path: "/bao-cao", element: <></> },
               // ============== HỆ THỐNG ==============
               {
                 path: "/quan-ly-tai-khoan",
                 element: (
-                  <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
+                  <ProtectedRoute allowedRoles={["Admin"]}>
                     <UserPage />
                   </ProtectedRoute>
                 ),
