@@ -1,4 +1,3 @@
-// AssignmentPage.tsx
 import {
   Box,
   Button,
@@ -14,78 +13,100 @@ import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-
 import GenericTable from "../../app/shared/components/tables/DataTable";
-import { deleteAssignment, getAssignments } from "../../lib/api/assignmentApi";
+import {
+  deleteAssignmentsOfUser,
+  getAssignments,
+} from "../../lib/api/assignmentApi";
 import AssignmentForm from "./AssignmentForm";
+
+// Define the type for a grouped manager row
+interface ManagerRow {
+  managerId: string;
+  managerFullName: string;
+  managerDepartmentName: string;
+  assignedDepartments: {
+    departmentId: string;
+    assignedDepartmentName: string;
+  }[];
+  assignedCount: number;
+}
 
 export default function AssignmentPage() {
   const queryClient = useQueryClient();
 
-  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
-    queryKey: ["assignments"],
-    queryFn: getAssignments,
-  });
+  // Fetch assignments
+  const { data, error, isPending, isSuccess, dataUpdatedAt, refetch } =
+    useQuery({
+      queryKey: ["assignments"],
+      queryFn: getAssignments,
+    });
 
-  const processedData = data?.data.map((item) => ({
-    ...item,
-    id:
-      item.id === "00000000-0000-0000-0000-000000000000"
-        ? `temp-${item.managerId}`
-        : item.id,
-  }));
-  
-
+  // Toast notifications similar to UserPage
   useEffect(() => {
     if (isSuccess && data) {
-      toast.success(data.message, { toastId: "fetch-assignments-success" });
+      toast.success(data.message || "Lấy dữ liệu phân công thành công", {
+        toastId: "fetch-assignments-success",
+      });
     }
-  }, [dataUpdatedAt]);
+  }, [dataUpdatedAt, isSuccess, data]);
 
   useEffect(() => {
     if (error) {
-      toast.error("Có lỗi khi tải phân công: " + (error as Error).message);
+      toast.error("Có lỗi xảy ra: " + (error as Error).message);
     }
   }, [error]);
 
-  const [open, setOpen] = useState(false);
-  const [selectedData, setSelectedData] = useState(null);
+  // Process API response and group assignments by manager
+  const groupedData: ManagerRow[] = data?.data
+    ? groupAssignments(data.data)
+    : [];
 
-  const handleOpen = (data: any) => {
-    setSelectedData(data);
-    setOpen(true);
-  };
+  // State to control the assignment form dialog
+  const [openForm, setOpenForm] = useState(false);
+  const [selectedManager, setSelectedManager] = useState<ManagerRow | null>(
+    null,
+  );
 
-  const handleClose = () => setOpen(false);
-
+  // State for deletion confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [managerIdToUnassign, setManagerIdToUnassign] = useState<string | null>(
+    null,
+  );
 
-  const handleDeleteClick = (id: string) => {
-    setDeleteId(id);
-    setDeleteDialogOpen(true);
+  const handleOpenForm = (manager: ManagerRow) => {
+    console.log(manager);
+    setSelectedManager(manager);
+    setOpenForm(true);
+  };
+  const handleCloseForm = () => {
+    setOpenForm(false);
+    setSelectedManager(null);
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteId(null);
-    setDeleteDialogOpen(false);
-  };
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteAssignment(id),
+  // Mutation for unassigning (clearing assignments) for a manager
+  const unassignMutation = useMutation({
+    mutationFn: (managerId: string) => deleteAssignmentsOfUser(managerId),
     onSuccess: () => {
-      toast.success("Xóa phân công thành công!");
+      toast.success("Đã bỏ phân công thành công");
       queryClient.invalidateQueries({ queryKey: ["assignments"] });
-      setDeleteDialogOpen(false);
+      refetch();
     },
-    onError: (error) => {
-      toast.error("Lỗi khi xóa: " + (error as Error).message);
+    onError: (error: any) => {
+      toast.error("Có lỗi xảy ra khi bỏ phân công: " + error.message);
     },
   });
 
-  const handleDeleteConfirm = () => {
-    if (deleteId) {
-      deleteMutation.mutate(deleteId);
+  // Open the deletion confirmation dialog instead of window.confirm
+  const handleUnassign = (managerId: string) => {
+    setManagerIdToUnassign(managerId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmUnassign = () => {
+    if (managerIdToUnassign) {
+      unassignMutation.mutate(managerIdToUnassign);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -94,31 +115,29 @@ export default function AssignmentPage() {
     {
       field: "managerDepartmentName",
       headerName: "Đơn vị công tác",
-      width: 220,
+      width: 200,
     },
-    {
-      field: "assignedDepartmentName",
-      headerName: "Đơn vị được phân công",
-      width: 220,
-    },
+    { field: "assignedCount", headerName: "Số phân công", width: 150 },
     {
       field: "actions",
-      headerName: "Thao tác",
-      width: 360,
+      headerName: "",
+      width: 300,
       renderCell: (params) => (
         <Box>
           <Button
-            onClick={() => handleOpen(params.row)}
             variant="contained"
-            sx={{ mr: 1 }}
+            size="small"
+            onClick={() => handleOpenForm(params.row)}
           >
             Phân công
           </Button>
           <Button
-            onClick={() => handleDeleteClick(params.row.id)}
             variant="contained"
             color="error"
-            disabled={params.row.departmentId === "00000000-0000-0000-0000-000000000000"}
+            size="small"
+            onClick={() => handleUnassign(params.row.managerId)}
+            disabled={params.row.assignedCount === 0}
+            sx={{ ml: 1 }}
           >
             Bỏ phân công
           </Button>
@@ -128,36 +147,87 @@ export default function AssignmentPage() {
   ];
 
   if (isPending) return <CircularProgress />;
-  if (error) return <p>Lỗi: {(error as Error).message}</p>;
+  if (error)
+    return (
+      <Typography variant="body1">Error: {(error as Error).message}</Typography>
+    );
+
+  const rowsWithId = groupedData.map((row) => ({ id: row.managerId, ...row }));
 
   return (
     <>
-      <Paper sx={{ width: "100%", overflow: "auto" }}>
-        <GenericTable columns={columns} data={processedData || []} />
+      <Paper sx={{ width: "100%", marginX: "auto", padding: 2 }}>
+        <GenericTable columns={columns} data={rowsWithId} />
       </Paper>
 
-      <AssignmentForm
-        open={open}
-        handleClose={handleClose}
-        data={selectedData}
-      />
+      {selectedManager && (
+        <AssignmentForm
+          open={openForm}
+          handleClose={handleCloseForm}
+          manager={selectedManager}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["assignments"] });
+            refetch();
+          }}
+        />
+      )}
 
-      <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
-        <DialogTitle>Xác nhận xóa</DialogTitle>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Xác nhận bỏ phân công</DialogTitle>
         <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa phân công này?</Typography>
+          <Typography>
+            Bạn có chắc chắn muốn bỏ <strong>tất cả</strong> phân công cho quản
+            lý này?
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDeleteCancel}>Hủy</Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            color="error"
-            variant="contained"
-          >
-            {deleteMutation.isPending ? "Đang xóa..." : "Xóa"}
+          <Button onClick={() => setDeleteDialogOpen(false)}>Hủy</Button>
+          <Button onClick={confirmUnassign} color="error" variant="contained">
+            {unassignMutation.isPending ? "Đang xóa..." : "Xóa"}
           </Button>
         </DialogActions>
       </Dialog>
     </>
   );
+}
+
+// Helper function: groups assignments by manager
+function groupAssignments(assignments: any[]): ManagerRow[] {
+  const groups = new Map<string, ManagerRow>();
+  assignments.forEach((assignment) => {
+    const {
+      managerId,
+      managerFullName,
+      managerDepartmentName,
+      departmentId,
+      assignedDepartmentName,
+    } = assignment;
+
+    if (!groups.has(managerId)) {
+      groups.set(managerId, {
+        managerId,
+        managerFullName,
+        managerDepartmentName,
+        assignedDepartments: [],
+        assignedCount: 0,
+      });
+    }
+    if (
+      departmentId !== "00000000-0000-0000-0000-000000000000" &&
+      assignedDepartmentName !== "Chưa phân công"
+    ) {
+      groups.get(managerId)!.assignedDepartments.push({
+        departmentId,
+        assignedDepartmentName,
+      });
+    }
+  });
+  // Compute the assigned count and return an array
+  return Array.from(groups.values()).map((group) => ({
+    ...group,
+    assignedCount: group.assignedDepartments.length,
+  }));
 }
