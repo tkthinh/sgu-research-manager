@@ -238,46 +238,58 @@ namespace Application.Works
             // Nếu đánh dấu công trình, kiểm tra giới hạn
             if (marked)
             {
-                // Thay vì thực hiện song song, chúng ta sẽ thực hiện tuần tự để tránh xung đột DbContext
-                
-                // 1. Lấy Factor để xác định MaxAllowed
+                // 1. Tìm Factor phù hợp nhất
                 var factors = await _factorRepository.FindAsync(f =>
                     f.WorkTypeId == work.WorkTypeId &&
-                    f.WorkLevelId == work.WorkLevelId &&
+                    ((work.WorkLevelId == null && f.WorkLevelId == null) || (work.WorkLevelId != null && f.WorkLevelId == work.WorkLevelId)) &&
+                    f.PurposeId == author.PurposeId &&
+                    f.AuthorRoleId == author.AuthorRoleId &&
                     f.ScoreLevel == author.ScoreLevel);
+
                 var factor = factors.FirstOrDefault();
-                
-                // 2. Đếm số lượng công trình đã được đánh dấu
+
+                if (factor == null)
+                {
+                    // Thử tìm factor không phụ thuộc AuthorRoleId
+                    factors = await _factorRepository.FindAsync(f =>
+                        f.WorkTypeId == work.WorkTypeId &&
+                        ((work.WorkLevelId == null && f.WorkLevelId == null) || (work.WorkLevelId != null && f.WorkLevelId == work.WorkLevelId)) &&
+                        f.PurposeId == author.PurposeId &&
+                        f.AuthorRoleId == null &&
+                        f.ScoreLevel == author.ScoreLevel);
+                    factor = factors.FirstOrDefault();
+                }
+
+                // 2. Đếm số lượng công trình đã được đánh dấu với cùng điều kiện
                 var markedAuthors = await _unitOfWork.Repository<Author>().FindAsync(a =>
                     a.UserId == author.UserId &&
-                                       a.MarkedForScoring &&
-                                       a.ScoreLevel == author.ScoreLevel);
+                    a.MarkedForScoring &&
+                    a.PurposeId == author.PurposeId &&
+                    a.ScoreLevel == author.ScoreLevel);
 
-                // 3. Lấy thông tin WorkType (nếu cần)
-                    var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
-                
-                // 4. Lấy thông tin WorkLevel (nếu cần)
+                // 3. Lấy thông tin WorkType và WorkLevel để hiển thị thông báo lỗi
+                var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
                 WorkLevel? workLevel = null;
                 if (work.WorkLevelId.HasValue)
                 {
                     workLevel = await _unitOfWork.Repository<WorkLevel>().GetByIdAsync(work.WorkLevelId.Value);
                 }
-                
-                // Xác định MaxAllowed
-                int maxAllowed = 1; // Giá trị mặc định
-                if (factor is not null && factor.MaxAllowed.HasValue)
-                {
-                    maxAllowed = factor.MaxAllowed.Value;
-                }
 
-                // Kiểm tra giới hạn
-                if (markedAuthors.Count() >= maxAllowed)
+                // 4. Kiểm tra giới hạn nếu có MaxAllowed
+                if (factor?.MaxAllowed != null)
                 {
-                    var workTypeInfo = workType?.Name ?? "Không xác định";
-                    var workLevelInfo = workLevel?.Name ?? "Không xác định";
-                    var scoreLevelInfo = author.ScoreLevel.HasValue ? author.ScoreLevel.ToString() : "Không xác định";
+                    if (markedAuthors.Count() >= factor.MaxAllowed)
+                    {
+                        var workTypeInfo = workType?.Name ?? "Không xác định";
+                        var workLevelInfo = workLevel?.Name ?? "Không xác định";
+                        var scoreLevelInfo = author.ScoreLevel.HasValue ? author.ScoreLevel.ToString() : "Không xác định";
 
-                    throw new Exception(string.Format(ErrorMessages.ScoreLimitExceeded, maxAllowed, workTypeInfo, workLevelInfo, scoreLevelInfo));
+                        throw new Exception(string.Format(ErrorMessages.ScoreLimitExceeded,
+                            factor.MaxAllowed,
+                            workTypeInfo,
+                            workLevelInfo,
+                            scoreLevelInfo));
+                    }
                 }
             }
 
@@ -288,7 +300,6 @@ namespace Application.Works
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await SafeInvalidateCacheAsync(author.WorkId);
         }
-
         public async Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken = default)
         {
             // Truy vấn tuần tự để tránh xung đột DbContext
