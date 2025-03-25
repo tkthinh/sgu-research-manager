@@ -17,7 +17,6 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 import { Work } from "../../lib/types/models/Work";
 import { WorkSource } from "../../lib/types/enums/WorkSource";
-import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
 import { getWorkLevelsByWorkTypeId } from "../../lib/api/workLevelsApi";
 import { getAuthorRolesByWorkTypeId } from "../../lib/api/authorRolesApi";
 import { getPurposesByWorkTypeId } from "../../lib/api/purposesApi";

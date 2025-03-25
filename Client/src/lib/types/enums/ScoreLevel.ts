@@ -1,11 +1,4 @@
 export enum ScoreLevel {
-  // One = 1,          // 1
-  // ZeroPointSevenFive = 2, // 0.75
-  // ZeroPointFive = 3,      // 0.5
-  // TenPercent = 4,   // 10%
-  // ThirtyPercent = 5, // 30%
-  // FiftyPercent = 6,  // 50%
-  // HundredPercent = 7 // 100%
 
   BaiBaoTopMuoi = 1,
   BaiBaoTopBaMuoi = 2,
@@ -36,5 +29,5 @@ export enum ScoreLevel {
 
   KetQuaNghienCuu = 22,
 
-Sach = 23
+  Sach = 23
 }   

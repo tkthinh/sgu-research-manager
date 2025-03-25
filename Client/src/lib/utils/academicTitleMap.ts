@@ -7,5 +7,5 @@ const academicTitleMap: Record<string, string> = {
 };
 
 export const getAcademicTitle = (value: string): string => {
-  return academicTitleMap[value] || "Không xác định";
+  return academicTitleMap[value] || "-";
 };

@@ -10,5 +10,5 @@ const officerRankMap: Record<string, string> = {
 };
 
 export const getOfficerRank = (value: string): string => {
-  return officerRankMap[value] || "Không xác định";
+  return officerRankMap[value] || "-";
 };

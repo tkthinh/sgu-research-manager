@@ -132,6 +132,6 @@ export const getScoreLevelFullDescription = (scoreLevel?: number | null): string
     case ScoreLevel.Sach:
       return "Sách";
     default:
-      return "Mức điểm không xác định";
+      return "-";
   }
 }; 

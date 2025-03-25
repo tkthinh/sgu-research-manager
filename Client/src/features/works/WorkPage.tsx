@@ -382,7 +382,7 @@ export default function WorksPage() {
       field: "scoreLevel",
       headerName: "Mức điểm",
       type: "string",
-      width: 120,
+      width: 150,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
         if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
@@ -523,7 +523,7 @@ export default function WorksPage() {
   return (
     <Container maxWidth="xl">
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h4">Danh sách công trình</Typography>
+        <Typography variant="h6">Danh sách công trình</Typography>
         <Button 
           variant="contained" 
           color="primary" 
