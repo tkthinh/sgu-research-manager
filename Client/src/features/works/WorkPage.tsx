@@ -16,30 +16,26 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
 import { deleteWork, getMyWorks } from "../../lib/api/worksApi";
-import { getWorkTypes } from "../../lib/api/workTypesApi";
-import { getWorkLevels } from "../../lib/api/workLevelsApi";
-import { getAuthorRoles } from "../../lib/api/authorRolesApi";
-import { getPurposes } from "../../lib/api/purposesApi";
-import { getScimagoFields } from "../../lib/api/scimagoFieldsApi";
-import { getFields } from "../../lib/api/fieldsApi";
 import { formatMonthYear } from "../../lib/utils/dateUtils";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
-import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HistoryIcon from "@mui/icons-material/History";
 import AddIcon from "@mui/icons-material/Add";
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { getUserById } from "../../lib/api/usersApi";
 import { User } from "../../lib/types/models/User";
 import { useWorkFormData } from "../../hooks/useWorkData";
 import { useWorkDialogs } from "../../hooks/useWorkDialogs";
 import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDialog";
 import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
+import { exportWorks } from "../../lib/api/excelApi";
+import { useAuth } from "../../app/shared/contexts/AuthContext";
 
 export default function WorksPage() {
   const queryClient = useQueryClient();
   const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
-  const currentUserId = localStorage.getItem("userId") || "";
+  const { user } = useAuth();
 
   // Sử dụng hook để lấy dữ liệu form
   const formData = useWorkFormData();
@@ -56,37 +52,6 @@ export default function WorksPage() {
     staleTime: 0, // Luôn refetch khi cần
   });
 
-  // Fetch data for dropdowns
-  const { data: workTypesData } = useQuery({
-    queryKey: ["workTypes"],
-    queryFn: getWorkTypes,
-  });
-
-  const { data: workLevelsData } = useQuery({
-    queryKey: ["workLevels"],
-    queryFn: getWorkLevels,
-  });
-
-  const { data: authorRolesData } = useQuery({
-    queryKey: ["authorRoles"],
-    queryFn: getAuthorRoles,
-  });
-
-  const { data: purposesData } = useQuery({
-    queryKey: ["purposes"],
-    queryFn: getPurposes,
-  });
-
-  const { data: scimagoFieldsData } = useQuery({
-    queryKey: ["scimagoFields"],
-    queryFn: getScimagoFields,
-  });
-
-  const { data: fieldsData } = useQuery({
-    queryKey: ["fields"],
-    queryFn: getFields,
-  });
-
   // Sử dụng hook để quản lý các dialog và logic cập nhật công trình
   const {
     selectedWork,
@@ -99,7 +64,7 @@ export default function WorksPage() {
     handleUpdateSubmit,
     setActiveTab,
   } = useWorkDialogs({
-    userId: currentUserId,
+    userId: user?.id ?? "",
     worksData,
     refetchWorks: refetch,
     isAuthorPage: true, // Đặt là true vì đây là trang của tác giả
@@ -193,6 +158,60 @@ export default function WorksPage() {
       } catch (error) {
         // Lỗi đã được xử lý trong onError của mutation
       }
+    }
+  };
+
+  // Thêm mutation cho việc xuất Excel
+  const exportMutation = useMutation({
+    mutationFn: exportWorks,
+    onSuccess: (data) => {
+      // Tạo URL từ Blob
+      const url = window.URL.createObjectURL(data);
+      
+      // Tạo thẻ a ẩn để tải file
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Tạo tên file với timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      link.download = `KeKhaiCongTrinh_${timestamp}.xlsx`;
+      
+      // Thêm link vào document, click và xóa
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Giải phóng URL
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Xuất Excel thành công!");
+    },
+    onError: (error: any) => {
+      console.error("Lỗi khi xuất Excel:", error);
+      let errorMessage = "Đã có lỗi xảy ra";
+      
+      if (error.message === "Bạn chưa đăng nhập") {
+        errorMessage = "Vui lòng đăng nhập lại để tiếp tục";
+      } else if (error.response?.data?.message) {
+        // Nếu có message từ API
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        // Nếu có message từ axios
+        errorMessage = error.message;
+      }
+      
+      toast.error(`Lỗi khi xuất Excel: ${errorMessage}`);
+    },
+  });
+
+  // Hàm xử lý sự kiện xuất Excel
+  const handleExport = async () => {
+    try {
+      console.log("Bắt đầu xuất Excel");
+      await exportMutation.mutateAsync();
+    } catch (error) {
+      // Lỗi đã được xử lý trong onError của mutation
+      console.error("Lỗi khi xuất Excel:", error);
     }
   };
 
@@ -517,14 +536,25 @@ export default function WorksPage() {
     <Container maxWidth="xl">
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
         <Typography variant="h6">Danh sách công trình</Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={() => handleOpenUpdateDialog(undefined as any)} 
-          startIcon={<AddIcon />}
-        >
-          Thêm công trình
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleExport}
+            startIcon={<FileDownloadIcon />}
+            disabled={exportMutation.isPending}
+          >
+            {exportMutation.isPending ? <CircularProgress size={24} /> : "Xuất Excel"}
+          </Button>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => handleOpenUpdateDialog(undefined as any)} 
+            startIcon={<AddIcon />}
+          >
+            Thêm công trình
+          </Button>
+        </Box>
       </Box>
 
       {isLoadingWorks ? (
