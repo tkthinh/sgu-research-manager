@@ -22,8 +22,7 @@ import { getAuthorRoles } from "../../lib/api/authorRolesApi";
 import { getPurposes } from "../../lib/api/purposesApi";
 import { getScimagoFields } from "../../lib/api/scimagoFieldsApi";
 import { getFields } from "../../lib/api/fieldsApi";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
+import { formatMonthYear } from "../../lib/utils/dateUtils";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
 import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -221,13 +220,7 @@ export default function WorksPage() {
       width: 150,
       renderCell: (params: any) => {
         if (!params.value) return <div>-</div>;
-        try {
-          // Hiển thị giá trị gốc nếu không thể chuyển đổi
-          const formattedDate = format(new Date(params.value), "dd/MM/yyyy", { locale: vi });
-          return <div>{formattedDate}</div>;
-        } catch (error) {
-          return <div>{params.value}</div>;
-        }
+        return <div>{formatMonthYear(params.value)}</div>;
       },
     },
     {

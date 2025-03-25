@@ -1,6 +1,7 @@
 ﻿using Application.Shared.Response;
 using Application.Works;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Mime;
 
 namespace WebApi.Controllers
 {
@@ -23,6 +24,14 @@ namespace WebApi.Controllers
         {
             if (file == null || file.Length == 0)
                 return BadRequest("File không hợp lệ");
+
+            // Kiểm tra định dạng file
+            string[] allowedExtensions = { ".xlsx", ".xls" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest("Chỉ chấp nhận file Excel (.xlsx hoặc .xls)");
+            }
 
             await _workService.ImportAsync(file);
             return Ok("Import thành công");
@@ -56,12 +65,15 @@ namespace WebApi.Controllers
                 // Log kích thước file để kiểm tra
                 _logger.LogInformation("File Excel được tạo thành công, kích thước: {FileSize} bytes", fileBytes.Length);
 
-                // Thiết lập header Content-Disposition thủ công
-                Response.Headers.Add("Content-Disposition", "attachment; filename=\"KeKhaiCongTrinh.xlsx\"");
-                Response.Headers.Add("Content-Length", fileBytes.Length.ToString());
+                // Tạo tên file với timestamp để tránh trùng lặp
+                var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
+                var fileName = $"KeKhaiCongTrinh_{timestamp}.xlsx";
 
-                // Trả về file Excel
-                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                return File(
+                    fileContents: fileBytes,
+                    contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    fileDownloadName: fileName
+                );
             }
             catch (Exception ex)
             {
