@@ -234,7 +234,7 @@ export default function WorksPage() {
       field: "workTypeName",
       headerName: "Loại công trình",
       type: "string",
-      width: 150,
+      width: 170,
     },
     {
       field: "workLevelName",
