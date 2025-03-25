@@ -22,5 +22,6 @@ namespace Domain.Entities
       // Liên kết khóa ngoại
       public virtual Department? Department { get; set; }
       public virtual Field? Field { get; set; }
+      public virtual ICollection<Assignment>? Assignments { get; set; }
    }
 }

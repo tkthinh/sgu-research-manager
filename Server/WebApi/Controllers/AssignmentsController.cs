@@ -22,7 +22,7 @@ namespace WebApi.Controllers
          IUserService userService,
          UserManager<ApplicationUser> userManager,
          ILogger<AssignmentsController> logger
-         )
+      )
       {
          this.assignmentService = assignmentService;
          this.userService = userService;
@@ -35,10 +35,8 @@ namespace WebApi.Controllers
       {
          try
          {
-            // Retrieve all manager users from Identity
+            // Retrieve users in the "Manager" role
             var managers = await userManager.GetUsersInRoleAsync("Manager");
-
-            // Retrieve all assignment records
             var assignments = await assignmentService.GetAllAsync();
 
             var assignmentDtos = new List<AssignmentDto>();
@@ -46,46 +44,55 @@ namespace WebApi.Controllers
             foreach (var manager in managers)
             {
                var managerInfo = await userService.GetUserByIdentityIdAsync(manager.Id);
+               if (managerInfo is null)
+                  continue;
 
-               if (managerInfo is not null)
+               // Filter assignments for the current user (manager)
+               var userAssignments = assignments.Where(a => a.ManagerId == managerInfo.Id).ToList();
+               if (userAssignments.Count > 0)
                {
-                  var dto = new AssignmentDto
+                  foreach (var assign in userAssignments)
+                  {
+                     assignmentDtos.Add(new AssignmentDto
+                     {
+                        Id = assign.Id,
+                        ManagerId = managerInfo.Id,
+                        ManagerFullName = managerInfo.FullName,
+                        ManagerDepartmentName = managerInfo.DepartmentName ?? "Unknown",
+                        DepartmentId = assign.DepartmentId,
+                        AssignedDepartmentName = assign.AssignedDepartmentName ?? "Unknown"
+                     });
+                  }
+               }
+               else
+               {
+                  // If no assignments exist, add a placeholder
+                  assignmentDtos.Add(new AssignmentDto
                   {
                      ManagerId = managerInfo.Id,
                      ManagerFullName = managerInfo.FullName,
                      ManagerDepartmentName = managerInfo.DepartmentName ?? "Unknown",
                      DepartmentId = Guid.Empty,
                      AssignedDepartmentName = "Chưa phân công"
-                  };
-
-                  var existingAssignment = assignments
-                      .FirstOrDefault(a => a.ManagerId == managerInfo.Id);
-
-                  if (existingAssignment != null)
-                  {
-                     // Map the assignment details if found
-                     dto.Id = existingAssignment.Id;
-                     dto.DepartmentId = existingAssignment.DepartmentId;
-                     dto.AssignedDepartmentName = existingAssignment.AssignedDepartmentName ?? "Unknown";
-                  }
-
-                  assignmentDtos.Add(dto);
+                  });
                }
             }
-            // Return the DTO list instead of the raw assignments
+
             return Ok(new ApiResponse<IEnumerable<AssignmentDto>>(
                 true,
-                "Lấy dữ liệu phân công thành công",
+                "Lấy dữ liệu danh sách phân công thành công",
                 assignmentDtos
             ));
          }
          catch (Exception ex)
          {
             logger.LogError(ex, "Error fetching assignments");
-            return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
+            return BadRequest(new ApiResponse<object>(
+                false,
+                "Có lỗi xảy ra trong quá trình xử lý"
+            ));
          }
       }
-
 
       [HttpGet("{id}")]
       public async Task<ActionResult<ApiResponse<AssignmentDto>>> GetAssignment([FromRoute] Guid id)
@@ -103,74 +110,79 @@ namespace WebApi.Controllers
       }
 
       [HttpPost]
-      public async Task<ActionResult<ApiResponse<AssignmentDto>>> CreateAssignment([FromBody] CreateAssignmentRequestDto request)
+      public async Task<ActionResult<ApiResponse<object>>> CreateAssignment([FromBody] CreateAssignmentRequestDto request)
       {
          try
          {
-            var dto = new AssignmentDto
-            {
-               ManagerId = request.ManagerId,
-               DepartmentId = request.DepartmentId
-            };
-
-            var assignment = await assignmentService.CreateAsync(dto);
-            var response = new ApiResponse<AssignmentDto>(
+            var assignment = await assignmentService.CreateAsync(request);
+            var response = new ApiResponse<object>(
                 true,
-                "Tạo phân công thành công",
+                "Đã tạo phân công",
                 assignment
             );
 
-            return CreatedAtAction(nameof(GetAssignment), new { id = assignment.Id }, response);
+            return CreatedAtAction(nameof(GetAssignment), new { id = assignment.First().ManagerId }, response);
          }
          catch (Exception ex)
          {
             logger.LogError(ex, "Error creating assignment");
-            return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
+            return BadRequest(new ApiResponse<object>(false, "Có lỗi xảy ra trong quá trình xử lý"));
          }
       }
 
-      [HttpPut("{id}")]
-      public async Task<ActionResult<ApiResponse<object>>> UpdateAssignment([FromRoute] Guid id, [FromBody] UpdateAssignmentRequestDto request)
+      [HttpPut()]
+      public async Task<ActionResult<ApiResponse<object>>> UpdateAssignment([FromBody] UpdateAssignmentRequestDto request)
       {
          try
          {
-            var existingAssignment = await assignmentService.GetByIdAsync(id);
-            if (existingAssignment == null)
-            {
-               return NotFound(new ApiResponse<object>(false, "Không tìm thấy phân công"));
-            }
-
-            existingAssignment.ManagerId = request.ManagerId;
-            existingAssignment.DepartmentId = request.DepartmentId;
-            await assignmentService.UpdateAsync(existingAssignment);
-
-            return Ok(new ApiResponse<object>(true, "Cập nhật phân công thành công"));
-         }
-         catch (ArgumentException ex)
-         {
-            logger.LogError(ex, "Error updating assignment");
-            return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
-         }
-      }
-
-      [HttpDelete("{id}")]
-      public async Task<ActionResult<ApiResponse<object>>> DeleteAssignment([FromRoute] Guid id)
-      {
-         try
-         {
-            var existingAssignment = await assignmentService.GetByIdAsync(id);
-            if (existingAssignment == null)
-            {
-               return NotFound(new ApiResponse<object>(false, "Không tìm thấy phân công"));
-            }
-
-            await assignmentService.DeleteAsync(id);
-            return Ok(new ApiResponse<object>(true, "Xóa phân công thành công"));
+            var result = await assignmentService.UpdateAsync(request);
+            return Ok(new ApiResponse<object>(true, "Đã cập nhật phân công"));
          }
          catch (Exception ex)
          {
-            logger.LogError(ex, "Error deleting assignment");
-            return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
+            logger.LogError(ex, "Error updating assignment");
+            return BadRequest(new ApiResponse<object>(false, "Có lỗi xảy ra trong quá trình xử lý"));
+         }
+      }
+
+      [HttpGet("user/{userId}")]
+      public async Task<ActionResult<ApiResponse<IEnumerable<AssignmentDto>>>> GetAllAssignmentsByUser(Guid userId)
+      {
+         try
+         {
+            var assignments = await assignmentService.GetAllAssignmentByUserAsync(userId);
+
+            if (!assignments.Any())
+            {
+               return NoContent();
+            }
+
+            return Ok(new ApiResponse<IEnumerable<AssignmentDto>>(
+                true,
+                "Lấy dữ liệu phân công của quản lý thành công",
+                assignments
+            ));
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(ex, "Error fetching assignments for user");
+            return BadRequest(new ApiResponse<object>(false, "Có lỗi xảy ra trong quá trình xử lý"));
+         }
+      }
+
+      [HttpDelete("user/{userId}")]
+      public async Task<ActionResult<ApiResponse<object>>> DeleteAllAssignmentsForUser([FromRoute] Guid userId)
+      {
+         try
+         {
+            await assignmentService.DeleteAllAssignmentsByUserIdAsync(userId);
+            
+            return Ok(new ApiResponse<object>(true, "Xóa phân công của quản lý thành công"));
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(ex, "Error deleting assignments for user");
+            return BadRequest(new ApiResponse<object>(false, "Có lỗi xảy ra trong quá trình xử lý"));
          }
       }
    }
