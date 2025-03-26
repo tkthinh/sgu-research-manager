@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 using System.Globalization;
 using System.Data;
-using System.Linq.Expressions;
 
 namespace Application.Works
 {
@@ -300,6 +299,7 @@ namespace Application.Works
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await SafeInvalidateCacheAsync(author.WorkId);
         }
+
         public async Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken = default)
         {
             // Truy vấn tuần tự để tránh xung đột DbContext
@@ -1249,6 +1249,7 @@ namespace Application.Works
                 return package.GetAsByteArray();
             }
         }
+
         public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             // Lấy thông tin cá nhân của user với đầy đủ details
