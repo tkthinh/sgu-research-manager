@@ -4,8 +4,9 @@ const academicTitleMap: Record<string, string> = {
   "TS": "Tiến sĩ",
   "PGS_TS": "Phó Giáo sư, Tiến sĩ",
   "GS_TS": "Giáo sư, Tiến sĩ",
+  "Unknown": "Không rõ",
 };
 
 export const getAcademicTitle = (value: string): string => {
-  return academicTitleMap[value] || "Không xác định";
+  return academicTitleMap[value] || "Không rõ";
 };

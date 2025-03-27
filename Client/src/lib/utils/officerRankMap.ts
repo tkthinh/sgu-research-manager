@@ -7,8 +7,9 @@ const officerRankMap: Record<string, string> = {
   "GiangVien": "Giảng viên",
   "GiangVienChinh": "Giảng viên chính",
   "GiangVienCaoCap": "Giảng viên cao cấp",
+  "Unknown": "Không rõ",
 };
 
 export const getOfficerRank = (value: string): string => {
-  return officerRankMap[value] || "Không xác định";
+  return officerRankMap[value] || "Không rõ";
 };
