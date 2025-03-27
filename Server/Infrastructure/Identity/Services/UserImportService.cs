@@ -4,6 +4,7 @@ using Application.Departments;
 using Application.Shared.Response;
 using Application.Users;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using OfficeOpenXml;
 
 namespace Infrastructure.Identity.Services
@@ -13,19 +14,22 @@ namespace Infrastructure.Identity.Services
         private readonly UserManager<ApplicationUser> userManager;
         private readonly IUserService userService;
         private readonly IDepartmentService departmentService;
+        private readonly ILogger<UserImportService> logger;
 
         public UserImportService(
             UserManager<ApplicationUser> userManager,
             IUserService userService,
-            IDepartmentService departmentService
+            IDepartmentService departmentService,
+            ILogger<UserImportService> logger
             )
         {
             this.userManager = userManager;
             this.userService = userService;
             this.departmentService = departmentService;
+            this.logger = logger;
         }
 
-        public async Task<ApiResponse<object>> ImportUsersAsync(Stream excelStream)
+        public async Task<UserImportResult> ImportUsersAsync(Stream excelStream)
         {
             try
             {
@@ -35,7 +39,7 @@ namespace Infrastructure.Identity.Services
                 using var package = new ExcelPackage(excelStream);
                 var worksheet = package.Workbook.Worksheets.FirstOrDefault();
                 if (worksheet == null)
-                    return new ApiResponse<object>(false, "Không tìm thấy worksheet nào trong file Excel.");
+                    throw new Exception("Không tìm thấy worksheet nào trong file Excel.");
 
                 int rowCount = worksheet.Dimension.Rows;
                 int importedCount = 0;
@@ -136,12 +140,16 @@ namespace Infrastructure.Identity.Services
                     }
                 }
 
-                return new ApiResponse<object>(true, $"Nhập thành công: {importedCount}, Bỏ qua: {skippedCount}");
+                return new UserImportResult
+                {
+                    ImportedCount = importedCount,
+                    SkippedCount = skippedCount
+                };
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                return new ApiResponse<object>(false, "Lỗi khi nhập dữ liệu từ Excel");
+                logger.LogError(ex, "Error importing users from Excel");
+                throw new Exception("Lỗi khi nhập dữ liệu từ Excel");
             }
         }
     }

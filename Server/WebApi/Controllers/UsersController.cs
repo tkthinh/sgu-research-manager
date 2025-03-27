@@ -358,17 +358,17 @@ namespace WebApi.Controllers
 
 
         [HttpPost("import")]
-        public async Task<IActionResult> ImportUsers(IFormFile file, [FromServices] IUserImportService importService)
+        public async Task<ActionResult<ApiResponse<object>>> ImportUsers(IFormFile file, [FromServices] IUserImportService importService)
         {
             if (file == null || file.Length == 0)
-                return BadRequest(new ApiResponse<string>(false, "Vui lòng đính kèm file"));
+                return BadRequest(new ApiResponse<object>(false, "Vui lòng đính kèm file"));
 
             if (!IsExcelFile(file))
-                return BadRequest(new ApiResponse<string>(false, "File Excel không đúng định dạng"));
+                return BadRequest(new ApiResponse<object>(false, "File Excel không đúng định dạng"));
 
             using var stream = file.OpenReadStream();
-            var response = await importService.ImportUsersAsync(stream);
-            return Ok(response);
+            var result = await importService.ImportUsersAsync(stream);
+            return Ok(new ApiResponse<object>(true, $"Đã nhập: {result.ImportedCount}, Đã bỏ qua: {result.SkippedCount}"));
         }
 
         private bool IsExcelFile(IFormFile file)
@@ -396,7 +396,7 @@ namespace WebApi.Controllers
                 using (var stream = file.OpenReadStream())
                 {
                     byte[] buffer = new byte[4];
-                    stream.Read(buffer, 0, buffer.Length);
+                    stream.ReadExactly(buffer);
 
                     // Check for Excel magic numbers (for .xls)
                     if (buffer[0] == 0xD0 && buffer[1] == 0xCF && buffer[2] == 0x11 && buffer[3] == 0xE0)
