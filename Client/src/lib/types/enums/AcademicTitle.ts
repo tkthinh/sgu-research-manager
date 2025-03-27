@@ -1,4 +1,5 @@
 export enum AcademicTitle {
+  Unknown = 0,
   CN = 1,      // Cử nhân
   ThS = 2,    // Thạc sĩ
   TS = 3,     // Tiến sĩ

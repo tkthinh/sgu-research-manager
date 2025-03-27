@@ -1,5 +1,5 @@
 export enum OfficerRank {
-  GiaoVien = 0,
+  Unknown = 0,
   ChuyenVien = 1,
   ChuyenVienChinh = 2,
   ChuyenVienCaoCap = 3,
@@ -7,4 +7,5 @@ export enum OfficerRank {
   GiangVien = 5,
   GiangVienChinh = 6,
   GiangVienCaoCap = 7,
+  GiaoVien = 8,
 }

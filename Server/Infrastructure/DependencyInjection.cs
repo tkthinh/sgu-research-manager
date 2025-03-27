@@ -27,115 +27,120 @@ using Application.SystemConfigs;
 using Application.Caches;
 using StackExchange.Redis;
 using Application.ScoreLevels;
+using Infrastructure.Identity.Services;
+using Application.Auth;
 
 namespace Infrastructure
 {
-   public static class DependencyInjection
-   {
-      public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
-      {
-         // Cấu hình Entity Framework Core với SQL Server
-         services.AddDbContext<ApplicationDbContext>(options =>
-             options.UseSqlServer(
-                 configuration.GetConnectionString("DefaultConnection"),
-                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+    public static class DependencyInjection
+    {
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        {
+            // Cấu hình Entity Framework Core với SQL Server
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(
+                    configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
-         // Cấu hình Identity với SQL Server
-         services.AddDbContext<AuthDbContext>(options =>
-            options.UseSqlServer(
-               configuration.GetConnectionString("DefaultConnection"),
-               b => b.MigrationsAssembly(typeof(AuthDbContext).Assembly.FullName)));
+            // Cấu hình Identity với SQL Server
+            services.AddDbContext<AuthDbContext>(options =>
+               options.UseSqlServer(
+                  configuration.GetConnectionString("DefaultConnection"),
+                  b => b.MigrationsAssembly(typeof(AuthDbContext).Assembly.FullName)));
 
-         services.Configure<IdentityOptions>(options =>
-         {
-            options.Password.RequireDigit = false;
-            options.Password.RequireLowercase = false;
-            options.Password.RequireUppercase = false;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequiredLength = 6;
-         });
-
-         // Cấu hình Redis Cache
-         services.AddStackExchangeRedisCache(options =>
-         {
-            options.Configuration = configuration.GetConnectionString("Redis");
-         });
-
-         // Đăng ký Identity
-         services.AddIdentityCore<ApplicationUser>()
-         .AddRoles<IdentityRole>()
-         .AddEntityFrameworkStores<AuthDbContext>()
-         .AddDefaultTokenProviders();
-
-         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+            services.Configure<IdentityOptions>(options =>
             {
-               options.TokenValidationParameters = new TokenValidationParameters
-               {
-                  AuthenticationType = "Jwt",
-                  ValidateIssuer = true,
-                  ValidateAudience = true,
-                  ValidateLifetime = true,
-                  ValidateIssuerSigningKey = true,
-                  ValidIssuer = configuration["Jwt:Issuer"],
-                  ValidAudience = configuration["Jwt:Audience"],
-                  IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
-               };
+                options.Password.RequireDigit = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 6;
             });
 
-         // Đăng ký UnitOfWork
-         services.AddScoped<IUnitOfWork, UnitOfWork>();
+            // Cấu hình Redis Cache
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = configuration.GetConnectionString("Redis");
+            });
 
-         // Đăng ký HttpContextAccessor
-         services.AddHttpContextAccessor();
+            // Đăng ký Identity
+            services.AddIdentityCore<ApplicationUser>()
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<AuthDbContext>()
+            .AddDefaultTokenProviders();
 
-         // Đăng ký SignalR
-         services.AddSignalR();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+               .AddJwtBearer(options =>
+               {
+                   options.TokenValidationParameters = new TokenValidationParameters
+                   {
+                       AuthenticationType = "Jwt",
+                       ValidateIssuer = true,
+                       ValidateAudience = true,
+                       ValidateLifetime = true,
+                       ValidateIssuerSigningKey = true,
+                       ValidIssuer = configuration["Jwt:Issuer"],
+                       ValidAudience = configuration["Jwt:Audience"],
+                       IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
+                   };
+               });
 
-         // Đăng ký các service
-         services.AddScoped<IDepartmentService, DepartmentService>();
-         services.AddScoped<IPurposeService, PurposeService>();
-         services.AddScoped<IWorkLevelService, WorkLevelService>();
-         services.AddScoped<IFieldService, FieldService>();
-         services.AddScoped<IWorkTypeService, WorkTypeService>();
-         services.AddScoped<IAuthorRoleService, AuthorRoleService>();
-         services.AddScoped<IAssignmentService, AssignmentService>();
-         services.AddScoped<IFactorService, FactorService>();
-         services.AddScoped<IAuthorService, AuthorService>();
-         services.AddScoped<IWorkService, WorkService>();
-         services.AddScoped<IUserService, UserService>();
-         services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
-         services.AddScoped<IScoreLevelService, ScoreLevelService>();
+            // Đăng ký UnitOfWork
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-         services.AddScoped<ICacheManagementService, CacheManagementService>();
-         services.AddSingleton(ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
+            // Đăng ký HttpContextAccessor
+            services.AddHttpContextAccessor();
 
-         services.AddScoped<ISystemConfigService, SystemConfigService>();
+            // Đăng ký SignalR
+            services.AddSignalR();
 
-         // Đăng ký các mapper
-         services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
-         services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
-         services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
-         services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
-         services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
-         services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
-         services.AddScoped<IGenericMapper<AssignmentDto, Assignment>, AssignmentMapper>();
-         services.AddScoped<IGenericMapper<FactorDto, Factor>, FactorMapper>();
-         services.AddScoped<IGenericMapper<AuthorDto, Author>, AuthorMapper>();
-         services.AddScoped<IGenericMapper<WorkDto, Work>, WorkMapper>();
-         services.AddScoped<IGenericMapper<UserDto, User>, UserMapper>();
-         services.AddScoped<IGenericMapper<SCImagoFieldDto, SCImagoField>, SCImagoFieldMapper>();
-         services.AddScoped<IGenericMapper<SystemConfigDto, SystemConfig>, SystemConfigMapper>();
+            // Đăng ký các service
+            services.AddScoped<IDepartmentService, DepartmentService>();
+            services.AddScoped<IPurposeService, PurposeService>();
+            services.AddScoped<IWorkLevelService, WorkLevelService>();
+            services.AddScoped<IFieldService, FieldService>();
+            services.AddScoped<IWorkTypeService, WorkTypeService>();
+            services.AddScoped<IAuthorRoleService, AuthorRoleService>();
+            services.AddScoped<IAssignmentService, AssignmentService>();
+            services.AddScoped<IFactorService, FactorService>();
+            services.AddScoped<IAuthorService, AuthorService>();
+            services.AddScoped<IWorkService, WorkService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
+            services.AddScoped<IScoreLevelService, ScoreLevelService>();
+
+            services.AddScoped<ICacheManagementService, CacheManagementService>();
+            services.AddSingleton(ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
+
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserImportService, UserImportService>();
+
+            services.AddScoped<ISystemConfigService, SystemConfigService>();
+
+            // Đăng ký các mapper
+            services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
+            services.AddScoped<IGenericMapper<PurposeDto, Purpose>, PurposeMapper>();
+            services.AddScoped<IGenericMapper<WorkLevelDto, WorkLevel>, WorkLevelMapper>();
+            services.AddScoped<IGenericMapper<FieldDto, Field>, FieldMapper>();
+            services.AddScoped<IGenericMapper<WorkTypeDto, WorkType>, WorkTypeMapper>();
+            services.AddScoped<IGenericMapper<AuthorRoleDto, AuthorRole>, AuthorRoleMapper>();
+            services.AddScoped<IGenericMapper<AssignmentDto, Assignment>, AssignmentMapper>();
+            services.AddScoped<IGenericMapper<FactorDto, Factor>, FactorMapper>();
+            services.AddScoped<IGenericMapper<AuthorDto, Author>, AuthorMapper>();
+            services.AddScoped<IGenericMapper<WorkDto, Work>, WorkMapper>();
+            services.AddScoped<IGenericMapper<UserDto, User>, UserMapper>();
+            services.AddScoped<IGenericMapper<SCImagoFieldDto, SCImagoField>, SCImagoFieldMapper>();
+            services.AddScoped<IGenericMapper<SystemConfigDto, SystemConfig>, SystemConfigMapper>();
 
 
 
-         // Đăng ký custom repository (nếu có)
-         services.AddScoped<IWorkTypeRepository, WorkTypeRepository>();
-         services.AddScoped<IUserRepository, UserRepository>();
-         services.AddScoped<IWorkRepository, WorkRepository>();
-         services.AddScoped<IAssignmentRepository, AssignmentRepository>();
+            // Đăng ký custom repository (nếu có)
+            services.AddScoped<IWorkTypeRepository, WorkTypeRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IWorkRepository, WorkRepository>();
+            services.AddScoped<IAssignmentRepository, AssignmentRepository>();
 
-         return services;
-      }
-   }
+            return services;
+        }
+    }
 }
