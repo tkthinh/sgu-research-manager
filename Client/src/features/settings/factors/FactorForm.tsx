@@ -22,6 +22,7 @@ import { getPurposesByWorkTypeId } from "../../../lib/api/purposesApi";
 import { getAuthorRolesByWorkTypeId } from "../../../lib/api/authorRolesApi";
 import { Factor } from "../../../lib/types/models/Factor";
 import { ScoreLevel } from "../../../lib/types/enums/ScoreLevel";
+import { getScoreLevelFullDescription } from '../../../lib/utils/scoreLevelUtils';
 
 // Define validation schema
 const schema = z.object({
@@ -158,60 +159,6 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
   // Handle form submission
   const onSubmit = async (formData: FactorFormData) => {
     await mutation.mutateAsync(formData);
-  };
-
-  // Get score level text
-  const getScoreLevelText = (level: number) => {
-    switch (level) {
-      case ScoreLevel.BaiBaoTopMuoi:
-        return "Top 10%";
-      case ScoreLevel.BaiBaoTopBaMuoi:
-        return "Top 30%";
-      case ScoreLevel.BaiBaoTopNamMuoi:
-        return "Top 50%";
-      case ScoreLevel.BaiBaoTopConLai:
-        return "Top còn lại";
-      case ScoreLevel.BaiBaoMotDiem:
-        return "Bài báo 1 điểm";
-      case ScoreLevel.BaiBaoNuaDiem:
-        return "Bài báo 0.5 điểm";
-      case ScoreLevel.BaiBaoKhongBayNamDiem:
-        return "Bài báo 0.75 điểm";
-      case ScoreLevel.HDSVDatGiaiKK:
-        return "HDSV đạt giải KK";
-      case ScoreLevel.HDSVDatGiaiBa:
-        return "HDSV đạt giải Ba";
-      case ScoreLevel.HDSVDatGiaiNhi:
-        return "HDSV đạt giải Nhì";
-      case ScoreLevel.HDSVDatGiaiNhat:
-        return "HDSV đạt giải Nhất";
-      case ScoreLevel.HDSVConLai:
-        return "HDSV còn lại";
-      case ScoreLevel.TacPhamNgheThuatCapTruong:
-        return "Tác phẩm nghệ thuật cấp trường";
-      case ScoreLevel.TacPhamNgheThuatCapTinhThanhPho:
-        return "Tác phẩm nghệ thuật cấp tỉnh/thành phố";
-      case ScoreLevel.TacPhamNgheThuatCapQuocGia:
-        return "Tác phẩm nghệ thuật cấp quốc gia";
-      case ScoreLevel.TacPhamNgheThuatCapQuocTe:
-        return "Tác phẩm nghệ thuật cấp quốc tế";
-      case ScoreLevel.ThanhTichHuanLuyenCapQuocGia:
-        return "Thành tích huấn luyện cấp quốc gia";
-      case ScoreLevel.ThanhTichHuanLuyenCapQuocTe:
-        return "Thành tích huấn luyện cấp quốc tế";
-      case ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho:
-        return "Giải pháp hữu ích cấp tỉnh/thành phố";
-      case ScoreLevel.GiaiPhapHuuIchCapQuocGia:
-        return "Giải pháp hữu ích cấp quốc gia";
-      case ScoreLevel.GiaiPhapHuuIchCapQuocTe:
-        return "Giải pháp hữu ích cấp quốc tế";
-      case ScoreLevel.KetQuaNghienCuu:
-        return "Kết quả nghiên cứu";
-      case ScoreLevel.Sach:
-        return "Sách";
-      default:
-        return "Không xác định";
-    }
   };
 
   return (
@@ -368,29 +315,13 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
                   onChange={(e) => field.onChange(Number(e.target.value))}
                   value={field.value}
                 >
-                  <MenuItem value={ScoreLevel.BaiBaoTopMuoi}>Top 10%</MenuItem>
-                  <MenuItem value={ScoreLevel.BaiBaoTopBaMuoi}>Top 30%</MenuItem>
-                  <MenuItem value={ScoreLevel.BaiBaoTopNamMuoi}>Top 50%</MenuItem>
-                  <MenuItem value={ScoreLevel.BaiBaoTopConLai}>Top còn lại</MenuItem>
-                  <MenuItem value={ScoreLevel.BaiBaoMotDiem}>Bài báo 1 điểm</MenuItem>
-                  <MenuItem value={ScoreLevel.BaiBaoNuaDiem}>Bài báo 0.5 điểm</MenuItem>
-                  <MenuItem value={ScoreLevel.BaiBaoKhongBayNamDiem}>Bài báo 0.75 điểm</MenuItem>
-                  <MenuItem value={ScoreLevel.HDSVDatGiaiKK}>HDSV đạt giải KK</MenuItem>
-                  <MenuItem value={ScoreLevel.HDSVDatGiaiBa}>HDSV đạt giải Ba</MenuItem>
-                  <MenuItem value={ScoreLevel.HDSVDatGiaiNhi}>HDSV đạt giải Nhì</MenuItem>
-                  <MenuItem value={ScoreLevel.HDSVDatGiaiNhat}>HDSV đạt giải Nhất</MenuItem>
-                  <MenuItem value={ScoreLevel.HDSVConLai}>HDSV còn lại</MenuItem>
-                  <MenuItem value={ScoreLevel.TacPhamNgheThuatCapTruong}>Tác phẩm nghệ thuật cấp trường</MenuItem>
-                  <MenuItem value={ScoreLevel.TacPhamNgheThuatCapTinhThanhPho}>Tác phẩm nghệ thuật cấp tỉnh/thành phố</MenuItem>
-                  <MenuItem value={ScoreLevel.TacPhamNgheThuatCapQuocGia}>Tác phẩm nghệ thuật cấp quốc gia</MenuItem>
-                  <MenuItem value={ScoreLevel.TacPhamNgheThuatCapQuocTe}>Tác phẩm nghệ thuật cấp quốc tế</MenuItem>
-                  <MenuItem value={ScoreLevel.ThanhTichHuanLuyenCapQuocGia}>Thành tích huấn luyện cấp quốc gia</MenuItem>
-                  <MenuItem value={ScoreLevel.ThanhTichHuanLuyenCapQuocTe}>Thành tích huấn luyện cấp quốc tế</MenuItem>
-                  <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho}>Giải pháp hữu ích cấp tỉnh/thành phố</MenuItem>
-                  <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapQuocGia}>Giải pháp hữu ích cấp quốc gia</MenuItem>
-                  <MenuItem value={ScoreLevel.GiaiPhapHuuIchCapQuocTe}>Giải pháp hữu ích cấp quốc tế</MenuItem>
-                  <MenuItem value={ScoreLevel.KetQuaNghienCuu}>Kết quả nghiên cứu</MenuItem>
-                  <MenuItem value={ScoreLevel.Sach}>Sách</MenuItem>
+                  {Object.values(ScoreLevel)
+                    .filter(value => typeof value === 'number')
+                    .map(level => (
+                      <MenuItem key={level} value={level}>
+                        {getScoreLevelFullDescription(level as number)}
+                      </MenuItem>
+                    ))}
                 </TextField>
               )}
             />

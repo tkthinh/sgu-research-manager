@@ -9,197 +9,65 @@ import {
   Typography,
   Tooltip,
   Container,
-  Tabs,
-  Tab,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
-import { deleteWork, getMyWorks, createWork, updateWorkByAuthor } from "../../lib/api/worksApi";
-import { getWorkTypes } from "../../lib/api/workTypesApi";
-import { getWorkLevels } from "../../lib/api/workLevelsApi";
-import { getAuthorRoles } from "../../lib/api/authorRolesApi";
-import { getPurposes } from "../../lib/api/purposesApi";
-import { getScimagoFields } from "../../lib/api/scimagoFieldsApi";
-import { getFields } from "../../lib/api/fieldsApi";
-import WorkForm from "./WorkForm";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
-import { Work } from "../../lib/types/models/Work";
+import { deleteWork, getMyWorks } from "../../lib/api/worksApi";
+import { formatMonthYear } from "../../lib/utils/dateUtils";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
-import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HistoryIcon from "@mui/icons-material/History";
 import AddIcon from "@mui/icons-material/Add";
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { getUserById } from "../../lib/api/usersApi";
 import { User } from "../../lib/types/models/User";
-
-// Hàm chuyển đổi ScoreLevel thành chuỗi hiển thị
-const getScoreLevelText = (scoreLevel: number): string => {
-  switch (scoreLevel) {
-    case ScoreLevel.BaiBaoTopMuoi:
-      return "Top 10%";
-    case ScoreLevel.BaiBaoTopBaMuoi:
-      return "Top 30%";
-    case ScoreLevel.BaiBaoTopNamMuoi:
-      return "Top 50%";
-    case ScoreLevel.BaiBaoTopConLai:
-      return "Top còn lại";
-    case ScoreLevel.BaiBaoMotDiem:
-      return "Bài báo 1 điểm";
-    case ScoreLevel.BaiBaoNuaDiem:
-      return "Bài báo 0.5 điểm";
-    case ScoreLevel.BaiBaoKhongBayNamDiem:
-      return "Bài báo 0.75 điểm";
-    case ScoreLevel.HDSVDatGiaiKK:
-      return "HDSV đạt giải KK";
-    case ScoreLevel.HDSVDatGiaiBa:
-      return "HDSV đạt giải Ba";
-    case ScoreLevel.HDSVDatGiaiNhi:
-      return "HDSV đạt giải Nhì";
-    case ScoreLevel.HDSVDatGiaiNhat:
-      return "HDSV đạt giải Nhất";
-    case ScoreLevel.HDSVConLai:
-      return "HDSV còn lại";
-    case ScoreLevel.TacPhamNgheThuatCapTruong:
-      return "Tác phẩm nghệ thuật cấp trường";
-    case ScoreLevel.TacPhamNgheThuatCapTinhThanhPho:
-      return "Tác phẩm nghệ thuật cấp tỉnh/thành phố";
-    case ScoreLevel.TacPhamNgheThuatCapQuocGia:
-      return "Tác phẩm nghệ thuật cấp quốc gia";
-    case ScoreLevel.TacPhamNgheThuatCapQuocTe:
-      return "Tác phẩm nghệ thuật cấp quốc tế";
-    case ScoreLevel.ThanhTichHuanLuyenCapQuocGia:
-      return "Thành tích huấn luyện cấp quốc gia";
-    case ScoreLevel.ThanhTichHuanLuyenCapQuocTe:
-      return "Thành tích huấn luyện cấp quốc tế";
-    case ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho:
-      return "Giải pháp hữu ích cấp tỉnh/thành phố";
-    case ScoreLevel.GiaiPhapHuuIchCapQuocGia:
-      return "Giải pháp hữu ích cấp quốc gia";
-    case ScoreLevel.GiaiPhapHuuIchCapQuocTe:
-      return "Giải pháp hữu ích cấp quốc tế";
-    case ScoreLevel.KetQuaNghienCuu:
-      return "Kết quả nghiên cứu";
-    case ScoreLevel.Sach:
-      return "Sách";
-    default:
-      return "-";
-  }
-};
+import { useWorkFormData } from "../../hooks/useWorkData";
+import { useWorkDialogs } from "../../hooks/useWorkDialogs";
+import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDialog";
+import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
+import { exportWorks } from "../../lib/api/excelApi";
+import { useAuth } from "../../app/shared/contexts/AuthContext";
 
 export default function WorksPage() {
   const queryClient = useQueryClient();
-  const [openFormDialog, setOpenFormDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
   const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
+  const { user } = useAuth();
+
+  // Sử dụng hook để lấy dữ liệu form
+  const formData = useWorkFormData();
 
   // Fetch works
-  const { data: worksData, error: worksError, isPending: isLoadingWorks, refetch } = useQuery({
+  const { 
+    data: worksData, 
+    error: worksError, 
+    isPending: isLoadingWorks, 
+    refetch 
+  } = useQuery({
     queryKey: ["works", "my-works"],
     queryFn: getMyWorks,
     staleTime: 0, // Luôn refetch khi cần
   });
 
-  // Fetch data for dropdowns
-  const { data: workTypesData } = useQuery({
-    queryKey: ["workTypes"],
-    queryFn: getWorkTypes,
-  });
-
-  const { data: workLevelsData } = useQuery({
-    queryKey: ["workLevels"],
-    queryFn: getWorkLevels,
-  });
-
-  const { data: authorRolesData } = useQuery({
-    queryKey: ["authorRoles"],
-    queryFn: getAuthorRoles,
-  });
-
-  const { data: purposesData } = useQuery({
-    queryKey: ["purposes"],
-    queryFn: getPurposes,
-  });
-
-  const { data: scimagoFieldsData } = useQuery({
-    queryKey: ["scimagoFields"],
-    queryFn: getScimagoFields,
-  });
-
-  const { data: fieldsData } = useQuery({
-    queryKey: ["fields"],
-    queryFn: getFields,
-  });
-
-  // Create/Update mutation
-  const createMutation = useMutation({
-    mutationFn: async (data: any) => {
-      try {
-        return await createWork({
-          title: data.workRequest.title,
-          timePublished: data.workRequest.timePublished,
-          totalAuthors: data.workRequest.totalAuthors,
-          totalMainAuthors: data.workRequest.totalMainAuthors,
-          source: data.workRequest.source,
-          workTypeId: data.workRequest.workTypeId,
-          workLevelId: data.workRequest.workLevelId,
-          details: data.workRequest.details,
-          coAuthorUserIds: data.coAuthorUserIds,
-          author: {
-            authorRoleId: data.authorRequest.authorRoleId,
-            purposeId: data.authorRequest.purposeId,
-            position: data.authorRequest.position,
-            scoreLevel: data.authorRequest.scoreLevel,
-            scImagoFieldId: data.authorRequest.scImagoFieldId, 
-            fieldId: data.authorRequest.fieldId
-          },
-        });
-      } catch (error: any) {
-        throw error;
-      }
-    },
-    onSuccess: (data) => {
-      toast.success("Công trình đã được thêm thành công");
-            
-      // Xóa cache và refetch dữ liệu mới
-      queryClient.removeQueries({ queryKey: ["works", "my-works"] });
-      
-      // Bắt buộc refetch dữ liệu ngay lập tức
-      setTimeout(() => {
-        refetch();
-      }, 100);
-      
-      setOpenFormDialog(false);
-    },
-    onError: (error) => {
-      toast.error("Lỗi khi thêm công trình: " + (error as Error).message);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (params: { workId: string; data: any }) => {
-      return updateWorkByAuthor(params.workId, params.data);
-    },
-    onSuccess: (data) => {
-      toast.success("Công trình đã được cập nhật thành công");
-      
-      // Xóa cache và refetch dữ liệu mới
-      queryClient.removeQueries({ queryKey: ["works", "my-works"] });
-      
-      // Bắt buộc refetch dữ liệu ngay lập tức
-      setTimeout(() => {
-        refetch();
-      }, 100);
-      
-      setOpenFormDialog(false);
-    },
-    onError: (error) => {
-      toast.error("Lỗi khi cập nhật công trình: " + (error as Error).message);
-    },
+  // Sử dụng hook để quản lý các dialog và logic cập nhật công trình
+  const {
+    selectedWork,
+    openUpdateDialog,
+    activeTab,
+    createWorkMutation,
+    updateWorkMutation,
+    handleOpenUpdateDialog,
+    handleCloseUpdateDialog,
+    handleUpdateSubmit,
+    setActiveTab,
+  } = useWorkDialogs({
+    userId: user?.id ?? "",
+    worksData,
+    refetchWorks: refetch,
+    isAuthorPage: true, // Đặt là true vì đây là trang của tác giả
   });
 
   // Lấy thông tin đồng tác giả khi có dữ liệu công trình
@@ -248,167 +116,6 @@ export default function WorksPage() {
     }
   }, [worksError]);
 
-  // Handle form dialog
-  const [selectedWork, setSelectedWork] = useState<Work | null>(null);
-
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
-  const handleOpenFormDialog = (work?: Work) => {
-    if (work) {
-      // Lấy userId từ localStorage hoặc context auth
-      const currentUserId = localStorage.getItem("userId") || "";
-      
-      // Lấy thông tin tác giả từ authors[0] hoặc author
-      const authorInfo = work.authors && work.authors.length > 0 
-        ? {
-            authorRoleId: work.authors[0].authorRoleId,
-            purposeId: work.authors[0].purposeId,
-            position: work.authors[0].position || 1,
-            scoreLevel: work.authors[0].scoreLevel,
-            scImagoFieldId: work.authors[0].scImagoFieldId || "",
-            fieldId: work.authors[0].fieldId || "",
-          }
-        : work.author || {
-            authorRoleId: "",
-            purposeId: "",
-            position: 1,
-            scoreLevel: undefined,
-            scImagoFieldId: "",
-            fieldId: "",
-          };
-
-      // Đảm bảo tất cả các trường cần thiết có giá trị
-      const workWithDefaults = {
-        ...work,
-        details: work.details || {},
-        totalAuthors: work.totalAuthors || 1,
-        totalMainAuthors: work.totalMainAuthors || 1,
-        author: authorInfo,
-        // Lọc người dùng hiện tại khỏi đồng tác giả - đảm bảo so sánh đúng kiểu dữ liệu
-        coAuthorUserIds: Array.isArray(work.coAuthorUserIds) 
-          ? work.coAuthorUserIds
-              .filter(id => {
-                return id.toString() !== currentUserId;
-              })
-              .map(id => id.toString())
-          : []
-      };
-      
-      setSelectedWork(workWithDefaults);
-    } else {
-      setSelectedWork(null);
-    }
-    setActiveTab(0);
-    setOpenFormDialog(true);
-  };
-
-  const handleCloseFormDialog = () => {
-    setSelectedWork(null);
-    setOpenFormDialog(false);
-  };
-
-  // Hàm kiểm tra tính hợp lệ của dữ liệu trước khi gửi
-  const validateWorkData = (data: any): string[] => {
-    // Danh sách lỗi
-    const errors: string[] = [];
-    
-    // Kiểm tra các trường bắt buộc
-    if (!data.title || data.title.trim() === "") {
-      errors.push("Tiêu đề không được để trống");
-    }
-    
-    if (!data.workTypeId) {
-      errors.push("Vui lòng chọn loại công trình");
-    }
-
-    // Kiểm tra thông tin tác giả
-    if (!data.author) {
-      errors.push("Thông tin tác giả là bắt buộc");
-    } else {
-      if (!data.author.authorRoleId) {
-        errors.push("Vai trò tác giả là bắt buộc");
-      }
-      
-      if (!data.author.purposeId) {
-        errors.push("Mục đích là bắt buộc");
-      }
-    }
-    
-    return errors;
-  };
-
-  const handleSubmit = async (data: any) => {
-    try {
-      // Kiểm tra dữ liệu trước khi gửi
-      const validationErrors = validateWorkData(data);
-      if (validationErrors.length > 0) {
-        // Hiển thị lỗi và dừng việc gửi dữ liệu
-        toast.error("Dữ liệu không hợp lệ: " + validationErrors.join(", "));
-        return;
-      }
-      
-      // Xử lý ngày tháng - đảm bảo định dạng đúng cho server
-      let formattedDate: string | undefined = undefined;
-      if (data.timePublished) {
-        try {
-          // Chuyển đổi sang định dạng ISO cho timePublished
-          const date = new Date(data.timePublished);
-          // Sử dụng định dạng yyyy-MM-dd theo quy định của server
-          formattedDate = date.toISOString().split('T')[0]; 
-        } catch (err) {
-          console.error("Lỗi khi chuyển đổi ngày tháng:", err);
-        }
-      }
-      
-      // Xử lý tham số scImagoFieldId - đảm bảo đúng format (viết hoa chữ I)
-      const scImagoFieldId = data.author.sCImagoFieldId || data.author.scImagoFieldId;
-      
-      // Đảm bảo coAuthorUserIds là một mảng và không chứa giá trị undefined/null
-      const coAuthorUserIds = Array.isArray(data.coAuthorUserIds) 
-        ? data.coAuthorUserIds.filter(id => id) 
-        : [];
-      
-      // Xử lý dữ liệu trước khi gửi - đảm bảo coAuthorUserIds nằm TRONG workRequest
-      const formattedData = {
-        workRequest: {
-          title: data.title?.trim(),
-          timePublished: formattedDate,
-          totalAuthors: data.totalAuthors ? Number(data.totalAuthors) : undefined,
-          totalMainAuthors: data.totalMainAuthors ? Number(data.totalMainAuthors) : undefined,
-          source: Number(data.source),
-          workTypeId: data.workTypeId,
-          workLevelId: data.workLevelId || null,
-          details: data.details || {},
-          coAuthorUserIds: coAuthorUserIds // QUAN TRỌNG: coAuthorUserIds phải nằm trong workRequest
-        },
-        authorRequest: {
-          authorRoleId: data.author.authorRoleId || null,
-          purposeId: data.author.purposeId,
-          position: data.author.position ? parseInt(String(data.author.position)) : undefined,
-          scoreLevel: data.author.scoreLevel ? Number(data.author.scoreLevel) : null,
-          scImagoFieldId: scImagoFieldId ? String(scImagoFieldId) : null,
-          fieldId: data.author.fieldId ? String(data.author.fieldId) : undefined
-        }
-      };
-            
-      if (selectedWork?.id) {
-        const response = await updateMutation.mutateAsync({ workId: selectedWork.id, data: formattedData });
-        console.log("Phản hồi từ API sau khi cập nhật:", response);
-        console.log("coAuthorUserIds trả về:", response.data?.coAuthorUserIds);
-        
-        queryClient.removeQueries({ queryKey: ['works', 'my-works'] });
-        queryClient.removeQueries({ queryKey: ['works', selectedWork.id] });
-        await queryClient.refetchQueries({ queryKey: ['works', 'my-works'] });
-      } else {
-        await createMutation.mutateAsync(formattedData);
-      }
-    } catch (error) {
-      toast.error("Có lỗi xảy ra khi gửi dữ liệu. Vui lòng kiểm tra lại thông tin.");
-    }
-  };
-
   // Handle delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -430,7 +137,7 @@ export default function WorksPage() {
       toast.success("Xóa công trình thành công!");
       
       // Xóa cache và refetch dữ liệu mới
-      queryClient.removeQueries({ queryKey: ["works", "my-works"] });
+      queryClient.invalidateQueries({ queryKey: ["works", "my-works"] });
       
       // Bắt buộc refetch dữ liệu ngay lập tức
       setTimeout(() => {
@@ -451,6 +158,60 @@ export default function WorksPage() {
       } catch (error) {
         // Lỗi đã được xử lý trong onError của mutation
       }
+    }
+  };
+
+  // Thêm mutation cho việc xuất Excel
+  const exportMutation = useMutation({
+    mutationFn: exportWorks,
+    onSuccess: (data) => {
+      // Tạo URL từ Blob
+      const url = window.URL.createObjectURL(data);
+      
+      // Tạo thẻ a ẩn để tải file
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Tạo tên file với timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      link.download = `KeKhaiCongTrinh_${timestamp}.xlsx`;
+      
+      // Thêm link vào document, click và xóa
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Giải phóng URL
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Xuất Excel thành công!");
+    },
+    onError: (error: any) => {
+      console.error("Lỗi khi xuất Excel:", error);
+      let errorMessage = "Đã có lỗi xảy ra";
+      
+      if (error.message === "Bạn chưa đăng nhập") {
+        errorMessage = "Vui lòng đăng nhập lại để tiếp tục";
+      } else if (error.response?.data?.message) {
+        // Nếu có message từ API
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        // Nếu có message từ axios
+        errorMessage = error.message;
+      }
+      
+      toast.error(`Lỗi khi xuất Excel: ${errorMessage}`);
+    },
+  });
+
+  // Hàm xử lý sự kiện xuất Excel
+  const handleExport = async () => {
+    try {
+      console.log("Bắt đầu xuất Excel");
+      await exportMutation.mutateAsync();
+    } catch (error) {
+      // Lỗi đã được xử lý trong onError của mutation
+      console.error("Lỗi khi xuất Excel:", error);
     }
   };
 
@@ -478,20 +239,14 @@ export default function WorksPage() {
       width: 150,
       renderCell: (params: any) => {
         if (!params.value) return <div>-</div>;
-        try {
-          // Hiển thị giá trị gốc nếu không thể chuyển đổi
-          const formattedDate = format(new Date(params.value), "dd/MM/yyyy", { locale: vi });
-          return <div>{formattedDate}</div>;
-        } catch (error) {
-          return <div>{params.value}</div>;
-        }
+        return <div>{formatMonthYear(params.value)}</div>;
       },
     },
     {
       field: "workTypeName",
       headerName: "Loại công trình",
       type: "string",
-      width: 150,
+      width: 170,
     },
     {
       field: "workLevelName",
@@ -639,7 +394,7 @@ export default function WorksPage() {
       field: "scoreLevel",
       headerName: "Mức điểm",
       type: "string",
-      width: 120,
+      width: 150,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
         if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
@@ -754,9 +509,9 @@ export default function WorksPage() {
             variant="contained"
             color="primary"
             size="small"
-            onClick={() => handleOpenFormDialog(params.row)}
+            onClick={() => handleOpenUpdateDialog(params.row)}
             sx={{ marginRight: 1 }}
-            disabled={updateMutation.isPending}
+            disabled={updateWorkMutation.isPending}
           >
             Sửa
           </Button>
@@ -780,15 +535,26 @@ export default function WorksPage() {
   return (
     <Container maxWidth="xl">
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h4">Danh sách công trình</Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={() => handleOpenFormDialog()} 
-          startIcon={<AddIcon />}
-        >
-          Thêm công trình
-        </Button>
+        <Typography variant="h6">Danh sách công trình</Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleExport}
+            startIcon={<FileDownloadIcon />}
+            disabled={exportMutation.isPending}
+          >
+            {exportMutation.isPending ? <CircularProgress size={24} /> : "Xuất Excel"}
+          </Button>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={() => handleOpenUpdateDialog(undefined as any)} 
+            startIcon={<AddIcon />}
+          >
+            Thêm công trình
+          </Button>
+        </Box>
       </Box>
 
       {isLoadingWorks ? (
@@ -799,49 +565,22 @@ export default function WorksPage() {
         <GenericTable columns={columns} data={worksData.data || []} />
       )}
 
-      {/* Form Dialog */}
-      <Dialog 
-        open={openFormDialog} 
-        onClose={handleCloseFormDialog}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>
-          {selectedWork ? "Cập nhật công trình" : "Thêm công trình mới"}
-        </DialogTitle>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
-          <Tabs value={activeTab} onChange={handleTabChange} aria-label="form tabs">
-            <Tab label="Thông tin công trình" id="tab-0" />
-            <Tab label="Thông tin tác giả" id="tab-1" />
-          </Tabs>
-        </Box>
-        <DialogContent>
-          {(workTypesData?.data && workLevelsData?.data && authorRolesData?.data && 
-            purposesData?.data && scimagoFieldsData?.data && fieldsData?.data) ? (
-            <WorkForm
-              initialData={selectedWork}
-              onSubmit={handleSubmit}
-              isLoading={createMutation.isPending || updateMutation.isPending}
-              workTypes={workTypesData.data}
-              workLevels={workLevelsData.data}
-              authorRoles={authorRolesData.data}
-              purposes={purposesData.data}
-              scimagoFields={scimagoFieldsData.data}
-              fields={fieldsData.data}
-              activeTab={activeTab}
-            />
-          ) : (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-              <CircularProgress />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseFormDialog} color="inherit">
-            Đóng
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Sử dụng component dialog tái sử dụng */}
+      <WorkUpdateDialog
+        open={openUpdateDialog}
+        onClose={handleCloseUpdateDialog}
+        selectedWork={selectedWork}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onSubmit={handleUpdateSubmit}
+        isPending={createWorkMutation.isPending || updateWorkMutation.isPending}
+        workTypes={formData.workTypes}
+        workLevels={formData.workLevels}
+        authorRoles={formData.authorRoles}
+        purposes={formData.purposes}
+        scimagoFields={formData.scimagoFields}
+        fields={formData.fields}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>

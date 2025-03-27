@@ -1,5 +1,6 @@
 import { ApiResponse } from "../types/common/ApiResponse";
 import { User } from "../types/models/User";
+import { UserConversionResult } from "../types/models/UserConversionResult";
 import apiClient from "./api";
 
 export const searchUsers = async (searchTerm: string): Promise<ApiResponse<User[]>> => {
@@ -34,5 +35,10 @@ export const deleteUser = async (userId: string): Promise<ApiResponse<User>> => 
 
 export const getUsersByDepartmentId = async (departmentId: string): Promise<ApiResponse<User[]>> => {
   const response = await apiClient.get<ApiResponse<User[]>>(`/users/department/${departmentId}`);
+  return response.data;
+}; 
+
+export const getUserConversionResult = async (userId: string): Promise<ApiResponse<UserConversionResult>> => {
+  const response = await apiClient.get<ApiResponse<UserConversionResult>>(`/users/conversionresult/${userId}`);
   return response.data;
 }; 

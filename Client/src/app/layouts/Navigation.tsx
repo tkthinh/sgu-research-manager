@@ -7,9 +7,7 @@ import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RateReviewIcon from '@mui/icons-material/RateReview';
-import RestorePageIcon from '@mui/icons-material/RestorePage';
 import LibraryAddCheckIcon from '@mui/icons-material/LibraryAddCheck';
-import GroupIcon from '@mui/icons-material/Group';
 
 // Navigation for "User" role
 export const NAVIGATION_USER: Navigation = [
@@ -63,11 +61,6 @@ export const NAVIGATION_MANAGER: Navigation = [
     icon: <RateReviewIcon />,
   },
   {
-    segment: 'danh-sach-nguoi-dung',
-    title: 'Danh sách người dùng',
-    icon: <GroupIcon />,
-  },
-  {
     kind: "header",
     title: "Báo cáo",
   },
@@ -111,11 +104,6 @@ export const NAVIGATION_ADMIN: Navigation = [
     segment: "phan-cong",
     title: "Phân công chấm điểm",
     icon: <AssignmentIndIcon />,
-  },
-  {
-    segment: 'danh-sach-nguoi-dung',
-    title: 'Danh sách người dùng',
-    icon: <GroupIcon />,
   },
   {
     kind: "header",

@@ -1,27 +1,43 @@
 import { ProofStatus } from "../enums/ProofStatus";
-import { ScoreLevel } from "../enums/ScoreLevel";
-
 export interface Author {
   id: string;
   workId: string;
   userId: string;
   authorRoleId: string;
+  authorRoleName: string;
   purposeId: string;
-  scimagoFieldId?: string;
+  purposeName: string;
+  scImagoFieldId?: string;
+  scImagoFieldName?: string;
   fieldId?: string;
+  fieldName?: string;
   position?: number;
-  scoreLevel?: ScoreLevel;
-  authorHour: number;
-  workHour: number;
+  scoreLevel?: number;
+  authorHour?: number;
+  workHour?: number;
   markedForScoring: boolean;
   proofStatus: ProofStatus;
-  note?: string;
-  // Navigation properties
-  fieldName?: string;
-  scimagoFieldName?: string;
-  userName?: string;
-  authorRoleName?: string;
-  purposeName?: string;
+  note?: string | null;
   createdDate: string;
-  modifiedDate: string | null;
-} 
+  modifiedDate?: string | null;
+}
+
+export interface UpdateAuthorRequest {
+  authorRoleId?: string;
+  purposeId?: string;
+  position?: number;
+  scoreLevel?: number;
+  proofStatus?: ProofStatus;
+  note?: string;
+  scImagoFieldId?: string;
+  fieldId?: string;
+}
+
+export interface CreateAuthorRequest {
+  authorRoleId?: string;
+  purposeId: string;
+  position?: number;
+  scoreLevel?: number;
+  scImagoFieldId?: string;
+  fieldId?: string;
+}

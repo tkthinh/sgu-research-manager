@@ -10,10 +10,7 @@ using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 using System.Globalization;
 using System.Data;
-using System.IO;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
+using System.Linq.Expressions;
 
 namespace Application.Works
 {
@@ -27,6 +24,7 @@ namespace Application.Works
         private readonly IWorkRepository _workRepository;
         private readonly ISystemConfigService _systemConfigService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IUserRepository _userRepository;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -36,7 +34,8 @@ namespace Application.Works
             ILogger<WorkService> logger,
             IWorkRepository workRepository,
             ISystemConfigService systemConfigService,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IUserRepository userRepository)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
@@ -47,6 +46,7 @@ namespace Application.Works
             _workRepository = workRepository;
             _systemConfigService = systemConfigService;
             _httpContextAccessor = httpContextAccessor;
+            _userRepository = userRepository;
         }
 
         public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
@@ -95,12 +95,14 @@ namespace Application.Works
                 CreatedDate = DateTime.UtcNow
             };
 
-            var factor = (await _factorRepository.FindAsync(f =>
-                f.WorkTypeId == work.WorkTypeId &&
-                f.WorkLevelId == work.WorkLevelId &&
-                f.PurposeId == request.Author.PurposeId &&
-                f.ScoreLevel == request.Author.ScoreLevel))
-                .FirstOrDefault();
+            var factor = await FindFactorAsync(
+                work.WorkTypeId,
+                work.WorkLevelId,
+                request.Author.PurposeId,
+                request.Author.AuthorRoleId,
+                request.Author.ScoreLevel,
+                cancellationToken);
+
             if (factor == null)
                 throw new Exception(ErrorMessages.FactorNotFound);
 
@@ -236,46 +238,58 @@ namespace Application.Works
             // Nếu đánh dấu công trình, kiểm tra giới hạn
             if (marked)
             {
-                // Thay vì thực hiện song song, chúng ta sẽ thực hiện tuần tự để tránh xung đột DbContext
-                
-                // 1. Lấy Factor để xác định MaxAllowed
+                // 1. Tìm Factor phù hợp nhất
                 var factors = await _factorRepository.FindAsync(f =>
                     f.WorkTypeId == work.WorkTypeId &&
-                    f.WorkLevelId == work.WorkLevelId &&
+                    ((work.WorkLevelId == null && f.WorkLevelId == null) || (work.WorkLevelId != null && f.WorkLevelId == work.WorkLevelId)) &&
+                    f.PurposeId == author.PurposeId &&
+                    f.AuthorRoleId == author.AuthorRoleId &&
                     f.ScoreLevel == author.ScoreLevel);
+
                 var factor = factors.FirstOrDefault();
-                
-                // 2. Đếm số lượng công trình đã được đánh dấu
+
+                if (factor == null)
+                {
+                    // Thử tìm factor không phụ thuộc AuthorRoleId
+                    factors = await _factorRepository.FindAsync(f =>
+                        f.WorkTypeId == work.WorkTypeId &&
+                        ((work.WorkLevelId == null && f.WorkLevelId == null) || (work.WorkLevelId != null && f.WorkLevelId == work.WorkLevelId)) &&
+                        f.PurposeId == author.PurposeId &&
+                        f.AuthorRoleId == null &&
+                        f.ScoreLevel == author.ScoreLevel);
+                    factor = factors.FirstOrDefault();
+                }
+
+                // 2. Đếm số lượng công trình đã được đánh dấu với cùng điều kiện
                 var markedAuthors = await _unitOfWork.Repository<Author>().FindAsync(a =>
                     a.UserId == author.UserId &&
-                                       a.MarkedForScoring &&
-                                       a.ScoreLevel == author.ScoreLevel);
+                    a.MarkedForScoring &&
+                    a.PurposeId == author.PurposeId &&
+                    a.ScoreLevel == author.ScoreLevel);
 
-                // 3. Lấy thông tin WorkType (nếu cần)
-                    var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
-                
-                // 4. Lấy thông tin WorkLevel (nếu cần)
+                // 3. Lấy thông tin WorkType và WorkLevel để hiển thị thông báo lỗi
+                var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
                 WorkLevel? workLevel = null;
                 if (work.WorkLevelId.HasValue)
                 {
                     workLevel = await _unitOfWork.Repository<WorkLevel>().GetByIdAsync(work.WorkLevelId.Value);
                 }
-                
-                // Xác định MaxAllowed
-                int maxAllowed = 1; // Giá trị mặc định
-                if (factor is not null && factor.MaxAllowed.HasValue)
-                {
-                    maxAllowed = factor.MaxAllowed.Value;
-                }
 
-                // Kiểm tra giới hạn
-                if (markedAuthors.Count() >= maxAllowed)
+                // 4. Kiểm tra giới hạn nếu có MaxAllowed
+                if (factor?.MaxAllowed != null)
                 {
-                    var workTypeInfo = workType?.Name ?? "Không xác định";
-                    var workLevelInfo = workLevel?.Name ?? "Không xác định";
-                    var scoreLevelInfo = author.ScoreLevel.HasValue ? author.ScoreLevel.ToString() : "Không xác định";
+                    if (markedAuthors.Count() >= factor.MaxAllowed)
+                    {
+                        var workTypeInfo = workType?.Name ?? "Không xác định";
+                        var workLevelInfo = workLevel?.Name ?? "Không xác định";
+                        var scoreLevelInfo = author.ScoreLevel.HasValue ? author.ScoreLevel.ToString() : "Không xác định";
 
-                    throw new Exception(string.Format(ErrorMessages.ScoreLimitExceeded, maxAllowed, workTypeInfo, workLevelInfo, scoreLevelInfo));
+                        throw new Exception(string.Format(ErrorMessages.ScoreLimitExceeded,
+                            factor.MaxAllowed,
+                            workTypeInfo,
+                            workLevelInfo,
+                            scoreLevelInfo));
+                    }
                 }
             }
 
@@ -286,8 +300,7 @@ namespace Application.Works
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await SafeInvalidateCacheAsync(author.WorkId);
         }
-
-        public async Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkByAdminRequestDto request, CancellationToken cancellationToken = default)
+        public async Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken = default)
         {
             // Truy vấn tuần tự để tránh xung đột DbContext
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
@@ -337,7 +350,7 @@ namespace Application.Works
         private async Task UpdateAuthorDetailsByAdminAsync(
             Author author, 
             Work work, 
-            UpdateAuthorByAdminRequestDto authorRequest, 
+            UpdateAuthorRequestDto authorRequest, 
             UpdateWorkRequestDto? workRequest,
             CancellationToken cancellationToken)
         {
@@ -356,7 +369,7 @@ namespace Application.Works
             author.ModifiedDate = DateTime.UtcNow;
         }
 
-        private void UpdateAuthorBasicProperties(Author author, UpdateAuthorByAdminRequestDto authorRequest)
+        private void UpdateAuthorBasicProperties(Author author, UpdateAuthorRequestDto authorRequest)
         {
             author.AuthorRoleId = authorRequest.AuthorRoleId ?? author.AuthorRoleId;
             author.PurposeId = authorRequest.PurposeId ?? author.PurposeId;
@@ -366,40 +379,60 @@ namespace Application.Works
             author.FieldId = authorRequest.FieldId ?? author.FieldId;
         }
 
-        private bool ShouldRecalculateAuthorHours(UpdateAuthorByAdminRequestDto authorRequest, UpdateWorkRequestDto? workRequest)
+        private bool ShouldRecalculateAuthorHours(UpdateAuthorRequestDto authorRequest, UpdateWorkRequestDto? workRequest)
         {
             return authorRequest.ScoreLevel.HasValue ||
                 (workRequest is not null && (workRequest.TotalAuthors.HasValue || workRequest.TotalMainAuthors.HasValue));
         }
 
         private async Task UpdateAuthorHoursAsync(
-            Author author, 
-            Work work, 
-            ScoreLevel? newScoreLevel, 
+            Author author,
+            Work work,
+            ScoreLevel? newScoreLevel,
             UpdateWorkRequestDto? workRequest,
             CancellationToken cancellationToken)
         {
             var effectiveScoreLevel = newScoreLevel ?? author.ScoreLevel;
-            
-                    var factor = (await _factorRepository.FindAsync(f =>
-                        f.WorkTypeId == work.WorkTypeId &&
-                        f.WorkLevelId == work.WorkLevelId &&
-                        f.PurposeId == author.PurposeId &&
-                f.ScoreLevel == effectiveScoreLevel))
-                        .FirstOrDefault();
+
+            // Ghi log thông tin trước khi tính toán
+            logger.LogInformation(
+                "UpdateAuthorHoursAsync - Bắt đầu tính giờ quy đổi: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
+                work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, effectiveScoreLevel);
+
+            // Sử dụng phương thức mới để tìm factor
+            var factor = await FindFactorAsync(
+                work.WorkTypeId,
+                work.WorkLevelId,
+                author.PurposeId,
+                author.AuthorRoleId,
+                effectiveScoreLevel,
+                cancellationToken);
 
             if (factor is null)
+            {
+                logger.LogError("UpdateAuthorHoursAsync - Không tìm thấy Factor phù hợp");
                 throw new Exception(ErrorMessages.FactorNotFound);
+            }
 
+            // Tính toán WorkHour và AuthorHour
             author.WorkHour = CalculateWorkHour(effectiveScoreLevel, factor);
-                    author.AuthorHour = await CalculateAuthorHour(
-                        author.WorkHour,
-                workRequest?.TotalAuthors ?? work.TotalAuthors ?? 0,
-                workRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0,
-                        author.AuthorRoleId);
-                }
+            
+            // Sử dụng các giá trị từ workRequest nếu có, nếu không thì dùng các giá trị từ work
+            int totalAuthors = workRequest?.TotalAuthors ?? work.TotalAuthors ?? 0;
+            int totalMainAuthors = workRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0;
+            
+            author.AuthorHour = await CalculateAuthorHour(
+                author.WorkHour,
+                totalAuthors,
+                totalMainAuthors,
+                author.AuthorRoleId);
+                
+            logger.LogInformation(
+                "UpdateAuthorHoursAsync - Kết quả: Factor.ConvertHour={ConvertHour}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, TotalAuthors={TotalAuthors}, TotalMainAuthors={TotalMainAuthors}",
+                factor.ConvertHour, author.WorkHour, author.AuthorHour, totalAuthors, totalMainAuthors);
+        }
 
-        private void UpdateAuthorProofStatus(Author author, UpdateAuthorByAdminRequestDto authorRequest)
+        private void UpdateAuthorProofStatus(Author author, UpdateAuthorRequestDto authorRequest)
         {
             if (authorRequest.ProofStatus.HasValue)
             {
@@ -408,7 +441,7 @@ namespace Application.Works
             }
         }
 
-        public async Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkByAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
+        public async Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkWithAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
         {
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
             if (work is null)
@@ -503,9 +536,7 @@ namespace Application.Works
             try {
                 // Đảm bảo newCoAuthorUserIds không bao gồm currentUserId
                 newCoAuthorUserIds = newCoAuthorUserIds.Where(id => id != currentUserId).Distinct().ToList();
-                
-                logger.LogInformation("UpdateCoAuthorsAsync - Work {WorkId}: Processing {Count} new coauthors: {NewCoauthors}", 
-                    work.Id, newCoAuthorUserIds.Count, string.Join(", ", newCoAuthorUserIds));
+
 
                 // Lấy tất cả WorkAuthor hiện có của công trình
                 var existingWorkAuthors = await _unitOfWork.Repository<WorkAuthor>()
@@ -520,22 +551,9 @@ namespace Application.Works
                 // Tổng hợp tất cả User IDs hiện có (từ cả WorkAuthor và Author)
                 var allExistingUserIds = existingCoAuthorIds.Union(existingAuthorUserIds).Distinct().ToList();
 
-                logger.LogInformation("Existing WorkAuthors: {Count} users - {ExistingIds}", 
-                    existingCoAuthorIds.Count, string.Join(", ", existingCoAuthorIds));
-                logger.LogInformation("Existing Authors: {Count} users - {ExistingAuthorIds}", 
-                    existingAuthorUserIds.Count, string.Join(", ", existingAuthorUserIds));
-                logger.LogInformation("Combined existing: {Count} users - {AllExistingUserIds}", 
-                    allExistingUserIds.Count, string.Join(", ", allExistingUserIds));
-
                 // 1. Xóa các WorkAuthor không còn trong danh sách mới
                 var workAuthorsToRemove = existingWorkAuthors.Where(wa => 
                     wa.UserId != currentUserId && !newCoAuthorUserIds.Contains(wa.UserId)).ToList();
-                
-                foreach (var wAuthor in workAuthorsToRemove)
-                {
-                    logger.LogInformation("Removing WorkAuthor with UserId: {UserId}", wAuthor.UserId);
-                    work.WorkAuthors.Remove(wAuthor);
-                }
 
                 // 2. Xóa các Author không còn trong danh sách mới
                 // * Quan trọng: Không xóa Author của người dùng hiện tại (currentUserId)
@@ -552,9 +570,6 @@ namespace Application.Works
                 // Tìm các userId cần thêm mới: những userId có trong newCoAuthorUserIds nhưng không có trong allExistingUserIds
                 var userIdsToAdd = newCoAuthorUserIds.Where(id => 
                     !allExistingUserIds.Contains(id) && id != currentUserId).ToList();
-                
-                logger.LogInformation("UserIds to add as new coauthors: {Count} users - {UserIdsToAdd}", 
-                    userIdsToAdd.Count, string.Join(", ", userIdsToAdd));
 
                 // Thêm các đồng tác giả mới
                 foreach (var coAuthorId in userIdsToAdd)
@@ -567,7 +582,6 @@ namespace Application.Works
                             WorkId = work.Id,
                             UserId = coAuthorId
                         };
-                        logger.LogInformation("Creating WorkAuthor for UserId: {UserId}", coAuthorId);
                         await _unitOfWork.Repository<WorkAuthor>().CreateAsync(workAuthor);
                         
                         // Thêm vào danh sách WorkAuthors của đối tượng Work
@@ -606,13 +620,13 @@ namespace Application.Works
             work.TotalAuthors = workRequest.TotalAuthors ?? work.TotalAuthors;
             work.TotalMainAuthors = workRequest.TotalMainAuthors ?? work.TotalMainAuthors;
             work.Details = workRequest.Details ?? work.Details;
-                work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
+            work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
-                work.ModifiedDate = DateTime.UtcNow;
-            }
+            work.ModifiedDate = DateTime.UtcNow;
+        }
 
-        private async Task<Author> GetOrCreateAuthorAsync(Work work, Guid userId, UpdateWorkByAuthorRequestDto request, CancellationToken cancellationToken)
+        private async Task<Author> GetOrCreateAuthorAsync(Work work, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken)
         {
             var author = await _unitOfWork.Repository<Author>()
                 .FirstOrDefaultAsync(a => a.WorkId == work.Id && a.UserId == userId, cancellationToken);
@@ -631,97 +645,171 @@ namespace Application.Works
             return author;
         }
 
-        private async Task<Author> CreateNewAuthorAsync(Work work, Guid userId, UpdateWorkByAuthorRequestDto request, CancellationToken cancellationToken)
+        private async Task<Author> CreateNewAuthorAsync(Work work, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken)
         {
             if (request.AuthorRequest is null)
             {
                 throw new Exception(ErrorMessages.AuthorInfoRequired);
-                }
+            }
 
-                // Tính toán WorkHour và AuthorHour cho tác giả mới
-            var factor = await FindFactorAsync(work.WorkTypeId, work.WorkLevelId, request.AuthorRequest.PurposeId, request.AuthorRequest.ScoreLevel, cancellationToken);
-
-                var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
-                var authorHour = await CalculateAuthorHour(
-                    workHour,
-                    work.TotalAuthors ?? 0,
-                    work.TotalMainAuthors ?? 0,
-                    request.AuthorRequest.AuthorRoleId);
-
-                // Tạo mới thông tin tác giả
-            return new Author
-                {
-                    UserId = userId,
-                WorkId = work.Id,
-                    AuthorRoleId = request.AuthorRequest.AuthorRoleId,
-                    PurposeId = request.AuthorRequest.PurposeId,
-                    Position = request.AuthorRequest.Position,
-                    ScoreLevel = request.AuthorRequest.ScoreLevel,
-                    WorkHour = workHour,
-                    AuthorHour = authorHour,
-                SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
-                FieldId = request.AuthorRequest.FieldId,
-                    ProofStatus = ProofStatus.ChuaXuLy,
-                    CreatedDate = DateTime.UtcNow
-                };
-        }
-
-        private async Task<Factor> FindFactorAsync(Guid workTypeId, Guid? workLevelId, Guid purposeId, ScoreLevel? scoreLevel, CancellationToken cancellationToken)
-        {
-            var factor = await _factorRepository.FirstOrDefaultAsync(f =>
-                f.WorkTypeId == workTypeId &&
-                f.WorkLevelId == workLevelId &&
-                f.PurposeId == purposeId &&
-                f.ScoreLevel == scoreLevel, cancellationToken);
+            // Tính toán WorkHour và AuthorHour cho tác giả mới
+            var factor = await FindFactorAsync(
+                work.WorkTypeId,
+                work.WorkLevelId,
+                request.AuthorRequest.PurposeId ?? Guid.Empty,
+                request.AuthorRequest.AuthorRoleId,
+                request.AuthorRequest.ScoreLevel,
+                cancellationToken);
 
             if (factor is null)
                 throw new Exception(ErrorMessages.FactorNotFound);
 
+            var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
+            var authorHour = await CalculateAuthorHour(
+                workHour,
+                work.TotalAuthors ?? 0,
+                work.TotalMainAuthors ?? 0,
+                request.AuthorRequest.AuthorRoleId);
+
+            // Tạo mới thông tin tác giả
+            return new Author
+            {
+                UserId = userId,
+                WorkId = work.Id,
+                AuthorRoleId = request.AuthorRequest.AuthorRoleId,
+                PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty,
+                Position = request.AuthorRequest.Position,
+                ScoreLevel = request.AuthorRequest.ScoreLevel,
+                WorkHour = workHour,
+                AuthorHour = authorHour,
+                SCImagoFieldId = request.AuthorRequest.SCImagoFieldId,
+                FieldId = request.AuthorRequest.FieldId,
+                ProofStatus = ProofStatus.ChuaXuLy,
+                CreatedDate = DateTime.UtcNow
+            };
+        }
+
+        private async Task<Factor> FindFactorAsync(Guid workTypeId, Guid? workLevelId, Guid purposeId, Guid? authorRoleId, ScoreLevel? scoreLevel, CancellationToken cancellationToken = default)
+        {
+            // Tìm kiếm chính xác theo tất cả điều kiện
+            var factors = await _factorRepository.FindAsync(f =>
+                f.WorkTypeId == workTypeId &&
+                // Xử lý WorkLevelId null
+                ((workLevelId == null && f.WorkLevelId == null) || (workLevelId != null && f.WorkLevelId == workLevelId)) &&
+                f.PurposeId == purposeId &&
+                // Xử lý AuthorRoleId null
+                ((authorRoleId == null && f.AuthorRoleId == null) || (authorRoleId != null && f.AuthorRoleId == authorRoleId)) &&
+                // Xử lý ScoreLevel null
+                ((scoreLevel == null && f.ScoreLevel == null) || (scoreLevel != null && f.ScoreLevel == scoreLevel)));
+
+            var factor = factors.FirstOrDefault();
+
+            // Nếu không tìm thấy và authorRoleId có giá trị, thử tìm với authorRoleId = null
+            if (factor == null && authorRoleId.HasValue)
+            {
+                factors = await _factorRepository.FindAsync(f =>
+                    f.WorkTypeId == workTypeId &&
+                    ((workLevelId == null && f.WorkLevelId == null) || (workLevelId != null && f.WorkLevelId == workLevelId)) &&
+                    f.PurposeId == purposeId &&
+                    f.AuthorRoleId == null &&
+                    ((scoreLevel == null && f.ScoreLevel == null) || (scoreLevel != null && f.ScoreLevel == scoreLevel)));
+
+                factor = factors.FirstOrDefault();
+            }
+
+            // Log thông tin debug
+            if (factor != null)
+            {
+                logger.LogInformation(
+                    "Tìm thấy Factor với WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}. ConvertHour={ConvertHour}",
+                    workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel, factor.ConvertHour);
+            }
+            else
+            {
+                logger.LogWarning(
+                    "Không tìm thấy Factor cho WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
+                    workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel);
+            }
+
             return factor;
         }
 
-        private async Task UpdateExistingAuthorAsync(Author author, Work work, UpdateWorkByAuthorRequestDto request, CancellationToken cancellationToken)
+        private async Task UpdateExistingAuthorAsync(Author author, Work work, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken)
         {
             // Cập nhật thông tin tác giả
             if (request.AuthorRequest is not null)
             {
+                // Ghi log trạng thái ban đầu
+                logger.LogInformation(
+                    "UpdateExistingAuthorAsync - Trạng thái ban đầu: AuthorId={AuthorId}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, ScoreLevel={ScoreLevel}",
+                    author.Id, author.WorkHour, author.AuthorHour, author.ScoreLevel);
+                
                 // AuthorRoleId và PurposeId là Guid không nullable, gán trực tiếp
-                    author.AuthorRoleId = request.AuthorRequest.AuthorRoleId;
-                    author.PurposeId = request.AuthorRequest.PurposeId;
+                author.AuthorRoleId = request.AuthorRequest.AuthorRoleId;
+                author.PurposeId = request.AuthorRequest.PurposeId ?? Guid.Empty;
+
+                author.Position = request.AuthorRequest.Position ?? author.Position;
                 
-                    author.Position = request.AuthorRequest.Position ?? author.Position;
-                    author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
-                
+                // Lưu trữ giá trị ScoreLevel ban đầu và mới để so sánh
+                var oldScoreLevel = author.ScoreLevel;
+                author.ScoreLevel = request.AuthorRequest.ScoreLevel ?? author.ScoreLevel;
+                var hasScoreLevelChanged = request.AuthorRequest.ScoreLevel.HasValue;
+
                 // SCImagoFieldId và FieldId là nullable Guid
                 author.SCImagoFieldId = request.AuthorRequest.SCImagoFieldId;
                 author.FieldId = request.AuthorRequest.FieldId;
 
-                // Tính lại WorkHour và AuthorHour nếu có thay đổi liên quan
-                bool shouldRecalculate = request.AuthorRequest.ScoreLevel.HasValue || 
+                // Tính lại WorkHour và AuthorHour khi có thay đổi liên quan
+                // Luôn tính toán lại nếu ScoreLevel thay đổi
+                bool shouldRecalculate = hasScoreLevelChanged ||
                     (request.WorkRequest is not null && (request.WorkRequest.TotalAuthors.HasValue || request.WorkRequest.TotalMainAuthors.HasValue));
-                    
+
                 if (shouldRecalculate)
                 {
-                    var factor = await _factorRepository.FirstOrDefaultAsync(f =>
-                            f.WorkTypeId == work.WorkTypeId &&
-                            f.WorkLevelId == work.WorkLevelId &&
-                            f.PurposeId == author.PurposeId &&
-                        f.ScoreLevel == author.ScoreLevel, cancellationToken);
+                    logger.LogInformation(
+                        "UpdateExistingAuthorAsync - Tính toán lại giờ quy đổi: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
+                        work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, author.ScoreLevel);
+                        
+                    var factor = await FindFactorAsync(
+                        work.WorkTypeId,
+                        work.WorkLevelId,
+                        author.PurposeId,
+                        author.AuthorRoleId,
+                        author.ScoreLevel,
+                        cancellationToken);
 
                     if (factor is null)
+                    {
+                        logger.LogError(
+                            "UpdateExistingAuthorAsync - Không tìm thấy Factor: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
+                            work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, author.ScoreLevel);
                         throw new Exception(ErrorMessages.FactorNotFound);
-
-                    author.WorkHour = CalculateWorkHour(author.ScoreLevel, factor);
-                        author.AuthorHour = await CalculateAuthorHour(
-                            author.WorkHour,
-                        work.TotalAuthors ?? 0,
-                        work.TotalMainAuthors ?? 0,
-                            author.AuthorRoleId);
                     }
 
-                author.ModifiedDate = DateTime.UtcNow;
+                    // Tính giờ quy đổi
+                    author.WorkHour = CalculateWorkHour(author.ScoreLevel, factor);
+                    author.AuthorHour = await CalculateAuthorHour(
+                        author.WorkHour,
+                        work.TotalAuthors ?? 0,
+                        work.TotalMainAuthors ?? 0,
+                        author.AuthorRoleId);
+                        
+                    logger.LogInformation(
+                        "UpdateExistingAuthorAsync - Kết quả tính toán: Factor.ConvertHour={ConvertHour}, WorkHour={WorkHour}, AuthorHour={AuthorHour}",
+                        factor.ConvertHour, author.WorkHour, author.AuthorHour);
                 }
+                else
+                {
+                    logger.LogInformation("UpdateExistingAuthorAsync - Không cần tính lại giờ quy đổi");
+                }
+
+                author.ModifiedDate = DateTime.UtcNow;
+                
+                logger.LogInformation(
+                    "UpdateExistingAuthorAsync - Trạng thái sau cập nhật: AuthorId={AuthorId}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, ScoreLevel={ScoreLevel}",
+                    author.Id, author.WorkHour, author.AuthorHour, author.ScoreLevel);
             }
+        }
 
         private async Task SaveChangesAsync(Work work, Author author, CancellationToken cancellationToken = default)
         {
@@ -788,14 +876,31 @@ namespace Application.Works
 
         private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
         {
-            // Kiểm tra nếu scoreLevel là null hoặc factor không hợp lệ
-            if (scoreLevel is null || factor is null)
+            // Nếu factor không tồn tại, trả về 0
+            if (factor is null)
             {
+                logger.LogWarning("CalculateWorkHour - Factor is null, returning 0");
                 return 0;
             }
-
-            // Chỉ tính giờ chuẩn khi mức điểm khớp với mức được cấu hình trong hệ số
-            return scoreLevel == factor.ScoreLevel ? factor.ConvertHour : 0;
+            
+            // Kiểm tra xem ScoreLevel có khớp không
+            if ((scoreLevel.HasValue != factor.ScoreLevel.HasValue) || 
+                (scoreLevel.HasValue && factor.ScoreLevel.HasValue && scoreLevel.Value != factor.ScoreLevel.Value))
+            {
+                logger.LogWarning("CalculateWorkHour - ScoreLevel mismatch: Request={RequestLevel}, Factor={FactorLevel}, nhưng vẫn trả về ConvertHour={ConvertHour}",
+                    scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null",
+                    factor.ScoreLevel.HasValue ? factor.ScoreLevel.Value.ToString() : "null",
+                    factor.ConvertHour);
+                    
+                // Vẫn trả về ConvertHour của Factor nếu Factor được tìm thấy
+                return factor.ConvertHour;
+            }
+            
+            // Nếu mọi thứ khớp hoặc cả hai đều null, trả về ConvertHour
+            logger.LogInformation("CalculateWorkHour - Returning ConvertHour={ConvertHour} cho ScoreLevel={ScoreLevel}", 
+                factor.ConvertHour, 
+                scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null");
+            return factor.ConvertHour;
         }
 
         private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid? authorRoleId, CancellationToken cancellationToken = default)
@@ -960,110 +1065,170 @@ namespace Application.Works
 
         public async Task<byte[]> ExportToExcelAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
         {
-            using (var package = new ExcelPackage())
+            // Thử tìm file template ở các vị trí khác nhau
+            string[] possiblePaths = new[]
             {
-                var worksheet = package.Workbook.Worksheets.Add("Kê khai công trình");
+                // Đường dẫn từ thư mục bin của WebApi
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "KeKhaiTemplate.xlsx"),
+                
+                // Đường dẫn từ thư mục gốc của Server project
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "KeKhaiTemplate.xlsx")),
+                
+                // Đường dẫn từ thư mục gốc của solution
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "KeKhaiTemplate.xlsx"))
+            };
 
-                // Định dạng tiêu đề
-                worksheet.Cells[1, 1].Value = "TRƯỜNG ĐẠI HỌC SÀI GÒN";
-                worksheet.Cells[1, 1, 1, 10].Merge = true;
-                worksheet.Cells[1, 12].Value = "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM";
-                worksheet.Cells[1, 12, 1, 18].Merge = true;
-                worksheet.Cells[2, 1].Value = "ĐƠN VỊ:";
-                worksheet.Cells[2, 1, 2, 10].Merge = true;
-                worksheet.Cells[2, 12].Value = "Độc lập - Tự do - Hạnh phúc";
-                worksheet.Cells[2, 12, 2, 18].Merge = true;
-                worksheet.Cells[3, 1].Value = "KÊ KHAI SẢN PHẨM, CÔNG TRÌNH CỦA HOẠT ĐỘNG KHOA HỌC CÔNG NGHỆ NĂM HỌC 2023-2024";
-                worksheet.Cells[3, 1, 3, 18].Merge = true;
+            string? templatePath = null;
+            foreach (var path in possiblePaths)
+            {
+                var normalizedPath = Path.GetFullPath(path);
+                logger.LogInformation("Đang thử tìm file template tại: {Path}", normalizedPath);
+                
+                if (File.Exists(normalizedPath))
+                {
+                    templatePath = normalizedPath;
+                    logger.LogInformation("Đã tìm thấy file template tại: {Path}", normalizedPath);
+                    break;
+                }
+            }
 
-                // Phần I: Thông tin tác giả
-                worksheet.Cells[5, 1].Value = "I. THÔNG TIN TÁC GIẢ";
-                worksheet.Cells[5, 1, 5, 18].Merge = true;
+            if (templatePath == null)
+            {
+                var errorMessage = $"Không tìm thấy file template Excel. Đã thử các đường dẫn sau:\n{string.Join("\n", possiblePaths.Select(p => Path.GetFullPath(p)))}";
+                logger.LogError(errorMessage);
+                throw new FileNotFoundException(errorMessage);
+            }
 
-                // Lấy thông tin cá nhân từ bản ghi đầu tiên (vì thông tin cá nhân giống nhau cho tất cả công trình)
+            using (var package = new ExcelPackage(new FileInfo(templatePath)))
+            {
+                var worksheet = package.Workbook.Worksheets[0]; // Lấy sheet đầu tiên
+
+                // Điền thông tin cá nhân từ bản ghi đầu tiên
                 var userInfo = exportData.FirstOrDefault();
                 if (userInfo is null)
                     throw new Exception(ErrorMessages.NoDataToExport);
 
-                worksheet.Cells[6, 1].Value = "1. Họ và tên:";
-                worksheet.Cells[6, 2].Value = userInfo.FullName;
-                worksheet.Cells[6, 5].Value = "4. Học hàm/học vị:";
-                worksheet.Cells[6, 6].Value = userInfo.AcademicTitle;
-                worksheet.Cells[6, 9].Value = "7. Mã số viên chức:";
-                worksheet.Cells[6, 10].Value = userInfo.UserName; // Dùng UserName làm mã số viên chức
+                // Điền thông tin cá nhân vào các ô tương ứng
+                worksheet.Cells["C2"].Value = userInfo.DepartmentName;
 
-                worksheet.Cells[7, 1].Value = "2. Ngành:";
-                worksheet.Cells[7, 2].Value = userInfo.DepartmentName;
-                worksheet.Cells[7, 5].Value = "5. Chuyên ngành:";
-                //worksheet.Cells[7, 6].Value = userInfo.MajorName;
-                worksheet.Cells[7, 9].Value = "8. Ngạch công chức:";
-                worksheet.Cells[7, 10].Value = userInfo.OfficerRank;
+                worksheet.Cells["B8"].Value = userInfo.FullName;
+                worksheet.Cells["B9"].Value = userInfo.FieldName;
+                worksheet.Cells["B10"].Value = userInfo.PhoneNumber;
 
-                worksheet.Cells[8, 1].Value = "3. Số điện thoại:";
-                //worksheet.Cells[8, 2].Value = userInfo.PhoneNumber;
-                worksheet.Cells[8, 5].Value = "6. Email:";
-                worksheet.Cells[8, 6].Value = userInfo.Email;
+                worksheet.Cells["E8"].Value = userInfo.AcademicTitle;
+                worksheet.Cells["E9"].Value = userInfo.Specialization;
+                worksheet.Cells["E10"].Value = userInfo.Email;
 
-                // Phần II: Thông tin công trình
-                worksheet.Cells[10, 1].Value = "II. THÔNG TIN CÔNG TRÌNH";
-                worksheet.Cells[10, 1, 10, 18].Merge = true;
+                worksheet.Cells["H8"].Value = userInfo.UserName;
+                worksheet.Cells["H9"].Value = userInfo.OfficerRank;
 
-                // Tiêu đề bảng
-                var headers = new[]
-                {
-            "STT", "Tên công trình", "Loại công trình", "Cấp công trình", "Thời điểm công bố/hoàn thành",
-            "Tổng số tác giả", "Tổng số tác giả chính", "Vị trí của tác giả", "Vai trò tác giả", "Đồng tác giả",
-            "Thông tin chi tiết của công trình", "Mục đích quy đổi", "Mức điểm của công trình", "Ngành theo SCImago",
-            "Ngành tính điểm", "Giờ chuẩn quy đổi", "Trạng thái", "Ghi chú"
-        };
-                for (int i = 0; i < headers.Length; i++)
-                {
-                    worksheet.Cells[11, i + 1].Value = headers[i];
-                }
+                // Điền dữ liệu công trình vào bảng
+                int startRow = 15; // Dòng bắt đầu của dữ liệu
+                int currentRow = startRow;
 
-                // Điền dữ liệu công trình
+                // Điền thông tin từng công trình
                 for (int i = 0; i < exportData.Count; i++)
                 {
                     var work = exportData[i];
-                    worksheet.Cells[i + 12, 1].Value = i + 1;
-                    worksheet.Cells[i + 12, 2].Value = work.Title;
-                    worksheet.Cells[i + 12, 3].Value = work.WorkTypeName;
-                    worksheet.Cells[i + 12, 4].Value = work.WorkLevelName;
-                    worksheet.Cells[i + 12, 5].Value = work.TimePublished.HasValue ? work.TimePublished.Value.ToString("dd/MM/yyyy") : "Không xác định";
-                    worksheet.Cells[i + 12, 6].Value = work.TotalAuthors;
-                    worksheet.Cells[i + 12, 7].Value = work.TotalMainAuthors;
-                    worksheet.Cells[i + 12, 8].Value = work.Position;
-                    worksheet.Cells[i + 12, 9].Value = work.AuthorRoleName;
-                    worksheet.Cells[i + 12, 10].Value = work.CoAuthorNames;
-                    worksheet.Cells[i + 12, 11].Value = work.Details != null ? string.Join("; ", work.Details.Select(kv => $"{kv.Key}: {kv.Value}")) : "Không xác định";
-                    worksheet.Cells[i + 12, 12].Value = work.PurposeName;
-                    worksheet.Cells[i + 12, 13].Value = work.ScoreLevel;
-                    worksheet.Cells[i + 12, 14].Value = work.SCImagoFieldName;
-                    worksheet.Cells[i + 12, 15].Value = work.ScoringFieldName;
-                    worksheet.Cells[i + 12, 16].Value = work.AuthorHour;
-                    worksheet.Cells[i + 12, 17].Value = work.ProofStatus?.ToString();
-                    worksheet.Cells[i + 12, 18].Value = work.Note;
+                    
+                    worksheet.Cells[currentRow, 1].Value = i + 1;
+                    worksheet.Cells[currentRow, 2].Value = work.Title;
+                    worksheet.Cells[currentRow, 3].Value = work.WorkTypeName;
+                    worksheet.Cells[currentRow, 4].Value = work.WorkLevelName ?? "";
+                    worksheet.Cells[currentRow, 5].Value = work.TimePublished.HasValue ? 
+                        $"{work.TimePublished.Value.Month:D2}/{work.TimePublished.Value.Year}" : 
+                        "";
+                    worksheet.Cells[currentRow, 6].Value = work.TotalAuthors.HasValue ? work.TotalAuthors.Value : "";
+                    worksheet.Cells[currentRow, 7].Value = work.TotalMainAuthors.HasValue ? work.TotalMainAuthors.Value : "";
+                    worksheet.Cells[currentRow, 8].Value = work.Position.HasValue ? work.Position.Value : "";
+                    worksheet.Cells[currentRow, 9].Value = work.AuthorRoleName ?? "";
+                    worksheet.Cells[currentRow, 10].Value = work.CoAuthorNames ?? "";
+                    worksheet.Cells[currentRow, 11].Value = work.Details != null && work.Details.Any() ? 
+                        string.Join("; ", work.Details.Select(kv => $"{kv.Key}: {kv.Value}")) : 
+                        "";
+                    worksheet.Cells[currentRow, 12].Value = work.PurposeName ?? "";
+
+                    // Xử lý hiển thị mức điểm
+                    string scoreLevelText = work.ScoreLevel switch
+                    {
+                        ScoreLevel.BaiBaoMotDiem => "Bài báo khoa học 1 điểm",
+                        ScoreLevel.BaiBaoNuaDiem => "Bài báo khoa học 0.5 điểm",
+                        ScoreLevel.BaiBaoKhongBayNamDiem => "Bài báo khoa học 0.75 điểm",
+                        ScoreLevel.BaiBaoTopMuoi => "Bài báo khoa học Top 10%",
+                        ScoreLevel.BaiBaoTopBaMuoi => "Bài báo khoa học Top 30%",
+                        ScoreLevel.BaiBaoTopNamMuoi => "Bài báo khoa học Top 50%",
+                        ScoreLevel.BaiBaoTopConLai => "Bài báo khoa học Top còn lại",
+
+                        ScoreLevel.HDSVDatGiaiNhat => "Hướng dẫn sinh viên đạt giải Nhất",
+                        ScoreLevel.HDSVDatGiaiNhi => "Hướng dẫn sinh viên đạt giải Nhì",
+                        ScoreLevel.HDSVDatGiaiBa => "Hướng dẫn sinh viên đạt giải Ba",
+                        ScoreLevel.HDSVDatGiaiKK => "Hướng dẫn sinh viên đạt giải Khuyến khích",
+                        ScoreLevel.HDSVConLai => "Hướng dẫn sinh viên đạt các giải còn lại",
+
+                        ScoreLevel.TacPhamNgheThuatCapTruong => "Tác phẩm nghệ thuật cấp Trường",
+                        ScoreLevel.TacPhamNgheThuatCapQuocGia => "Tác phẩm nghệ thuật cấp Quốc gia",
+                        ScoreLevel.TacPhamNgheThuatCapQuocTe => "Tác phẩm nghệ thuật cấp Quốc tế",
+                        ScoreLevel.TacPhamNgheThuatCapTinhThanhPho => "Tác phẩm nghệ thuật cấp Tỉnh/Thành phố",
+
+                        ScoreLevel.ThanhTichHuanLuyenCapQuocGia => "Thành tích huấn luyện cấp Quốc gia",
+                        ScoreLevel.ThanhTichHuanLuyenCapQuocTe => "Thành tích huấn luyện cấp Quốc tế",
+
+                        ScoreLevel.GiaiPhapHuuIchCapQuocGia => "Giải pháp hữu ích cấp Quốc gia",
+                        ScoreLevel.GiaiPhapHuuIchCapQuocTe => "Giải pháp hữu ích cấp Quốc tế",
+                        ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho => "Giải pháp hữu ích cấp Tỉnh/Thành phố",
+
+                        ScoreLevel.KetQuaNghienCuu => "Kết quả nghiên cứu",
+
+                        ScoreLevel.Sach => "Sách",
+                        _ => ""
+                    };
+
+                    worksheet.Cells[currentRow, 13].Value = scoreLevelText;
+                    worksheet.Cells[currentRow, 14].Value = work.SCImagoFieldName ?? "";
+                    worksheet.Cells[currentRow, 15].Value = work.ScoringFieldName ?? "";
+                    
+                    // Định dạng giờ quy đổi với 1 chữ số thập phân
+                    if (work.AuthorHour.HasValue)
+                    {
+                        var authorHourValue = (decimal)work.AuthorHour.Value;
+                        worksheet.Cells[currentRow, 16].Value = Math.Round(authorHourValue, 1, MidpointRounding.AwayFromZero);
+                        worksheet.Cells[currentRow, 16].Style.Numberformat.Format = "#,##0.0";
+                    }
+                    else
+                    {
+                        worksheet.Cells[currentRow, 16].Value = "";
+                    }
+
+                    // Xử lý hiển thị trạng thái
+                    string proofStatusText = work.ProofStatus switch
+                    {
+                        ProofStatus.ChuaXuLy => "Chưa xử lý",
+                        ProofStatus.HopLe => "Hợp lệ",
+                        ProofStatus.KhongHopLe => "Không hợp lệ",
+                        _ => ""
+                    };
+
+                    worksheet.Cells[currentRow, 17].Value = proofStatusText;
+                    worksheet.Cells[currentRow, 18].Value = work.Note ?? "";
+
+                    currentRow++;
                 }
 
-                // Phần III: Tổng số công trình
-                int startRow = 12 + exportData.Count + 2;
-                worksheet.Cells[startRow, 1].Value = "III. TỔNG SỐ CÔNG TRÌNH";
-                worksheet.Cells[startRow, 1, startRow, 18].Merge = true;
-
-                startRow += 1;
-                worksheet.Cells[startRow, 1].Value = "Tôi xin chịu trách nhiệm về tính xác thực của những thông tin trong bản kê khai này.";
-                worksheet.Cells[startRow, 1, startRow, 18].Merge = true;
-
-                startRow += 1;
-                worksheet.Cells[startRow, 1].Value = "TỔNG SỐ CÔNG TRÌNH";
-                worksheet.Cells[startRow, 1, startRow, 18].Merge = true;
-
-                startRow += 1;
-                worksheet.Cells[startRow, 1].Value = "TT";
-                worksheet.Cells[startRow, 2].Value = "Loại công trình";
-                worksheet.Cells[startRow, 3].Value = "Số lượng";
-
                 // Tính tổng số công trình theo loại
+                // Để trống 2 dòng sau danh sách công trình
+                var summaryStartRow = currentRow + 2;
+
+                // Chèn dòng trống cho phần tổng hợp
+                worksheet.InsertRow(summaryStartRow, exportData.Count + 3); // +3 cho tiêu đề, dòng trống và tổng số
+
+                // Thêm tiêu đề phần tổng hợp
+                worksheet.Cells[summaryStartRow, 1, summaryStartRow, 3].Merge = true;
+                worksheet.Cells[summaryStartRow, 1].Value = "III. TỔNG HỢP CÔNG TRÌNH THEO LOẠI";
+                worksheet.Cells[summaryStartRow, 1].Style.Font.Bold = true;
+
+                // Bắt đầu điền dữ liệu tổng hợp từ dòng tiếp theo
+                summaryStartRow++;
+
                 var workTypeCounts = exportData
                     .GroupBy(w => w.WorkTypeName ?? "Khác")
                     .ToDictionary(g => g.Key, g => g.Count());
@@ -1071,44 +1236,40 @@ namespace Application.Works
                 var workTypes = new[] { "Bài báo khoa học", "Báo cáo khoa học", "Đề tài", "Giáo trình", "Sách", "Hội thảo, hội nghị", "Hướng dẫn SV NCKH", "Khác" };
                 for (int i = 0; i < workTypes.Length; i++)
                 {
-                    worksheet.Cells[startRow + i + 1, 1].Value = i + 1;
-                    worksheet.Cells[startRow + i + 1, 2].Value = workTypes[i];
-                    worksheet.Cells[startRow + i + 1, 3].Value = workTypeCounts.ContainsKey(workTypes[i]) ? workTypeCounts[workTypes[i]] : 0;
+                    worksheet.Cells[summaryStartRow + i, 1].Value = i + 1;
+                    worksheet.Cells[summaryStartRow + i, 2].Value = workTypes[i];
+                    worksheet.Cells[summaryStartRow + i, 3].Value = workTypeCounts.ContainsKey(workTypes[i]) ? workTypeCounts[workTypes[i]] : 0;
                 }
 
-                startRow += workTypes.Length + 1;
-                worksheet.Cells[startRow, 1].Value = "Tổng số sản phẩm:";
-                worksheet.Cells[startRow, 2].Value = exportData.Count;
+                // Tổng số sản phẩm
+                worksheet.Cells[summaryStartRow + workTypes.Length + 1, 1].Value = "Tổng số sản phẩm:";
+                worksheet.Cells[summaryStartRow + workTypes.Length + 1, 2, summaryStartRow + workTypes.Length + 1, 3].Merge = true;
+                worksheet.Cells[summaryStartRow + workTypes.Length + 1, 2].Value = exportData.Count;
 
-                // Định dạng cột
-                worksheet.Cells.AutoFitColumns();
-
-                // Trả về nội dung file Excel dưới dạng byte[]
                 return package.GetAsByteArray();
             }
         }
         public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            // Lấy thông tin cá nhân của user
-            var user = await _unitOfWork.Repository<User>()
-                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            // Lấy thông tin cá nhân của user với đầy đủ details
+            var user = await _userRepository.GetUserByIdWithDetailsAsync(userId);
             if (user is null)
                 throw new Exception(ErrorMessages.UserNotFound);
 
             // Lấy danh sách công trình của user
             var works = await GetWorksByCurrentUserAsync(userId, cancellationToken);
 
-            // Lấy thông tin đồng tác giả
+            // Lấy thông tin đồng tác giả với đầy đủ details
             var allCoAuthorUserIds = works.SelectMany(w => w.CoAuthorUserIds).Distinct().ToList();
-            var coAuthors = await _unitOfWork.Repository<User>()
-                .FindAsync(u => allCoAuthorUserIds.Contains(u.Id));
+            var coAuthors = await _userRepository.GetUsersWithDetailsAsync();
+            var filteredCoAuthors = coAuthors.Where(u => allCoAuthorUserIds.Contains(u.Id));
 
             // Ánh xạ dữ liệu vào ExportExcelDto
             var exportData = works.Select(w =>
             {
                 var author = w.Authors?.FirstOrDefault();
                 var coAuthorNames = string.Join(", ", w.CoAuthorUserIds
-                    .Select(uid => coAuthors.FirstOrDefault(u => u.Id == uid)?.FullName ?? "Không xác định"));
+                    .Select(uid => filteredCoAuthors.FirstOrDefault(u => u.Id == uid)?.FullName ?? "Không xác định"));
 
                 return new ExportExcelDto
                 {
@@ -1119,8 +1280,8 @@ namespace Application.Works
                     OfficerRank = user.OfficerRank.ToString() ?? "Không xác định", // Ngạch công chức
                     DepartmentName = user.Department?.Name ?? "Không xác định",
                     FieldName = author?.FieldName ?? "Không xác định", // Ngành - Field
-                    //MajorName = user.Major ?? "Không xác định", // Chuyên ngành
-                    //PhoneNumber = user.PhoneNumber ?? "Không xác định",
+                    Specialization= user.Specialization ?? "Không xác định", // Chuyên ngành
+                    PhoneNumber = user.PhoneNumber ?? "Không xác định",
                     Title = w.Title ?? "Không xác định",
                     WorkTypeName = w.WorkTypeName ?? "Không xác định",
                     WorkLevelName = w.WorkLevelName,
@@ -1194,9 +1355,7 @@ namespace Application.Works
                             Title = worksheet.Cells[row, 4].Text.Trim(),
                             WorkTypeName = worksheet.Cells[row, 5].Text.Trim(),
                             WorkLevelName = worksheet.Cells[row, 6].Text.Trim(),
-                            TimePublished = DateOnly.TryParseExact(worksheet.Cells[row, 7].Text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ? date :
-                           DateOnly.TryParseExact(worksheet.Cells[row, 7].Text, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out date) ? date :
-                           DateOnly.TryParseExact(worksheet.Cells[row, 7].Text, "MM/dd/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out date) ? date : null,
+                            TimePublished = ParseMonthYear(worksheet.Cells[row, 7].Text.Trim()),
                             TotalAuthors = int.TryParse(worksheet.Cells[row, 8].Text.Trim(), out var ta) ? ta : (int?)null,
                             TotalMainAuthors = int.TryParse(worksheet.Cells[row, 9].Text.Trim(), out var tma) ? tma : (int?)null,
                             Position = int.TryParse(worksheet.Cells[row, 10].Text.Trim(), out var pos) ? pos : (int?)null,
@@ -1253,15 +1412,19 @@ namespace Application.Works
                 //    Nếu 4 trường này trùng nhau thì xem là cùng 1 công trình
                 // Lấy Id nếu workLevel != null
                 Guid? workLevelId = workLevel?.Id;
-                DateOnly? timePublished = dto.TimePublished; // Có thể null
+                DateOnly? timePublished = null;
+                if (dto.TimePublished.HasValue)
+                {
+                    timePublished = new DateOnly(dto.TimePublished.Value.Year, dto.TimePublished.Value.Month, 1);
+                }
 
                 var existingWork = await workRepo.FirstOrDefaultAsync(w =>
                     w.Title.ToLower() == dto.Title.ToLower() &&
                     w.WorkTypeId == workType.Id &&
-                    // So sánh WorkLevelId
                     (workLevelId == null ? w.WorkLevelId == null : w.WorkLevelId == workLevelId) &&
-                    // So sánh TimePublished
-                    (timePublished == null ? w.TimePublished == null : w.TimePublished == timePublished)
+                    (timePublished == null ? w.TimePublished == null : 
+                     w.TimePublished.Value.Year == timePublished.Value.Year && 
+                     w.TimePublished.Value.Month == timePublished.Value.Month)
                 );
 
 
@@ -1272,7 +1435,7 @@ namespace Application.Works
                     work = new Work
                     {
                         Title = dto.Title,
-                        TimePublished = dto.TimePublished,
+                        TimePublished = timePublished,
                         TotalAuthors = dto.TotalAuthors,
                         TotalMainAuthors = dto.TotalMainAuthors,
                         Details = dto.Details,
@@ -1364,6 +1527,36 @@ namespace Application.Works
 
             // Cuối cùng, lưu tất cả thay đổi
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        private DateOnly? ParseMonthYear(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            // Thử parse các định dạng khác nhau
+            string[] formats = { 
+                "MM/yyyy", "M/yyyy", "yyyy-MM", "MM-yyyy", "M-yyyy",
+                "d/M/yyyy", "dd/MM/yyyy", "d-M-yyyy", "dd-MM-yyyy",
+                "yyyy/MM/dd", "yyyy-MM-dd"
+            };
+
+            foreach (var format in formats)
+            {
+                if (DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result))
+                {
+                    // Luôn trả về ngày 1 của tháng đó
+                    return new DateOnly(result.Year, result.Month, 1);
+                }
+            }
+
+            // Thử parse bằng DateTime.Parse nếu các format trên không khớp
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
+            {
+                return new DateOnly(parsedDate.Year, parsedDate.Month, 1);
+            }
+
+            return null;
         }
     }
 }

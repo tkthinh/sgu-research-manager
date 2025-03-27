@@ -1,5 +1,5 @@
 import { ApiResponse } from "../types/common/ApiResponse";
-import { Work, CreateWorkRequest, UpdateWorkByAdminRequest, UpdateWorkByAuthorRequest } from "../types/models/Work";
+import { Work, CreateWorkRequest, UpdateWorkWithAuthorRequest } from "../types/models/Work";
 import apiClient from "./api";
 
 // Fetch all works
@@ -61,13 +61,21 @@ export const setMarkedForScoring = async (authorId: string, marked: boolean): Pr
 };
 
 // Update work by admin
-export const updateWorkByAdmin = async (workId: string, userId: string, data: UpdateWorkByAdminRequest): Promise<ApiResponse<Work>> => {
-  const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}/admin-update/${userId}`, data);
-  return response.data;
+export const updateWorkByAdmin = async (workId: string, userId: string, data: UpdateWorkWithAuthorRequest): Promise<ApiResponse<Work>> => {
+  try {
+    console.log("WorksApi:updateWorkByAdmin - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
+    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}/admin-update/${userId}`, data);
+    console.log("WorksApi:updateWorkByAdmin - Phản hồi:", JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error: any) {
+    console.error("WorksApi:updateWorkByAdmin - Chi tiết lỗi:", error.response?.data);
+    console.error("WorksApi:updateWorkByAdmin - Status code:", error.response?.status);
+    throw error;
+  }
 };
 
 // Update work by author
-export const updateWorkByAuthor = async (id: string, data: UpdateWorkByAuthorRequest): Promise<ApiResponse<Work>> => {
+export const updateWorkByAuthor = async (id: string, data: UpdateWorkWithAuthorRequest): Promise<ApiResponse<Work>> => {
   try {
     console.log("WorksApi:updateWorkByAuthor - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
     const response = await apiClient.patch<ApiResponse<Work>>(`/works/${id}`, data);
@@ -115,13 +123,3 @@ export const updateWorkNote = async (
   return response.data;
 };
 
-export const markWorkForScoring = async (
-  id: string,
-  marked: boolean
-): Promise<ApiResponse<Work>> => {
-  const response = await apiClient.put<ApiResponse<Work>>(
-    `/works/${id}/mark`,
-    { marked }
-  );
-  return response.data;
-};

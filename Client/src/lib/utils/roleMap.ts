@@ -5,5 +5,5 @@ const roleMap: Record<string, string> = {
 };
 
 export const getRole = (value: string): string => {
-  return roleMap[value] || "Không xác định";
+  return roleMap[value] || "-";
 };

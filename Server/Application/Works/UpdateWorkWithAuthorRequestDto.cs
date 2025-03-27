@@ -2,9 +2,9 @@
 
 namespace Application.Works
 {
-    public class UpdateWorkByAdminRequestDto
+    public class UpdateWorkWithAuthorRequestDto
     {
         public UpdateWorkRequestDto? WorkRequest { get; set; }
-        public UpdateAuthorByAdminRequestDto? AuthorRequest { get; set; }
+        public UpdateAuthorRequestDto? AuthorRequest { get; set; }
     }
 }

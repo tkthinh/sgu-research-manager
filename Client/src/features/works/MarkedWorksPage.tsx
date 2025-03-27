@@ -5,7 +5,14 @@ import {
   Switch,
   Tooltip,
   Alert,
-  FormControlLabel
+  FormControlLabel,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,39 +20,29 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
 import { getMyWorks, setMarkedForScoring } from "../../lib/api/worksApi";
+import { getUserConversionResult } from "../../lib/api/usersApi"; 
 import { Work } from "../../lib/types/models/Work";
-import { ScoreLevel } from "../../lib/types/enums/ScoreLevel";
-
-const getScoreLevelText = (scoreLevel: number): string => {
-  switch (scoreLevel) {
-    case ScoreLevel.One:
-      return "1 điểm";
-    case ScoreLevel.ZeroPointSevenFive:
-      return "0.75 điểm";
-    case ScoreLevel.ZeroPointFive:
-      return "0.5 điểm";
-    case ScoreLevel.TenPercent:
-      return "Top 10%";
-    case ScoreLevel.ThirtyPercent:
-      return "Top 30%";
-    case ScoreLevel.FiftyPercent:
-      return "Top 50%";
-    case ScoreLevel.HundredPercent:
-      return "Top 100%";
-    default:
-      return "Không xác định";
-  }
-};
+import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
+import { useAuth } from "../../app/shared/contexts/AuthContext";
 
 export default function MarkedWorksPage() {
   const queryClient = useQueryClient();
   const [markingAuthorId, setMarkingAuthorId] = useState<string | null>(null);
+  const { user } = useAuth();
 
   // Fetch my works
   const { data, error, isPending, refetch } = useQuery({
     queryKey: ["myWorks"],
     queryFn: getMyWorks,
     staleTime: 0, // Luôn refetch khi cần
+  });
+
+  // Fetch conversion result
+  const { data: conversionData, isPending: isConversionPending, refetch: refetchConversion } = useQuery({
+    queryKey: ["userConversionResult", user?.id],
+    queryFn: () => getUserConversionResult(user?.id || ""),
+    staleTime: 0,
+    enabled: !!user?.id,
   });
 
   // Mutation để cập nhật trạng thái đánh dấu
@@ -60,10 +57,12 @@ export default function MarkedWorksPage() {
       
       // Xóa cache và refetch dữ liệu mới
       queryClient.removeQueries({ queryKey: ["myWorks"] });
+      queryClient.removeQueries({ queryKey: ["userConversionResult", user?.id] });
       
       // Bắt buộc refetch dữ liệu ngay lập tức
       setTimeout(() => {
         refetch();
+        refetchConversion();
         setMarkingAuthorId(null);
       }, 100);
     },
@@ -95,7 +94,7 @@ export default function MarkedWorksPage() {
     {
       field: "stt",
       headerName: "STT",
-      width: 70,
+      width: 50,
       renderCell: (params: any) => {
         if (!params || !params.row) return null;
         const rowIndex = Array.from(params.api.getAllRowIds()).findIndex((id: any) => id === params.row.id);
@@ -115,8 +114,8 @@ export default function MarkedWorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        if (!params || !params.row) return <div>Không xác định</div>;
-        return <div>{params.row.workTypeName || "Không xác định"}</div>;
+        if (!params || !params.row) return <div>-</div>;
+        return <div>{params.row.workTypeName || "-"}</div>;
       },
     },
     {
@@ -125,8 +124,8 @@ export default function MarkedWorksPage() {
       type: "string",
       width: 120,
       renderCell: (params: any) => {
-        if (!params || !params.row) return <div>Không xác định</div>;
-        return <div>{params.row.workLevelName || "Không xác định"}</div>;
+        if (!params || !params.row) return <div>-</div>;
+        return <div>{params.row.workLevelName || "-"}</div>;
       },
     },
     {
@@ -135,9 +134,9 @@ export default function MarkedWorksPage() {
       type: "string",
       width: 180,
       renderCell: (params: any) => {
-        if (!params || !params.row) return <div>Không xác định</div>;
+        if (!params || !params.row) return <div>-</div>;
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.purposeName : "Không xác định"}</div>;
+        return <div>{author ? author.purposeName : "-"}</div>;
       },
     },
     {
@@ -146,20 +145,20 @@ export default function MarkedWorksPage() {
       type: "string",
       width: 130,
       renderCell: (params: any) => {
-        if (!params || !params.row) return <div>Không xác định</div>;
+        if (!params || !params.row) return <div>-</div>;
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.authorRoleName : "Không xác định"}</div>;
+        return <div>{author ? author.authorRoleName : "-"}</div>;
       },
     },
     {
       field: "scoreLevel",
-      headerName: "Mức điểm",
+      headerName: "Thành tích",
       type: "string",
-      width: 120,
+      width: 150,
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
         if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
-          return <div>Không xác định</div>;
+          return <div>-</div>;
         }
         return <div>{getScoreLevelText(author.scoreLevel)}</div>;
       },
@@ -170,9 +169,9 @@ export default function MarkedWorksPage() {
       type: "string",
       width: 120,
       renderCell: (params: any) => {
-        if (!params || !params.row) return <div>Không xác định</div>;
+        if (!params || !params.row) return <div>-</div>;
         const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "Không xác định"}</div>;
+        return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
       },
     },
     {
@@ -233,17 +232,67 @@ export default function MarkedWorksPage() {
         sx={{ marginBottom: 2 }}
       >
       </Box>
-      
+      <Typography variant="h6" sx={{ mb: 2, mt: 3 }}>
+        Đánh dấu công trình
+      </Typography>
       <Alert severity="info" sx={{ mb: 2 }}>
         Đánh dấu các công trình bạn muốn sử dụng để quy đổi. Lưu ý rằng mỗi loại công trình, cấp và mức điểm có giới hạn số lượng công trình được phép đánh dấu.
       </Alert>
       
-      <Paper sx={{ width: "100%", overflow: "hidden" }}>
+      <Paper sx={{ width: "100%", overflow: "hidden", mb: 3 }}>
         <GenericTable 
           columns={columns} 
           data={filteredWorks} 
         />
       </Paper>
+
+      {/* Bảng kết quả quy đổi */}
+      <Typography variant="h6" sx={{ mb: 2, mt: 3 }}>
+        Kết quả quy đổi
+      </Typography>
+
+      {isConversionPending ? (
+        <CircularProgress size={24} />
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Mục đích quy đổi</TableCell>
+                <TableCell align="center">Số công trình</TableCell>
+                <TableCell align="center">Số giờ được quy đổi</TableCell>
+                <TableCell align="center">Số giờ được tính</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow>
+                <TableCell>Quy đổi giờ nghĩa vụ</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.dutyHourConversion?.totalWorks || 0}</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.dutyHourConversion?.totalConvertedHours || 0}</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.dutyHourConversion?.totalCalculatedHours || 0}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Quy đổi vượt định mức</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.overLimitConversion?.totalWorks || 0}</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.overLimitConversion?.totalConvertedHours || 0}</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.overLimitConversion?.totalCalculatedHours || 0}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Sản phẩm của đề tài NCKH</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.researchProductConversion?.totalWorks || 0}</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.researchProductConversion?.totalConvertedHours || 0}</TableCell>
+                <TableCell align="center">{conversionData?.data?.conversionResults?.researchProductConversion?.totalCalculatedHours || 0}</TableCell>
+              </TableRow>
+              <TableRow sx={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}>
+                <TableCell><strong>Tổng cộng</strong></TableCell>
+                <TableCell align="center"><strong>{conversionData?.data?.conversionResults?.totalWorks || 0}</strong></TableCell>
+                <TableCell align="center">-</TableCell>
+                <TableCell align="center"><strong>{conversionData?.data?.conversionResults?.totalCalculatedHours || 0}</strong></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </>
   );
 } 

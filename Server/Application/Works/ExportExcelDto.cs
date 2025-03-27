@@ -11,8 +11,8 @@ namespace Application.Works
         public required string OfficerRank { get; set; }    // Ngạch công chức
         public required string DepartmentName { get; set; } // Đơn vị công tác
         public required string FieldName { get; set; }      // Ngành - Field
-        //public required string MajorName { get; set; }      // Chuyên ngành
-        //public required string PhoneNumber { get; set; }    // Số điện thoại
+        public required string Specialization { get; set; }      // Chuyên ngành
+        public required string PhoneNumber { get; set; }    // Số điện thoại
         public required string Title { get; set; }          // Tên công trình
         public required string WorkTypeName { get; set; }   // Loại công trình
         public string? WorkLevelName { get; set; }          // Cấp công trình
