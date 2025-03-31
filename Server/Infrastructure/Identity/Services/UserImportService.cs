@@ -31,6 +31,7 @@ namespace Infrastructure.Identity.Services
 
         public async Task<UserImportResult> ImportUsersAsync(Stream excelStream)
         {
+            using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
                 // EPPlus requires setting a license context
@@ -45,6 +46,8 @@ namespace Infrastructure.Identity.Services
                 int importedCount = 0;
                 int skippedCount = 0;
 
+                var userstoImport = new List<(ApplicationUser userAuth, UserDto userInfo, string defaultPassword)>();
+
                 // Loop through rows (assuming first row is header)
                 for (int row = 2; row <= rowCount; row++)
                 {
@@ -56,9 +59,7 @@ namespace Infrastructure.Identity.Services
                     DateTime dobValue;
                     if (!DateTime.TryParseExact(dobString, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dobValue))
                     {
-                        // If parsing fails, skip this row
-                        skippedCount++;
-                        continue;
+                        throw new ValidationException($"Ngày sinh không hợp lệ ở hàng {row}");
                     }
 
                     var departmentName = worksheet.Cells[row, 4].GetValue<string>()?.Trim();
@@ -67,8 +68,7 @@ namespace Infrastructure.Identity.Services
                     // Validate required fields
                     if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(fullName))
                     {
-                        skippedCount++;
-                        continue;
+                        throw new Exception($"Tên người dùng hoặc họ tên không hợp lệ ở hàng {row}");
                     }
 
                     // Check if the identity user already exists
@@ -89,56 +89,59 @@ namespace Infrastructure.Identity.Services
                         _ => "User", // default to user if "người dùng" or any other value
                     };
 
-                    using(var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+                    // Create the Identity user
+                    var newIdentityUser = new ApplicationUser
                     {
-                        // Create the Identity user
-                        var newIdentityUser = new ApplicationUser
-                        {
-                            UserName = username,
-                            IsApproved = true
-                        };
-                        var identityResult = await userManager.CreateAsync(newIdentityUser, defaultPassword);
-                        if (!identityResult.Succeeded)
-                        {
-                            skippedCount++;
-                            continue;
-                        }
+                        UserName = username,
+                        IsApproved = true
+                    };
 
-                        // Map Excel role to Identity roles
+                    // Create the domain user.
+                    var department = await departmentService.GetDepartmentByNameAsync(departmentName!);
+                    Guid departmentId = department?.Id ?? Guid.Empty;
 
+                    // Map to your domain user DTO. Adjust properties as needed.
+                    var userDto = new UserDto
+                    {
+                        FullName = fullName,
+                        UserName = username,
+                        IdentityId = newIdentityUser.Id,
+                        DepartmentId = departmentId
+                    };
 
-                        var roleResult = await userManager.AddToRoleAsync(newIdentityUser, identityRole);
-                        if (!roleResult.Succeeded)
-                        {
-                            skippedCount++;
-                            continue;
-                        }
-
-                        // Create the domain user.
-                        // Assuming that you have a method in IUserService to get DepartmentId by department name.
-                        var department = await departmentService.GetDepartmentByNameAsync(departmentName!);
-                        Guid departmentId = department?.Id ?? Guid.Empty;
-
-                        // Map to your domain user DTO. Adjust properties as needed.
-                        var userDto = new UserDto
-                        {
-                            FullName = fullName,
-                            UserName = username,
-                            IdentityId = newIdentityUser.Id,
-                            DepartmentId = departmentId
-                        };
-
-                        var domainUser = await userService.CreateAsync(userDto);
-                        if (domainUser != null)
-                        {
-                            importedCount++;
-                        }
-                        else
-                        {
-                            skippedCount++;
-                        }
-                    }
+                    // Store for batch processing
+                    userstoImport.Add((newIdentityUser, userDto, defaultPassword));
                 }
+
+                foreach (var (userAuth, userInfo, defaultPassword) in userstoImport)
+                {
+                    // Create Identity user
+                    var identityResult = await userManager.CreateAsync(userAuth, defaultPassword);
+                    if (!identityResult.Succeeded)
+                    {
+                        throw new InvalidOperationException("Tạo identity user thất bại");
+                    }
+
+                    // Assign role
+                    var roleResult = await userManager.AddToRoleAsync(userAuth, "User");
+                    if (!roleResult.Succeeded)
+                    {
+                        throw new InvalidOperationException("Phân quyền user thất bại");
+                    }
+
+                    // Set Identity ID for domain user
+                    userInfo.IdentityId = userAuth.Id;
+
+                    // Create domain user
+                    var domainUser = await userService.CreateAsync(userInfo);
+                    if (domainUser == null)
+                    {
+                        throw new InvalidOperationException("Tạo người dùng thất bại");
+                    }
+
+                    importedCount++;
+                }
+                transactionScope.Complete();
 
                 return new UserImportResult
                 {
@@ -146,11 +149,21 @@ namespace Infrastructure.Identity.Services
                     SkippedCount = skippedCount
                 };
             }
+            catch (ValidationException vex)
+            {
+                logger.LogError($"Validation Error: {vex.Message}");
+                throw new Exception(vex.Message);
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error importing users from Excel");
                 throw new Exception("Lỗi khi nhập dữ liệu từ Excel");
             }
+        }
+
+        public class ValidationException : Exception
+        {
+            public ValidationException(string message) : base(message) { }
         }
     }
 }

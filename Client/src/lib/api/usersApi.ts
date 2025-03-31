@@ -42,3 +42,15 @@ export const getUserConversionResult = async (userId: string): Promise<ApiRespon
   const response = await apiClient.get<ApiResponse<UserConversionResult>>(`/users/conversionresult/${userId}`);
   return response.data;
 }; 
+
+export const importUserFromExcelFile = async (file: File): Promise<ApiResponse<object>> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await apiClient.post<ApiResponse<object>>('/users/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+}

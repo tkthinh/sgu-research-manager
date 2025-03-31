@@ -1,20 +1,20 @@
 import {
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Paper,
-  Typography,
+    Box,
+    Button,
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Paper,
+    Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { deleteUser, getUsers } from "../../../lib/api/usersApi";
+import { deleteUser, getUsers, importUserFromExcelFile } from "../../../lib/api/usersApi";
 import { User } from "../../../lib/types/models/User";
 import { getAcademicTitle } from "../../../lib/utils/academicTitleMap";
 import { getOfficerRank } from "../../../lib/utils/officerRankMap";
@@ -23,9 +23,10 @@ import UserForm from "./UserForm";
 
 export default function UserPage() {
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch users
-  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
+  const { data, error, isPending, isSuccess, dataUpdatedAt, refetch } = useQuery({
     queryKey: ["users"],
     queryFn: getUsers,
   });
@@ -85,6 +86,25 @@ export default function UserPage() {
   const handleDeleteConfirm = () => {
     if (deleteId) {
       deleteMutation.mutate(deleteId);
+    }
+  };
+
+  // Import from Excel
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      try {
+        const response = await importUserFromExcelFile(file);
+        toast.success(response.message);
+        queryClient.invalidateQueries({ queryKey: ["users"] });
+        refetch();
+      } catch (error) {
+        toast.error("Lỗi khi nhập file: " + (error as Error).message);
+      }
     }
   };
 
@@ -172,6 +192,20 @@ export default function UserPage() {
 
   return (
     <>
+      {/* Admin Import Button */}
+      <Box sx={{ marginBottom: 2, display: "flex", justifyContent: "flex-end" }}>
+        <Button variant="contained" color="primary" onClick={handleImportClick}>
+          Nhập người dùng từ Excel
+        </Button>
+        <input
+          type="file"
+          accept=".xls,.xlsx"
+          style={{ display: "none" }}
+          ref={fileInputRef}
+          onChange={handleFileChange}
+        />
+      </Box>
+
       {/* User creation is not allowed so there is no add button */}
       <Paper sx={{ width: "100%", marginX: "auto", padding: 2 }}>
         <GenericTable columns={columns} data={data?.data || []} />
@@ -186,10 +220,7 @@ export default function UserPage() {
           <Typography>Bạn có chắc chắn muốn xóa người dùng này?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={handleDeleteCancel}
-            disabled={deleteMutation.isPending}
-          >
+          <Button onClick={handleDeleteCancel} disabled={deleteMutation.isPending}>
             Hủy
           </Button>
           <Button
