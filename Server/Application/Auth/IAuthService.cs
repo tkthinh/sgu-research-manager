@@ -7,5 +7,6 @@ namespace Application.Auth
     {
         Task<ApiResponse<object>> LoginAsync(LoginRequestDto request);
         Task<ApiResponse<UserDto>> RegisterAsync(RegisterRequestDto request);
+        Task<ApiResponse<object>> ChangePasswordAsync(ChangePasswordRequestDto request);
     }
 }

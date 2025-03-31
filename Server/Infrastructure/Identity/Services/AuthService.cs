@@ -4,8 +4,10 @@ using System.Text;
 using Application.Auth;
 using Application.Shared.Response;
 using Application.Users;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,15 +18,22 @@ namespace Infrastructure.Identity.Services
         private readonly UserManager<ApplicationUser> userManager;
         private readonly IConfiguration configuration;
         private readonly IUserService userService;
+        private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly ILogger<AuthService> logger;
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
             IConfiguration configuration,
-            IUserService userService)
+            IUserService userService,
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<AuthService> logger
+            )
         {
             this.userManager = userManager;
             this.configuration = configuration;
             this.userService = userService;
+            this.httpContextAccessor = httpContextAccessor;
+            this.logger = logger;
         }
 
         public async Task<ApiResponse<object>> LoginAsync(LoginRequestDto request)
@@ -138,7 +147,37 @@ namespace Infrastructure.Identity.Services
             }
             catch (Exception ex)
             {
+                logger.LogError(ex, "Error registering user");
                 return new ApiResponse<UserDto>(false, "Lỗi khi đăng ký", null);
+            }
+        }
+
+        public async Task<ApiResponse<object>> ChangePasswordAsync(ChangePasswordRequestDto request)
+        {
+            try
+            {
+                var user = httpContextAccessor.HttpContext?.User;
+                if (user == null)
+                {
+                    return new ApiResponse<object>(false, "Không tìm thấy thông tin người dùng");
+                }
+
+                var userName = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+
+                var identityUser = await userManager.FindByNameAsync(userName!);
+                if (identityUser == null || !await userManager.CheckPasswordAsync(identityUser, request.CurrentPassword))
+                {
+                    return new ApiResponse<object>(false, "Mật khẩu cũ không trùng khớp");
+                }
+
+                var result = await userManager.ChangePasswordAsync(identityUser, request.CurrentPassword, request.NewPassword);
+
+                return new ApiResponse<object>(true, "Đổi mật khẩu thành công");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error changing password");
+                return new ApiResponse<object>(false, "Lỗi khi thay đổi mật khẩu");
             }
         }
     }

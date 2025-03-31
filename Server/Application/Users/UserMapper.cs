@@ -13,16 +13,16 @@ public class UserMapper : IGenericMapper<UserDto, User>
             Id = user.Id,
             FullName = user.FullName,
             UserName = user.UserName,
-            Email = user.Email ?? "Không rõ",
-            PhoneNumber = user.PhoneNumber ?? "Không rõ",
-            AcademicTitle = user.AcademicTitle.ToString() ?? "Không rõ",
-            OfficerRank = user.OfficerRank.ToString() ?? "Không rõ",
+            Email = user.Email ?? "-",
+            PhoneNumber = user.PhoneNumber ?? "-",
+            AcademicTitle = user.AcademicTitle.ToString() ?? "-",
+            OfficerRank = user.OfficerRank.ToString() ?? "-",
             IdentityId = user.IdentityId,
-            Specialization = user.Specialization ?? "Không rõ",
+            Specialization = user.Specialization ?? "-",
             DepartmentId = user.DepartmentId,
             FieldId = user.FieldId ?? Guid.Empty,
-            DepartmentName = user.Department?.Name ?? "Không rõ",
-            FieldName = user.Field?.Name ?? "Không rõ",
+            DepartmentName = user.Department?.Name ?? "-",
+            FieldName = user.Field?.Name ?? "-",
         };
     }
 
