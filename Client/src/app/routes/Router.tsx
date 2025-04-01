@@ -25,6 +25,7 @@ import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import ScoreWorksPage from "../../features/users/UserListPage";
 import UserWorkDetailPage from "../../features/users/UserWorkDetailPage";
+import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
 
 export const router = createBrowserRouter([
   {
@@ -76,6 +77,14 @@ export const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute allowedRoles={["Admin"]}>
                     <AssignmentPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: "/cap-nhat-thong-tin",
+                element: (
+                  <ProtectedRoute allowedRoles={["User", "Manager", "Admin"]}>
+                    <UpdateInfoPage />
                   </ProtectedRoute>
                 ),
               },
