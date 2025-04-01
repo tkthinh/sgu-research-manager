@@ -24,6 +24,7 @@ namespace Application.Works
         private readonly ISystemConfigService _systemConfigService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserRepository _userRepository;
+        private readonly ILogger<WorkService> _logger;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -46,6 +47,7 @@ namespace Application.Works
             _systemConfigService = systemConfigService;
             _httpContextAccessor = httpContextAccessor;
             _userRepository = userRepository;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
@@ -177,6 +179,12 @@ namespace Application.Works
             // Gán danh sách đồng tác giả không bao gồm tác giả chính
             workDto.CoAuthorUserIds = coAuthorUserIds;
             await SafeInvalidateCacheAsync(work.Id);
+
+            // Nếu là đề tài, tạo bài báo khoa học tự động
+            if (work.WorkTypeId == Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348"))
+            {
+                await CreateScientificArticleFromProjectAsync(work, userId, cancellationToken);
+            }
 
             return workDto;
         }
@@ -395,7 +403,7 @@ namespace Application.Works
             var effectiveScoreLevel = newScoreLevel ?? author.ScoreLevel;
 
             // Ghi log thông tin trước khi tính toán
-            logger.LogInformation(
+            _logger.LogInformation(
                 "UpdateAuthorHoursAsync - Bắt đầu tính giờ quy đổi: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
                 work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, effectiveScoreLevel);
 
@@ -410,7 +418,7 @@ namespace Application.Works
 
             if (factor is null)
             {
-                logger.LogError("UpdateAuthorHoursAsync - Không tìm thấy Factor phù hợp");
+                _logger.LogError("UpdateAuthorHoursAsync - Không tìm thấy Factor phù hợp");
                 throw new Exception(ErrorMessages.FactorNotFound);
             }
 
@@ -427,7 +435,7 @@ namespace Application.Works
                 totalMainAuthors,
                 author.AuthorRoleId);
                 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "UpdateAuthorHoursAsync - Kết quả: Factor.ConvertHour={ConvertHour}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, TotalAuthors={TotalAuthors}, TotalMainAuthors={TotalMainAuthors}",
                 factor.ConvertHour, author.WorkHour, author.AuthorHour, totalAuthors, totalMainAuthors);
         }
@@ -447,7 +455,7 @@ namespace Application.Works
             if (work is null)
                 throw new Exception(ErrorMessages.WorkNotFound);
 
-            logger.LogInformation("UpdateWorkByAuthorAsync - Received request for workId {WorkId}", workId);
+            _logger.LogInformation("UpdateWorkByAuthorAsync - Received request for workId {WorkId}", workId);
             
             // Xử lý đặc biệt cho coAuthorUserIds - kiểm tra cả hai vị trí
             List<Guid> coAuthorUserIds = new List<Guid>();
@@ -457,7 +465,7 @@ namespace Application.Works
             {
                 // Vị trí 1: Trong workRequest (cấu trúc chính xác)
                 coAuthorUserIds.AddRange(request.WorkRequest.CoAuthorUserIds);
-                logger.LogInformation("Found CoAuthorUserIds in WorkRequest: {Count} ids - {CoAuthorUserIds}", 
+                _logger.LogInformation("Found CoAuthorUserIds in WorkRequest: {Count} ids - {CoAuthorUserIds}", 
                     request.WorkRequest.CoAuthorUserIds.Count, 
                     string.Join(", ", request.WorkRequest.CoAuthorUserIds));
             }
@@ -474,7 +482,7 @@ namespace Application.Works
                     if (value is List<Guid> userIds && userIds.Any())
                     {
                         coAuthorUserIds.AddRange(userIds);
-                        logger.LogInformation("Found CoAuthorUserIds at root level: {Count} ids - {CoAuthorUserIds}", 
+                        _logger.LogInformation("Found CoAuthorUserIds at root level: {Count} ids - {CoAuthorUserIds}", 
                             userIds.Count, string.Join(", ", userIds));
                     }
                     else if (value is IEnumerable<Guid> userIdsEnum)
@@ -483,7 +491,7 @@ namespace Application.Works
                         if (userIdsList.Any())
                         {
                             coAuthorUserIds.AddRange(userIdsList);
-                            logger.LogInformation("Found CoAuthorUserIds as IEnumerable at root level: {Count} ids - {CoAuthorUserIds}", 
+                            _logger.LogInformation("Found CoAuthorUserIds as IEnumerable at root level: {Count} ids - {CoAuthorUserIds}", 
                                 userIdsList.Count, string.Join(", ", userIdsList));
                         }
                     }
@@ -491,12 +499,12 @@ namespace Application.Works
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error checking for root-level CoAuthorUserIds");
+                _logger.LogError(ex, "Error checking for root-level CoAuthorUserIds");
             }
             
             // Loại bỏ trùng lặp từ danh sách coAuthorUserIds
             coAuthorUserIds = coAuthorUserIds.Distinct().ToList();
-            logger.LogInformation("Final combined CoAuthorUserIds: {Count} ids - {CoAuthorUserIds}", 
+            _logger.LogInformation("Final combined CoAuthorUserIds: {Count} ids - {CoAuthorUserIds}", 
                 coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
 
             await ValidateSystemStateAsync(work, userId, cancellationToken);
@@ -507,7 +515,7 @@ namespace Application.Works
 
                 // Luôn gọi UpdateCoAuthorsAsync để cập nhật đúng danh sách đồng tác giả
                 // Ngay cả khi danh sách rỗng, việc này cũng đảm bảo xóa các đồng tác giả cũ nếu người dùng muốn
-                logger.LogInformation("Updating CoAuthors with combined list: {Count} userIds - {UserIds}", 
+                _logger.LogInformation("Updating CoAuthors with combined list: {Count} userIds - {UserIds}", 
                     coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
                 await UpdateCoAuthorsAsync(work, coAuthorUserIds, userId, cancellationToken);
             }
@@ -517,15 +525,15 @@ namespace Application.Works
             // Lưu các thay đổi vào database
             await SaveChangesAsync(work, author, cancellationToken);
             
-            logger.LogInformation("Changes saved successfully for workId {WorkId}", workId);
+            _logger.LogInformation("Changes saved successfully for workId {WorkId}", workId);
 
             // Ánh xạ sang DTO và điền thông tin đồng tác giả
             var workDto = _mapper.MapToDto(work);
             
-            logger.LogInformation("WorkDto mapped. Filling CoAuthorUserIds...");
+            _logger.LogInformation("WorkDto mapped. Filling CoAuthorUserIds...");
             await FillCoAuthorUserIdsAsync(workDto, cancellationToken);
             
-            logger.LogInformation("UpdateWorkByAuthorAsync complete. Returning CoAuthorUserIds: {CoAuthorUserIds}", 
+            _logger.LogInformation("UpdateWorkByAuthorAsync complete. Returning CoAuthorUserIds: {CoAuthorUserIds}", 
                 string.Join(", ", workDto.CoAuthorUserIds));
                 
             return workDto;
@@ -589,15 +597,15 @@ namespace Application.Works
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError(ex, "Error adding coauthor {UserId} to work {WorkId}", coAuthorId, work.Id);
+                        _logger.LogError(ex, "Error adding coauthor {UserId} to work {WorkId}", coAuthorId, work.Id);
                     }
                 }
                 
-                logger.LogInformation("UpdateCoAuthorsAsync completed for work {WorkId}", work.Id);
+                _logger.LogInformation("UpdateCoAuthorsAsync completed for work {WorkId}", work.Id);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error in UpdateCoAuthorsAsync for work {WorkId}", work.Id);
+                _logger.LogError(ex, "Error in UpdateCoAuthorsAsync for work {WorkId}", work.Id);
             }
         }
 
@@ -720,13 +728,13 @@ namespace Application.Works
             // Log thông tin debug
             if (factor != null)
             {
-                logger.LogInformation(
+                _logger.LogInformation(
                     "Tìm thấy Factor với WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}. ConvertHour={ConvertHour}",
                     workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel, factor.ConvertHour);
             }
             else
             {
-                logger.LogWarning(
+                _logger.LogWarning(
                     "Không tìm thấy Factor cho WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
                     workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel);
             }
@@ -740,7 +748,7 @@ namespace Application.Works
             if (request.AuthorRequest is not null)
             {
                 // Ghi log trạng thái ban đầu
-                logger.LogInformation(
+                _logger.LogInformation(
                     "UpdateExistingAuthorAsync - Trạng thái ban đầu: AuthorId={AuthorId}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, ScoreLevel={ScoreLevel}",
                     author.Id, author.WorkHour, author.AuthorHour, author.ScoreLevel);
                 
@@ -766,7 +774,7 @@ namespace Application.Works
 
                 if (shouldRecalculate)
                 {
-                    logger.LogInformation(
+                    _logger.LogInformation(
                         "UpdateExistingAuthorAsync - Tính toán lại giờ quy đổi: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
                         work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, author.ScoreLevel);
                         
@@ -780,7 +788,7 @@ namespace Application.Works
 
                     if (factor is null)
                     {
-                        logger.LogError(
+                        _logger.LogError(
                             "UpdateExistingAuthorAsync - Không tìm thấy Factor: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
                             work.WorkTypeId, work.WorkLevelId, author.PurposeId, author.AuthorRoleId, author.ScoreLevel);
                         throw new Exception(ErrorMessages.FactorNotFound);
@@ -794,18 +802,18 @@ namespace Application.Works
                         work.TotalMainAuthors ?? 0,
                         author.AuthorRoleId);
                         
-                    logger.LogInformation(
+                    _logger.LogInformation(
                         "UpdateExistingAuthorAsync - Kết quả tính toán: Factor.ConvertHour={ConvertHour}, WorkHour={WorkHour}, AuthorHour={AuthorHour}",
                         factor.ConvertHour, author.WorkHour, author.AuthorHour);
                 }
                 else
                 {
-                    logger.LogInformation("UpdateExistingAuthorAsync - Không cần tính lại giờ quy đổi");
+                    _logger.LogInformation("UpdateExistingAuthorAsync - Không cần tính lại giờ quy đổi");
                 }
 
                 author.ModifiedDate = DateTime.UtcNow;
                 
-                logger.LogInformation(
+                _logger.LogInformation(
                     "UpdateExistingAuthorAsync - Trạng thái sau cập nhật: AuthorId={AuthorId}, WorkHour={WorkHour}, AuthorHour={AuthorHour}, ScoreLevel={ScoreLevel}",
                     author.Id, author.WorkHour, author.AuthorHour, author.ScoreLevel);
             }
@@ -879,7 +887,7 @@ namespace Application.Works
             // Nếu factor không tồn tại, trả về 0
             if (factor is null)
             {
-                logger.LogWarning("CalculateWorkHour - Factor is null, returning 0");
+                _logger.LogWarning("CalculateWorkHour - Factor is null, returning 0");
                 return 0;
             }
             
@@ -887,7 +895,7 @@ namespace Application.Works
             if ((scoreLevel.HasValue != factor.ScoreLevel.HasValue) || 
                 (scoreLevel.HasValue && factor.ScoreLevel.HasValue && scoreLevel.Value != factor.ScoreLevel.Value))
             {
-                logger.LogWarning("CalculateWorkHour - ScoreLevel mismatch: Request={RequestLevel}, Factor={FactorLevel}, nhưng vẫn trả về ConvertHour={ConvertHour}",
+                _logger.LogWarning("CalculateWorkHour - ScoreLevel mismatch: Request={RequestLevel}, Factor={FactorLevel}, nhưng vẫn trả về ConvertHour={ConvertHour}",
                     scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null",
                     factor.ScoreLevel.HasValue ? factor.ScoreLevel.Value.ToString() : "null",
                     factor.ConvertHour);
@@ -897,7 +905,7 @@ namespace Application.Works
             }
             
             // Nếu mọi thứ khớp hoặc cả hai đều null, trả về ConvertHour
-            logger.LogInformation("CalculateWorkHour - Returning ConvertHour={ConvertHour} cho ScoreLevel={ScoreLevel}", 
+            _logger.LogInformation("CalculateWorkHour - Returning ConvertHour={ConvertHour} cho ScoreLevel={ScoreLevel}", 
                 factor.ConvertHour, 
                 scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null");
             return factor.ConvertHour;
@@ -975,7 +983,7 @@ namespace Application.Works
                 currentUserId = userId;
             }
 
-            logger.LogInformation("FillCoAuthorUserIdsAsync - WorkDto {WorkId}: Start", workDto.Id);
+            _logger.LogInformation("FillCoAuthorUserIdsAsync - WorkDto {WorkId}: Start", workDto.Id);
 
             try {
                 // Lấy những UserId đã có thông tin Author
@@ -988,10 +996,10 @@ namespace Application.Works
                     .FindAsync(wa => wa.WorkId == workDto.Id);
                 var coAuthorUserIds = workAuthors.Select(wa => wa.UserId).ToList();
 
-                logger.LogInformation("FillCoAuthorUserIdsAsync - Authors found: {Count}", authors.Count());
-                logger.LogInformation("FillCoAuthorUserIdsAsync - WorkAuthors found: {Count}", workAuthors.Count());
-                logger.LogInformation("Authors UserIds: {AuthorIds}", string.Join(", ", authorUserIds));
-                logger.LogInformation("WorkAuthors UserIds: {WorkAuthors}", string.Join(", ", coAuthorUserIds));
+                _logger.LogInformation("FillCoAuthorUserIdsAsync - Authors found: {Count}", authors.Count());
+                _logger.LogInformation("FillCoAuthorUserIdsAsync - WorkAuthors found: {Count}", workAuthors.Count());
+                _logger.LogInformation("Authors UserIds: {AuthorIds}", string.Join(", ", authorUserIds));
+                _logger.LogInformation("WorkAuthors UserIds: {WorkAuthors}", string.Join(", ", coAuthorUserIds));
 
                 // Kết hợp tất cả UserId, loại bỏ currentUserId, và đảm bảo không có trùng lặp
                 var combinedUserIds = authorUserIds.Union(coAuthorUserIds)
@@ -1001,12 +1009,12 @@ namespace Application.Works
                     
                 workDto.CoAuthorUserIds = combinedUserIds;
                 
-                logger.LogInformation("Final CoAuthorUserIds: {Count} users - {FinalIds}", 
+                _logger.LogInformation("Final CoAuthorUserIds: {Count} users - {FinalIds}", 
                     workDto.CoAuthorUserIds.Count,
                     string.Join(", ", workDto.CoAuthorUserIds));
             }
             catch (Exception ex) {
-                logger.LogError(ex, "Error filling CoAuthorUserIds for WorkDto {WorkId}", workDto.Id);
+                _logger.LogError(ex, "Error filling CoAuthorUserIds for WorkDto {WorkId}", workDto.Id);
                 // Đảm bảo ít nhất trả về một danh sách rỗng thay vì null
                 workDto.CoAuthorUserIds = new List<Guid>();
             }
@@ -1082,12 +1090,12 @@ namespace Application.Works
             foreach (var path in possiblePaths)
             {
                 var normalizedPath = Path.GetFullPath(path);
-                logger.LogInformation("Đang thử tìm file template tại: {Path}", normalizedPath);
+                _logger.LogInformation("Đang thử tìm file template tại: {Path}", normalizedPath);
                 
                 if (File.Exists(normalizedPath))
                 {
                     templatePath = normalizedPath;
-                    logger.LogInformation("Đã tìm thấy file template tại: {Path}", normalizedPath);
+                    _logger.LogInformation("Đã tìm thấy file template tại: {Path}", normalizedPath);
                     break;
                 }
             }
@@ -1095,7 +1103,7 @@ namespace Application.Works
             if (templatePath == null)
             {
                 var errorMessage = $"Không tìm thấy file template Excel. Đã thử các đường dẫn sau:\n{string.Join("\n", possiblePaths.Select(p => Path.GetFullPath(p)))}";
-                logger.LogError(errorMessage);
+                _logger.LogError(errorMessage);
                 throw new FileNotFoundException(errorMessage);
             }
 
@@ -1558,6 +1566,80 @@ namespace Application.Works
             }
 
             return null;
+        }
+
+        private async Task CreateScientificArticleFromProjectAsync(Work project, Guid userId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Lấy nội dung sản phẩm từ details của đề tài
+                var productDetails = project.Details?.GetValueOrDefault("Sản phẩm thuộc đề tài");
+                if (string.IsNullOrEmpty(productDetails))
+                {
+                    _logger.LogWarning("Không tìm thấy thông tin sản phẩm trong details của đề tài {ProjectId}", project.Id);
+                    return;
+                }
+
+                // Tạo công trình mới (Bài báo khoa học)
+                var scientificArticle = new Work
+                {
+                    Id = Guid.NewGuid(),
+                    Title = productDetails,
+                    TimePublished = project.TimePublished,
+                    TotalAuthors = project.TotalAuthors,
+                    TotalMainAuthors = project.TotalMainAuthors,
+                    Details = new Dictionary<string, string>
+                    {
+                        { "Tên tạp chí", "" },
+                        { "Tập, số phát hành", "" },
+                        { "Số trang", "" },
+                        { "Chỉ số xuất bản", "" },
+                        { "Cơ quản xuất bản", "" }
+                    },
+                    Source = WorkSource.NguoiDungKeKhai,
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"), // ID của Bài báo khoa học
+                    WorkLevelId = null,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                await _unitOfWork.Repository<Work>().CreateAsync(scientificArticle);
+
+                // Tạo thông tin tác giả
+                var author = new Author
+                {
+                    Id = Guid.NewGuid(),
+                    WorkId = scientificArticle.Id,
+                    UserId = userId,
+                    AuthorRoleId = null,
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"), // ID của mục đích "Sản phẩm của đề tài NCKH"
+                    Position = 1,
+                    ScoreLevel = null,
+                    WorkHour = 0,
+                    SCImagoFieldId = null,
+                    FieldId = null,
+                    ProofStatus = ProofStatus.ChuaXuLy,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                await _unitOfWork.Repository<Author>().CreateAsync(author);
+
+                // Thêm tác giả vào WorkAuthor
+                var workAuthor = new WorkAuthor
+                {
+                    Id = Guid.NewGuid(),
+                    WorkId = scientificArticle.Id,
+                    UserId = userId
+                };
+                await _unitOfWork.Repository<WorkAuthor>().CreateAsync(workAuthor);
+
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("Đã tạo bài báo khoa học tự động từ đề tài {ProjectId}", project.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi tạo bài báo khoa học từ đề tài {ProjectId}", project.Id);
+                throw;
+            }
         }
     }
 }

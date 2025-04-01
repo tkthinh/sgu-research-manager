@@ -233,7 +233,7 @@ export default function WorkForm({
 
       ];
     }
-    // Đề tài, giáo trình
+    // Đề tài
     else if (["49cf7589-fb84-4934-be8e-991c6319a348"].includes(workTypeId)) {
       return [
         { key: "Mã số đề tài", label: "Mã số đề tài", required: true },
