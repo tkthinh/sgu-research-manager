@@ -1,4 +1,5 @@
-﻿using Application.Shared.Response;
+﻿using System.Security.Claims;
+using Application.Shared.Response;
 using Application.Users;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
@@ -14,18 +15,21 @@ namespace WebApi.Controllers
         private readonly IUserService userService;
         private readonly IUserImportService userImportService;
         private readonly ILogger<UsersController> logger;
+        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly UserManager<ApplicationUser> userManager;
 
         public UsersController(
             IUserService userService,
             IUserImportService userImportService,
             ILogger<UsersController> logger,
+            IHttpContextAccessor httpContextAccessor,
             UserManager<ApplicationUser> userManager
             )
         {
             this.userService = userService;
             this.userImportService = userImportService;
             this.logger = logger;
+            this.httpContextAccessor = httpContextAccessor;
             this.userManager = userManager;
         }
 
@@ -46,11 +50,11 @@ namespace WebApi.Controllers
                     FieldId = user.FieldId,
                     UserName = user.UserName,
                     FullName = user.FullName,
-                    Email = user.Email,
-                    PhoneNumber = user.PhoneNumber,
-                    Specialization = user.Specialization,
-                    AcademicTitle = user.AcademicTitle,
-                    OfficerRank = user.OfficerRank,
+                    Email = user.Email ?? "-",
+                    PhoneNumber = user.PhoneNumber ?? "-",
+                    Specialization = user.Specialization ?? "-",
+                    AcademicTitle = user.AcademicTitle ?? "-",
+                    OfficerRank = user.OfficerRank ?? "-",
                     DepartmentName = user.DepartmentName,
                     FieldName = user.FieldName,
                     IdentityId = user.IdentityId
@@ -102,31 +106,33 @@ namespace WebApi.Controllers
                   ));
         }
 
-        [HttpPut("me")]
+        [HttpPut("{id}")]
         [Authorize]
-        public async Task<ActionResult<ApiResponse<object>>> UpdateMyProfile([FromBody] UpdateUserRequestDto requestDto)
+        public async Task<ActionResult<ApiResponse<object>>> UpdatePersonalProfile([FromRoute] Guid id, [FromBody] UpdateUserRequestDto requestDto)
         {
-            // Get the current Identity user.
-            var currentIdentityUser = await userManager.GetUserAsync(User);
-            if (currentIdentityUser == null)
+            var currentUserId = httpContextAccessor.HttpContext?.User.FindFirst(c => c.Type == "id");
+            if(currentUserId == null || currentUserId.Value != id.ToString())
             {
-                return Unauthorized(new ApiResponse<object>(false, "Không tìm thấy người dùng hiện tại"));
+                return Unauthorized(new ApiResponse<object>(false, "Không có quyền cập nhật thông tin người dùng"));
             }
 
-            var user = await userService.GetUserByIdentityIdAsync(currentIdentityUser.Id);
-            if (user == null)
+            var currentUser = await userService.GetByIdAsync(id);
+            if (currentUser == null)
             {
                 return NotFound(new ApiResponse<object>(false, "Không tìm thấy thông tin người dùng"));
             }
 
             // Update only allowed fields.
-            user.FullName = requestDto.FullName;
-            user.AcademicTitle = requestDto.AcademicTitle;
-            user.OfficerRank = requestDto.OfficerRank;
-            user.DepartmentId = requestDto.DepartmentId;
-            user.FieldId = requestDto.FieldId;
+            currentUser.FullName = requestDto.FullName;
+            currentUser.AcademicTitle = requestDto.AcademicTitle;
+            currentUser.OfficerRank = requestDto.OfficerRank;
+            currentUser.Email = requestDto.Email;
+            currentUser.PhoneNumber = requestDto.PhoneNumber;
+            currentUser.Specialization = requestDto.Specialization;
+            currentUser.DepartmentId = requestDto.DepartmentId;
+            currentUser.FieldId = requestDto.FieldId;
 
-            await userService.UpdateAsync(user);
+            await userService.UpdateAsync(currentUser);
             return Ok(new ApiResponse<object>(true, "Cập nhật thông tin thành công"));
         }
 

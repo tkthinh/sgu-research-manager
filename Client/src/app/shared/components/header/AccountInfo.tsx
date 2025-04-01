@@ -70,7 +70,7 @@ export default function AccountInfo() {
           </Grid>
 
           {/* <Typography variant="body2">Role: {session.user.role}</Typography> */}
-          <Link href="/profile" sx={{ marginTop: 2 }}>
+          <Link href="/cap-nhat-thong-tin" sx={{ marginTop: 2 }}>
             Chỉnh sửa thông tin
           </Link>
         </Stack>

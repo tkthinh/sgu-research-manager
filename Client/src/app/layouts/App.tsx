@@ -6,9 +6,15 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { User } from "../../lib/types/models/User";
+import { isUserProfileIncomplete } from "../../lib/utils/checkUserProfile";
+import ProfileIncompletedDialog from "../shared/components/dialogs/ProfileIncompletedDialog";
 import SessionExpiredDialog from "../shared/components/dialogs/SessionExpiredDialog";
 import { useAuth } from "../shared/contexts/AuthContext";
-import { NAVIGATION_ADMIN, NAVIGATION_MANAGER, NAVIGATION_USER } from "./Navigation";
+import {
+  NAVIGATION_ADMIN,
+  NAVIGATION_MANAGER,
+  NAVIGATION_USER,
+} from "./Navigation";
 
 interface CustomSession extends Session {
   user: User;
@@ -23,7 +29,8 @@ export default function App() {
   const [customSession, setCustomSession] = useState<CustomSession | null>(
     null,
   );
-  const [showDialog, setShowDialog] = useState(false);
+  const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
+  const [showProfileUpdateDialog, setShowProfileUpdateDialog] = useState(false);
 
   const { user } = useAuth();
   const userRole = user?.role;
@@ -49,15 +56,6 @@ export default function App() {
     toast.dismiss();
   }, [location]);
 
-  // Load user session from local storage
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      setCustomSession({ user });
-    }
-  }, []);
-
   const authentication = useMemo(() => {
     return {
       signIn: () => {
@@ -72,6 +70,19 @@ export default function App() {
     };
   }, []);
 
+  // Load user session from local storage
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (isUserProfileIncomplete(user)) {
+        setShowProfileUpdateDialog(true);
+      }
+
+      setCustomSession({ user });
+    }
+  }, []);
+
   // Automatically sign out user when token expires
   useEffect(() => {
     const expiration = localStorage.getItem("expiration");
@@ -81,12 +92,12 @@ export default function App() {
 
     if (timeout > 0) {
       const timer = setTimeout(() => {
-        setShowDialog(true);
+        setShowTimeoutDialog(true);
         authentication.signOut();
       }, timeout);
       return () => clearTimeout(timer);
     } else {
-      setShowDialog(true);
+      setShowTimeoutDialog(true);
       authentication.signOut();
     }
   }, []);
@@ -102,8 +113,12 @@ export default function App() {
         <ToastContainer position="top-right" autoClose={2000} />
         <Outlet />
         <SessionExpiredDialog
-          open={showDialog}
+          open={showTimeoutDialog}
           onClose={() => navigate("/dang-nhap")}
+        />
+        <ProfileIncompletedDialog
+          open={showProfileUpdateDialog}
+          onClose={() => navigate("/cap-nhat-thong-tin")}
         />
       </QueryClientProvider>
     </ReactRouterAppProvider>
