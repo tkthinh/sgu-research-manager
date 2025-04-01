@@ -9,6 +9,7 @@ import {
   Typography,
   Tooltip,
   Container,
+  IconButton,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,11 +32,15 @@ import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDial
 import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 import { exportWorks } from "../../lib/api/excelApi";
 import { useAuth } from "../../app/shared/contexts/AuthContext";
+import { useSystemStatus } from '../../hooks/useSystemStatus';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function WorksPage() {
   const queryClient = useQueryClient();
   const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
   const { user } = useAuth();
+  const { isSystemOpen, canEditWork } = useSystemStatus();
 
   // Sử dụng hook để lấy dữ liệu form
   const formData = useWorkFormData();
@@ -503,29 +508,47 @@ export default function WorksPage() {
       field: "actions",
       headerName: "Thao tác",
       width: 200,
-      renderCell: (params: any) => (
-        <Box>
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={() => handleOpenUpdateDialog(params.row)}
-            sx={{ marginRight: 1 }}
-            disabled={updateWorkMutation.isPending}
-          >
-            Sửa
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => handleDeleteClick(params.row.id)}
-            disabled={deleteMutation.isPending}
-          >
-            Xóa
-          </Button>
-        </Box>
-      ),
+      renderCell: (params: any) => {
+        const work = params.row;
+        const author = work.authors && work.authors[0];
+        const proofStatus = author?.proofStatus;
+
+        return (
+          <Box>
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={() => handleOpenUpdateDialog(work)}
+              disabled={!canEditWork(proofStatus)}
+              sx={{ 
+                marginRight: 1,
+                '&.Mui-disabled': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                  color: 'rgba(0, 0, 0, 0.26)'
+                }
+              }}
+            >
+              Sửa
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={() => handleDeleteClick(work.id)}
+              disabled={!isSystemOpen}
+              sx={{
+                '&.Mui-disabled': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                  color: 'rgba(0, 0, 0, 0.26)'
+                }
+              }}
+            >
+              Xóa
+            </Button>
+          </Box>
+        );
+      },
     },
   ];
 
@@ -551,6 +574,7 @@ export default function WorksPage() {
             color="primary" 
             onClick={() => handleOpenUpdateDialog(undefined as any)} 
             startIcon={<AddIcon />}
+            disabled={!isSystemOpen}
           >
             Thêm công trình
           </Button>
