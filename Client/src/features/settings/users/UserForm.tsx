@@ -259,7 +259,7 @@ export default function UserForm({ open, handleClose, data }: UserFormProps) {
               margin="dense"
               disabled={isSubmitting}
             >
-              <MenuItem value="">-- Chọn bộ môn --</MenuItem>
+              <MenuItem value="">-- Chọn ngành --</MenuItem>
               {fields.map((fieldItem: any) => (
                 <MenuItem key={fieldItem.id} value={fieldItem.id}>
                   {fieldItem.name}

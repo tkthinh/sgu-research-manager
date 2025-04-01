@@ -145,86 +145,91 @@ export default function SignIn() {
           gap: 2,
         }}
       >
-        <Card variant="outlined">
-          <img src="/logo.png" height={36} width={36} alt="logo" />
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Card variant="outlined">
+            <img src="/logo.png" height={36} width={36} alt="logo" />
 
-          <Typography component="h1" variant="h4" fontWeight={600}>
-            Đăng nhập
-          </Typography>
+            <Typography component="h1" variant="h4" fontWeight={600}>
+              Đăng nhập
+            </Typography>
 
-          {/* Success Alert for registration */}
-          {registeredSuccess && (
-            <Alert severity="success">Đăng ký thành công</Alert>
-          )}
+            {/* Success Alert for registration */}
+            {registeredSuccess && (
+              <Alert severity="success">Đăng ký thành công</Alert>
+            )}
 
-          {error && <Alert severity="error">{error}</Alert>}
+            {error && <Alert severity="error">{error}</Alert>}
 
-          <FormControl fullWidth key="username">
-            <FormLabel htmlFor="username">Mã số giảng viên</FormLabel>
-            <TextField
-              fullWidth
-              id="username"
-              placeholder="Nhập mã số giảng viên"
-              {...register("username")}
-              error={!!errors.username}
-              helperText={errors.username?.message}
-            />
-          </FormControl>
+            <FormControl fullWidth key="username">
+              <FormLabel htmlFor="username">Mã số giảng viên</FormLabel>
+              <TextField
+                fullWidth
+                id="username"
+                placeholder="Nhập mã số giảng viên"
+                {...register("username")}
+                error={!!errors.username}
+                helperText={errors.username?.message}
+              />
+            </FormControl>
 
-          <FormControl fullWidth key="password">
-            <FormLabel htmlFor="password">Mật khẩu</FormLabel>
-            <TextField
-              fullWidth
-              id="password"
-              placeholder="Nhập mật khẩu"
-              type={showPassword ? "text" : "password"}
-              {...register("password")}
-              error={!!errors.password}
-              helperText={errors.password?.message}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleTogglePasswordVisibility}
-                      edge="end"
-                      aria-label="toggle password visibility"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+            <FormControl fullWidth key="password">
+              <FormLabel htmlFor="password">Mật khẩu</FormLabel>
+              <TextField
+                fullWidth
+                id="password"
+                placeholder="Nhập mật khẩu"
+                type={showPassword ? "text" : "password"}
+                {...register("password")}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleTogglePasswordVisibility}
+                        edge="end"
+                        aria-label="toggle password visibility"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </FormControl>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                marginTop: 3,
               }}
-            />
-          </FormControl>
-
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 2,
-              marginTop: 3,
-            }}
-          >
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              onClick={handleSubmit(onSubmit)}
-              disabled={loading}
             >
-              {loading ? <CircularProgress size={24} /> : "Đăng nhập"}
-            </Button>
-          </Box>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={24} /> : "Đăng nhập"}
+              </Button>
+            </Box>
 
-          <Divider sx={{ marginY: 2 }} />
-          <Typography sx={{ textAlign: "center" }}>
-            Chưa có tài khoản?{" "}
-            <Link href="/dang-ky" variant="body2" sx={{ alignSelf: "center" }}>
-              Đăng ký
-            </Link>
-          </Typography>
-        </Card>
+            <Divider sx={{ marginY: 2 }} />
+            <Typography sx={{ textAlign: "center" }}>
+              Chưa có tài khoản?{" "}
+              <Link
+                href="/dang-ky"
+                variant="body2"
+                sx={{ alignSelf: "center" }}
+              >
+                Đăng ký
+              </Link>
+            </Typography>
+          </Card>
+        </form>
       </SignInContainer>
     </>
   );
