@@ -5,8 +5,9 @@ namespace Application.Auth
 {
     public interface IAuthService
     {
-        Task<ApiResponse<object>> LoginAsync(LoginRequestDto request);
-        Task<ApiResponse<UserDto>> RegisterAsync(RegisterRequestDto request);
-        Task<ApiResponse<object>> ChangePasswordAsync(ChangePasswordRequestDto request);
+        Task<object> LoginAsync(LoginRequestDto request);
+        Task<UserDto> RegisterAsync(RegisterRequestDto request);
+        Task ChangePasswordAsync(ChangePasswordRequestDto request);
     }
+
 }

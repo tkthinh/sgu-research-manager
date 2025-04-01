@@ -17,30 +17,46 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
-        var result = await authService.LoginAsync(request);
-        if (!result.Success)
-            return Unauthorized(result);
-
-        return Ok(result);
+        try
+        {
+            var data = await authService.LoginAsync(request);
+            return Ok(new ApiResponse<object>(true, "Đăng nhập thành công", data));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new ApiResponse<object>(false, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<object>(false, ex.Message));
+        }
     }
 
     [HttpPost("register")]
     public async Task<ActionResult<ApiResponse<UserDto>>> Register([FromBody] RegisterRequestDto request)
     {
-        var result = await authService.RegisterAsync(request);
-        if (!result.Success)
-            return BadRequest(result);
-
-        return Ok(result);
+        try
+        {
+            var userDto = await authService.RegisterAsync(request);
+            return Ok(new ApiResponse<UserDto>(true, "Đăng ký tài khoản thành công", userDto));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<UserDto>(false, ex.Message));
+        }
     }
 
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto request)
     {
-        var result = await authService.ChangePasswordAsync(request);
-        if (!result.Success)
-            return BadRequest(result);
-
-        return Ok(result);
+        try
+        {
+            await authService.ChangePasswordAsync(request);
+            return Ok(new ApiResponse<object>(true, "Đổi mật khẩu thành công"));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<object>(false, ex.Message));
+        }
     }
 }

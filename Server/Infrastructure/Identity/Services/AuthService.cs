@@ -2,13 +2,11 @@
 using System.Security.Claims;
 using System.Text;
 using Application.Auth;
-using Application.Shared.Response;
 using Application.Users;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Infrastructure.Identity.Services
@@ -26,8 +24,7 @@ namespace Infrastructure.Identity.Services
             IConfiguration configuration,
             IUserService userService,
             IHttpContextAccessor httpContextAccessor,
-            ILogger<AuthService> logger
-            )
+            ILogger<AuthService> logger)
         {
             this.userManager = userManager;
             this.configuration = configuration;
@@ -36,38 +33,30 @@ namespace Infrastructure.Identity.Services
             this.logger = logger;
         }
 
-        public async Task<ApiResponse<object>> LoginAsync(LoginRequestDto request)
+        public async Task<object> LoginAsync(LoginRequestDto request)
         {
             var identityUser = await userManager.FindByNameAsync(request.Username);
             if (identityUser == null || !await userManager.CheckPasswordAsync(identityUser, request.Password))
-            {
-                return new ApiResponse<object>(false, "Sai thông tin đăng nhập");
-            }
+                throw new UnauthorizedAccessException("Sai thông tin đăng nhập");
 
             if (!identityUser.IsApproved)
-            {
-                return new ApiResponse<object>(false, "Tài khoản chưa được phê duyệt");
-            }
+                throw new Exception("Tài khoản chưa được phê duyệt");
 
-            // Create user claims
+            // Build up those claims like a boss
             var authClaims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, identityUser.UserName!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            // Add roles as claims:
             var userRoles = await userManager.GetRolesAsync(identityUser);
             authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            // Add user id as a claim
             var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
             if (user != null)
-            {
                 authClaims.Add(new Claim("id", user.Id.ToString()));
-            }
 
-            // Generate the token
+            // Generate JWT token
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
             var token = new JwtSecurityToken(
                 issuer: configuration["Jwt:Issuer"],
@@ -78,7 +67,6 @@ namespace Infrastructure.Identity.Services
             );
 
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
             var responseData = new
             {
                 token = tokenString,
@@ -86,99 +74,75 @@ namespace Infrastructure.Identity.Services
                 user
             };
 
-            return new ApiResponse<object>(true, "Đăng nhập thành công", responseData);
+            return responseData;
         }
 
-        public async Task<ApiResponse<UserDto>> RegisterAsync(RegisterRequestDto request)
+        public async Task<UserDto> RegisterAsync(RegisterRequestDto request)
         {
-            try
+            // Check if username already exists
+            var existingUser = await userManager.FindByNameAsync(request.UserName);
+            if (existingUser != null)
+                throw new Exception("Tên người dùng đã tồn tại");
+
+            // Create new identity user
+            var identityUser = new ApplicationUser
             {
-                // Check if username is already taken
-                var existingUser = await userManager.FindByNameAsync(request.UserName);
-                if (existingUser != null)
-                {
-                    return new ApiResponse<UserDto>(false, "Tên người dùng đã tồn tại");
-                }
+                UserName = request.UserName,
+                Email = request.Email,
+                PhoneNumber = request.PhoneNumber,
+                IsApproved = false
+            };
 
-                // Create the Identity user with the provided username.
-                var identityUser = new ApplicationUser
-                {
-                    UserName = request.UserName,
-                    Email = request.Email,
-                    PhoneNumber = request.PhoneNumber,
-                    IsApproved = false
-                };
-
-                var identityResult = await userManager.CreateAsync(identityUser, request.Password);
-                if (!identityResult.Succeeded)
-                {
-                    var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
-                    return new ApiResponse<UserDto>(false, $"Lỗi khi đăng ký: {errors}");
-                }
-
-                // Add the "User" role to the newly registered user.
-                var roleResult = await userManager.AddToRoleAsync(identityUser, "User");
-                if (!roleResult.Succeeded)
-                {
-                    var roleErrors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
-                    return new ApiResponse<UserDto>(false, $"Lỗi khi đăng ký: {roleErrors}");
-                }
-
-                // Map to your domain user DTO.
-                var userDto = new UserDto
-                {
-                    FullName = request.FullName,
-                    UserName = identityUser.UserName,
-                    Email = identityUser.Email,
-                    PhoneNumber = identityUser.PhoneNumber,
-                    IdentityId = identityUser.Id,
-                    AcademicTitle = request.AcademicTitle,
-                    OfficerRank = request.OfficerRank,
-                    Specialization = request.Specialization,
-                    DepartmentId = request.DepartmentId,
-                    FieldId = request.FieldId
-                };
-
-                // Create the domain user.
-                var user = await userService.CreateAsync(userDto);
-                userDto.Id = user.Id;
-
-                return new ApiResponse<UserDto>(true, "Đăng ký tài khoản thành công", userDto);
-            }
-            catch (Exception ex)
+            var identityResult = await userManager.CreateAsync(identityUser, request.Password);
+            if (!identityResult.Succeeded)
             {
-                logger.LogError(ex, "Error registering user");
-                return new ApiResponse<UserDto>(false, "Lỗi khi đăng ký", null);
+                var errors = string.Join(", ", identityResult.Errors.Select(e => e.Description));
+                throw new Exception($"Lỗi khi đăng ký: {errors}");
             }
+
+            // Assign the "User" role
+            var roleResult = await userManager.AddToRoleAsync(identityUser, "User");
+            if (!roleResult.Succeeded)
+            {
+                var roleErrors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+                throw new Exception($"Lỗi khi đăng ký: {roleErrors}");
+            }
+
+            // Map to domain user DTO
+            var userDto = new UserDto
+            {
+                FullName = request.FullName,
+                UserName = identityUser.UserName,
+                Email = identityUser.Email,
+                PhoneNumber = identityUser.PhoneNumber,
+                IdentityId = identityUser.Id,
+                AcademicTitle = request.AcademicTitle,
+                OfficerRank = request.OfficerRank,
+                Specialization = request.Specialization,
+                DepartmentId = request.DepartmentId,
+                FieldId = request.FieldId
+            };
+
+            // Create the domain user and return the DTO
+            var user = await userService.CreateAsync(userDto);
+            userDto.Id = user.Id;
+            return userDto;
         }
 
-        public async Task<ApiResponse<object>> ChangePasswordAsync(ChangePasswordRequestDto request)
+        public async Task ChangePasswordAsync(ChangePasswordRequestDto request)
         {
-            try
-            {
-                var user = httpContextAccessor.HttpContext?.User;
-                if (user == null)
-                {
-                    return new ApiResponse<object>(false, "Không tìm thấy thông tin người dùng");
-                }
+            var user = httpContextAccessor.HttpContext?.User;
+            if (user == null)
+                throw new Exception("Không tìm thấy thông tin người dùng");
 
-                var userName = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+            var userName = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+            var identityUser = await userManager.FindByNameAsync(userName!);
+            if (identityUser == null || !await userManager.CheckPasswordAsync(identityUser, request.CurrentPassword))
+                throw new Exception("Mật khẩu cũ không trùng khớp");
 
-                var identityUser = await userManager.FindByNameAsync(userName!);
-                if (identityUser == null || !await userManager.CheckPasswordAsync(identityUser, request.CurrentPassword))
-                {
-                    return new ApiResponse<object>(false, "Mật khẩu cũ không trùng khớp");
-                }
-
-                var result = await userManager.ChangePasswordAsync(identityUser, request.CurrentPassword, request.NewPassword);
-
-                return new ApiResponse<object>(true, "Đổi mật khẩu thành công");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error changing password");
-                return new ApiResponse<object>(false, "Lỗi khi thay đổi mật khẩu");
-            }
+            var result = await userManager.ChangePasswordAsync(identityUser, request.CurrentPassword, request.NewPassword);
+            if (!result.Succeeded)
+                throw new Exception("Lỗi khi thay đổi mật khẩu");
         }
     }
 }
