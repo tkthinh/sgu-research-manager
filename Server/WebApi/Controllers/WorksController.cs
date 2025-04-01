@@ -113,13 +113,13 @@ namespace WebApi.Controllers
                 if (work.Authors != null && work.Authors.Any())
                 {
                     var recipientIds = new HashSet<string>();
-                    
+
                     // Thêm các tác giả khác
                     var authorIds = work.Authors
                         .Where(a => a.UserId != userId)
                         .Select(a => a.UserId.ToString());
                     foreach (var authorId in authorIds) recipientIds.Add(authorId);
-                    
+
                     // Thêm các đồng tác giả
                     var coAuthorIds = work.CoAuthorUserIds?
                         .Where(uid => uid != userId)
@@ -259,15 +259,15 @@ namespace WebApi.Controllers
                 }
 
                 // Kiểm tra quyền truy cập theo một truy vấn duy nhất
-                bool hasAccess = (work.Authors?.Any(a => a.UserId == userId) ?? false) || 
+                bool hasAccess = (work.Authors?.Any(a => a.UserId == userId) ?? false) ||
                                  (work.CoAuthorUserIds?.Contains(userId) ?? false);
-                
+
                 if (!hasAccess)
                 {
                     // Kiểm tra bổ sung trong bảng WorkAuthor nếu không thấy trong danh sách authors/coAuthors
                     var workAuthorExists = await _unitOfWork.Repository<WorkAuthor>()
                         .FirstOrDefaultAsync(wa => wa.WorkId == workId && wa.UserId == userId);
-                    
+
                     if (workAuthorExists == null)
                     {
                         return StatusCode(403, new ApiResponse<object>(false, "Bạn không có quyền cập nhật công trình này"));
@@ -279,7 +279,7 @@ namespace WebApi.Controllers
 
                 // Gửi thông báo đến tất cả các tác giả khác (đơn giản hóa logic)
                 var allRecipientsIds = new HashSet<string>();
-                
+
                 // Thêm UserId của tất cả tác giả
                 if (updatedWork.Authors?.Any() == true)
                 {
@@ -288,7 +288,7 @@ namespace WebApi.Controllers
                         .Select(a => a.UserId.ToString());
                     foreach (var id in authorIds) allRecipientsIds.Add(id);
                 }
-                
+
                 // Thêm UserId của tất cả đồng tác giả
                 if (updatedWork.CoAuthorUserIds?.Any() == true)
                 {
