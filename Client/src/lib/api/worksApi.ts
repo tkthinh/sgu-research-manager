@@ -94,6 +94,12 @@ export const getMyWorks = async (): Promise<ApiResponse<Work[]>> => {
   return response.data;
 };
 
+// Get all works of current user (including imported works)
+export const getAllMyWorks = async (): Promise<ApiResponse<Work[]>> => {
+  const response = await apiClient.get<ApiResponse<Work[]>>("/works/all-my-works");
+  return response.data;
+};
+
 export const getMarkedWorks = async (): Promise<ApiResponse<Work[]>> => {
   const response = await apiClient.get<ApiResponse<Work[]>>("/works/marked");
   return response.data;

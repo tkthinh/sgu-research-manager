@@ -346,6 +346,34 @@ namespace WebApi.Controllers
             }
         }
 
+        [HttpGet("all-my-works")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetAllMyWorks()
+        {
+            try
+            {
+                var (isSuccess, userId, _) = GetCurrentUser();
+                if (!isSuccess)
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                // Lấy tất cả công trình của người dùng, bao gồm cả công trình do người dùng kê khai và công trình được admin import vào
+                var works = await _workService.GetAllWorksByCurrentUserAsync(userId);
+
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy tất cả công trình của người dùng hiện tại thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy tất cả công trình của người dùng hiện tại");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
         // Phương thức tiện ích để lấy userId từ token
         private (bool isSuccess, Guid userId, string userName) GetCurrentUser()
         {

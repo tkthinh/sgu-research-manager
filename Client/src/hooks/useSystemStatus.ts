@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getSystemConfig } from '../lib/api/systemConfigApi';
 import { SystemConfig } from '../lib/types/models/SystemConfig';
-import { ApiResponse } from '../lib/types/ApiResponse';
+import { ApiResponse } from '../lib/types/common/ApiResponse';
 
 export function useSystemStatus() {
   const { data, isLoading } = useQuery<ApiResponse<SystemConfig>>({

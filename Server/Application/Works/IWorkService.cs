@@ -16,6 +16,7 @@ namespace Application.Works
         Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default);
         Task<WorkDto?> GetWorkByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<WorkDto>> GetAllWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
 
 
         Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default);

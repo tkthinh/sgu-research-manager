@@ -862,6 +862,60 @@ namespace Application.Works
             var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(allWorkIds, cancellationToken);
 
             // Lọc và xử lý dữ liệu
+            var filteredWorks = works
+                .Where(work => work.Source == WorkSource.NguoiDungKeKhai) // Chỉ lấy công trình do người dùng kê khai
+                .Select(work =>
+                {
+                    // Kiểm tra xem user đã có thông tin tác giả trong công trình này chưa
+                    var userAuthor = authors.FirstOrDefault(a => a.WorkId == work.Id);
+                    var isCoAuthor = workAuthorWorkIds.Contains(work.Id);
+
+                    // Chỉ giữ thông tin tác giả của user hiện tại (nếu có)
+                    var filteredWork = _mapper.MapToDto(work);
+                    filteredWork.Authors = userAuthor != null
+                        ? new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) }
+                        : new List<AuthorDto>();
+
+                    return filteredWork;
+                }).Where(w => w != null).ToList();
+
+            await FillCoAuthorUserIdsForMultipleWorksAsync(filteredWorks, cancellationToken);
+
+            return filteredWorks;
+        }
+
+        /// <summary>
+        /// Lấy tất cả công trình của người dùng, bao gồm cả công trình do người dùng kê khai và công trình được admin import vào
+        /// </summary>
+        /// <param name="userId">ID của người dùng</param>
+        /// <param name="cancellationToken">Token hủy</param>
+        /// <returns>Danh sách công trình</returns>
+        public async Task<IEnumerable<WorkDto>> GetAllWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            // Lấy danh sách các WorkId mà user là tác giả (có trong bảng Author)
+            var authors = await _unitOfWork.Repository<Author>()
+                .FindAsync(a => a.UserId == userId);
+
+            var authorWorkIds = authors.Select(a => a.WorkId).Distinct().ToList();
+
+            // Lấy danh sách các WorkId mà user được thêm làm đồng tác giả (có trong bảng WorkAuthor)
+            var workAuthors = await _unitOfWork.Repository<WorkAuthor>()
+                .FindAsync(wa => wa.UserId == userId);
+
+            var workAuthorWorkIds = workAuthors.Select(wa => wa.WorkId).Distinct().ToList();
+
+            // Kết hợp tất cả WorkId (loại bỏ trùng lặp)
+            var allWorkIds = authorWorkIds.Union(workAuthorWorkIds).Distinct().ToList();
+
+            if (!allWorkIds.Any())
+            {
+                return Enumerable.Empty<WorkDto>();
+            }
+
+            // Lấy thông tin đầy đủ của các công trình
+            var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(allWorkIds, cancellationToken);
+
+            // Lọc và xử lý dữ liệu
             var filteredWorks = works.Select(work =>
             {
                 // Kiểm tra xem user đã có thông tin tác giả trong công trình này chưa
