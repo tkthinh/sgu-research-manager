@@ -507,19 +507,19 @@ namespace Infrastructure.Data.Seeding
                     new AuthorRole {
                         Id = Guid.Parse("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"),
                         Name = "Trưởng ban",
-                        IsMainAuthor = false,
+                        IsMainAuthor = true,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
                         Id = Guid.Parse("822d8f31-2b1d-4367-8c50-e4535fac5b5f"),
                         Name = "Phó trưởng ban",
-                        IsMainAuthor = false,
+                        IsMainAuthor = true,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
                         Id = Guid.Parse("ad3aa473-c140-46cb-b8f4-faecdf2f338e"),
                         Name = "Ủy viên thường trực",
-                        IsMainAuthor = false,
+                        IsMainAuthor = true,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {

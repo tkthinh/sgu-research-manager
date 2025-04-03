@@ -457,55 +457,12 @@ namespace Application.Works
 
             _logger.LogInformation("UpdateWorkByAuthorAsync - Received request for workId {WorkId}", workId);
             
-            // Xử lý đặc biệt cho coAuthorUserIds - kiểm tra cả hai vị trí
-            List<Guid> coAuthorUserIds = new List<Guid>();
+            // Lấy coAuthorUserIds từ WorkRequest
+            List<Guid> coAuthorUserIds = request.WorkRequest?.CoAuthorUserIds ?? new List<Guid>();
             
-            // Xác định coAuthorUserIds từ vị trí đúng và vị trí có thể sai
-            if (request.WorkRequest?.CoAuthorUserIds != null && request.WorkRequest.CoAuthorUserIds.Any()) 
-            {
-                // Vị trí 1: Trong workRequest (cấu trúc chính xác)
-                coAuthorUserIds.AddRange(request.WorkRequest.CoAuthorUserIds);
-                _logger.LogInformation("Found CoAuthorUserIds in WorkRequest: {Count} ids - {CoAuthorUserIds}", 
-                    request.WorkRequest.CoAuthorUserIds.Count, 
-                    string.Join(", ", request.WorkRequest.CoAuthorUserIds));
-            }
-            
-            // Kiểm tra xem có thuộc tính coAuthorUserIds ở gốc của request không (vị trí sai)
-            try 
-            {
-                var property = request.GetType().GetProperty("CoAuthorUserIds") ?? 
-                              request.GetType().GetProperty("coAuthorUserIds");
-                
-                if (property != null)
-                {
-                    var value = property.GetValue(request);
-                    if (value is List<Guid> userIds && userIds.Any())
-                    {
-                        coAuthorUserIds.AddRange(userIds);
-                        _logger.LogInformation("Found CoAuthorUserIds at root level: {Count} ids - {CoAuthorUserIds}", 
-                            userIds.Count, string.Join(", ", userIds));
-                    }
-                    else if (value is IEnumerable<Guid> userIdsEnum)
-                    {
-                        var userIdsList = userIdsEnum.ToList();
-                        if (userIdsList.Any())
-                        {
-                            coAuthorUserIds.AddRange(userIdsList);
-                            _logger.LogInformation("Found CoAuthorUserIds as IEnumerable at root level: {Count} ids - {CoAuthorUserIds}", 
-                                userIdsList.Count, string.Join(", ", userIdsList));
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking for root-level CoAuthorUserIds");
-            }
-            
-            // Loại bỏ trùng lặp từ danh sách coAuthorUserIds
-            coAuthorUserIds = coAuthorUserIds.Distinct().ToList();
-            _logger.LogInformation("Final combined CoAuthorUserIds: {Count} ids - {CoAuthorUserIds}", 
-                coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
+            _logger.LogInformation("Found CoAuthorUserIds in WorkRequest: {Count} ids - {CoAuthorUserIds}", 
+                coAuthorUserIds.Count, 
+                string.Join(", ", coAuthorUserIds));
 
             await ValidateSystemStateAsync(work, userId, cancellationToken);
 
@@ -515,7 +472,7 @@ namespace Application.Works
 
                 // Luôn gọi UpdateCoAuthorsAsync để cập nhật đúng danh sách đồng tác giả
                 // Ngay cả khi danh sách rỗng, việc này cũng đảm bảo xóa các đồng tác giả cũ nếu người dùng muốn
-                _logger.LogInformation("Updating CoAuthors with combined list: {Count} userIds - {UserIds}", 
+                _logger.LogInformation("Updating CoAuthors with list: {Count} userIds - {UserIds}", 
                     coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
                 await UpdateCoAuthorsAsync(work, coAuthorUserIds, userId, cancellationToken);
             }
