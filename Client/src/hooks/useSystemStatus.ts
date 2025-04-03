@@ -26,6 +26,11 @@ export function useSystemStatus() {
     const start = new Date(data.data.startDate);
     const end = new Date(data.data.endDate);
     
+    // Nếu tác giả đã được xác nhận hợp lệ (ProofStatus = 0), không cho phép sửa
+    if (proofStatus === 0) {
+      return false;
+    }
+    
     // Nếu hệ thống đóng, chỉ cho phép sửa các công trình có trạng thái KhongHopLe
     if (data.data.isClosed || now < start || now > end) {
       return proofStatus === 1; // 1 là KhongHopLe

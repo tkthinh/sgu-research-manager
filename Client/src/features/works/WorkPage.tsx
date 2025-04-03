@@ -536,7 +536,7 @@ export default function WorksPage() {
               color="error"
               size="small"
               onClick={() => handleDeleteClick(work.id)}
-              disabled={!isSystemOpen}
+              disabled={!canEditWork(proofStatus)}
               sx={{
                 '&.Mui-disabled': {
                   backgroundColor: 'rgba(0, 0, 0, 0.12)',
