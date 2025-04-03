@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Domain.Entities;
 using Domain.Interfaces;
+using Domain.Enums;
 
 namespace WebApi.Controllers
 {
@@ -104,6 +105,23 @@ namespace WebApi.Controllers
                 if (!isAuthor)
                 {
                     return StatusCode(403, new ApiResponse<object>(false, "Bạn không có quyền xóa công trình này"));
+                }
+
+                // Kiểm tra xem tác giả hiện tại đã được admin set ProofStatus = HopLe chưa
+                var currentAuthor = work.Authors?.FirstOrDefault(a => a.UserId == userId);
+                if (currentAuthor != null && currentAuthor.ProofStatus == ProofStatus.HopLe)
+                {
+                    return BadRequest(new ApiResponse<object>(false, "Bạn không thể xóa công trình đã được xác nhận hợp lệ bởi admin"));
+                }
+
+                // Kiểm tra xem có tác giả nào khác của công trình đã được set ProofStatus = HopLe chưa
+                bool hasOtherApprovedAuthor = work.Authors?.Any(a => a.UserId != userId && a.ProofStatus == ProofStatus.HopLe) ?? false;
+                if (hasOtherApprovedAuthor)
+                {
+                    return BadRequest(new ApiResponse<object>(
+                        false, 
+                        "Công trình đã có tác giả khác được xác nhận hợp lệ. Bạn không thể xóa công trình này."
+                    ));
                 }
 
                 // Gọi service để xóa công trình
@@ -274,10 +292,36 @@ namespace WebApi.Controllers
                     }
                 }
 
-                // Cập nhật công trình
-                var updatedWork = await _workService.UpdateWorkByAuthorAsync(workId, request, userId);
+                // Kiểm tra xem tác giả hiện tại đã được admin set ProofStatus = HopLe chưa
+                var currentAuthor = work.Authors?.FirstOrDefault(a => a.UserId == userId);
+                if (currentAuthor != null && currentAuthor.ProofStatus == ProofStatus.HopLe)
+                {
+                    return BadRequest(new ApiResponse<object>(false, "Bạn không thể cập nhật thông tin khi tác giả đã được xác nhận hợp lệ bởi admin"));
+                }
 
-                // Gửi thông báo đến tất cả các tác giả khác (đơn giản hóa logic)
+                // Kiểm tra xem có tác giả nào của công trình đã được set ProofStatus = HopLe chưa
+                bool hasApprovedAuthor = work.Authors?.Any(a => a.ProofStatus == ProofStatus.HopLe) ?? false;
+                
+                UpdateWorkWithAuthorRequestDto updatedRequest = request;
+                
+                // Nếu có tác giả đã được xác nhận hợp lệ, chỉ cho phép cập nhật thông tin tác giả
+                if (hasApprovedAuthor && request.WorkRequest != null)
+                {
+                    // Tạo request mới chỉ có phần thông tin tác giả
+                    updatedRequest = new UpdateWorkWithAuthorRequestDto 
+                    { 
+                        AuthorRequest = request.AuthorRequest,
+                        WorkRequest = null
+                    };
+                    
+                    // Log thông báo
+                    _logger.LogInformation("Công trình {WorkId} đã có tác giả được xác nhận hợp lệ. Tác giả {UserId} chỉ có thể cập nhật thông tin tác giả", workId, userId);
+                }
+
+                // Tiến hành cập nhật công trình với request đã được điều chỉnh
+                var updatedWork = await _workService.UpdateWorkByAuthorAsync(workId, updatedRequest, userId);
+
+                // Gửi thông báo đến tất cả các tác giả khác
                 var allRecipientsIds = new HashSet<string>();
 
                 // Thêm UserId của tất cả tác giả
@@ -301,13 +345,18 @@ namespace WebApi.Controllers
                 // Gửi thông báo nếu có người nhận
                 if (allRecipientsIds.Any())
                 {
-                    var notificationMessage = $"Công trình '{updatedWork.Title}' đã được cập nhật bởi {userName}.";
+                    var notificationMessage = hasApprovedAuthor && request.WorkRequest != null
+                        ? $"Tác giả {userName} đã cập nhật thông tin tác giả của công trình '{updatedWork.Title}'."
+                        : $"Công trình '{updatedWork.Title}' đã được cập nhật bởi {userName}.";
+                    
                     await _hubContext.Clients.Users(allRecipientsIds.ToList()).SendAsync("ReceiveNotification", notificationMessage);
                 }
 
                 return Ok(new ApiResponse<WorkDto>(
                     true,
-                    "Cập nhật thông tin công trình và tác giả thành công",
+                    hasApprovedAuthor && request.WorkRequest != null
+                        ? "Công trình đã có tác giả được xác nhận hợp lệ. Chỉ cập nhật thông tin tác giả thành công."
+                        : "Cập nhật thông tin công trình và tác giả thành công",
                     updatedWork
                 ));
             }
