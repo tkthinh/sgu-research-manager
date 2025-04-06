@@ -39,8 +39,8 @@ namespace WebApi.Controllers
             return Ok("Import thành công");
         }
 
-        [HttpGet("export")]
-        public async Task<IActionResult> ExportWorksToExcel()
+        [HttpGet("export-by-user")]
+        public async Task<IActionResult> ExportWorksByUser()
         {
             try
             {
@@ -77,7 +77,7 @@ namespace WebApi.Controllers
                 }
 
                 // Tạo file Excel từ WorkService
-                var fileBytes = await _workService.ExportToExcelAsync(exportData);
+                var fileBytes = await _workService.ExportWorksByUserAsync(exportData);
 
                 // Kiểm tra fileBytes có dữ liệu không
                 if (fileBytes == null || fileBytes.Length == 0)

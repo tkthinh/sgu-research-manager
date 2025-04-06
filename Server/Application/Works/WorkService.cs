@@ -1082,7 +1082,7 @@ namespace Application.Works
             }
         }
 
-        public async Task<byte[]> ExportToExcelAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
+        public async Task<byte[]> ExportWorksByUserAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
         {
             // Thử tìm file template ở các vị trí khác nhau
             string[] possiblePaths = new[]
