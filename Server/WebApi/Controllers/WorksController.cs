@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Enums;
+using Application.Shared.Services;
 
 namespace WebApi.Controllers
 {
@@ -19,13 +20,20 @@ namespace WebApi.Controllers
         private readonly ILogger<WorksController> _logger;
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUserService _currentUserService;
 
-        public WorksController(IWorkService workService, ILogger<WorksController> logger, IHubContext<NotificationHub> hubContext, IUnitOfWork unitOfWork)
+        public WorksController(
+            IWorkService workService, 
+            ILogger<WorksController> logger, 
+            IHubContext<NotificationHub> hubContext, 
+            IUnitOfWork unitOfWork,
+            ICurrentUserService currentUserService)
         {
             _workService = workService;
             _logger = logger;
             _hubContext = hubContext;
             _unitOfWork = unitOfWork;
+            _currentUserService = currentUserService;
         }
 
         [HttpGet]
@@ -88,7 +96,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var (isSuccess, userId, userName) = GetCurrentUser();
+                var (isSuccess, userId, userName) = _currentUserService.GetCurrentUser();
                 if (!isSuccess)
                 {
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
@@ -262,8 +270,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                // Lấy userId từ phương thức tiện ích
-                var (isSuccess, userId, userName) = GetCurrentUser();
+                var (isSuccess, userId, userName) = _currentUserService.GetCurrentUser();
                 if (!isSuccess)
                 {
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
@@ -362,7 +369,7 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tác giả cập nhật công trình và thông tin tác giả");
+                _logger.LogError(ex, "Lỗi khi cập nhật công trình {WorkId} của người dùng", workId);
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
@@ -373,7 +380,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var (isSuccess, userId, _) = GetCurrentUser();
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
                 if (!isSuccess)
                 {
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
@@ -401,7 +408,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var (isSuccess, userId, _) = GetCurrentUser();
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
                 if (!isSuccess)
                 {
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
@@ -421,19 +428,6 @@ namespace WebApi.Controllers
                 _logger.LogError(ex, "Lỗi khi lấy tất cả công trình của người dùng hiện tại");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
-        }
-
-        // Phương thức tiện ích để lấy userId từ token
-        private (bool isSuccess, Guid userId, string userName) GetCurrentUser()
-        {
-            var userIdClaim = User.FindFirst("id")?.Value;
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-            {
-                return (false, Guid.Empty, string.Empty);
-            }
-
-            var userName = User.FindFirst("fullName")?.Value ?? User.FindFirst(ClaimTypes.Name)?.Value ?? "Người dùng";
-            return (true, userId, userName);
         }
     }
 }

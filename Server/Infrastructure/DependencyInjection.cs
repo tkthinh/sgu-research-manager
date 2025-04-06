@@ -29,6 +29,7 @@ using StackExchange.Redis;
 using Application.ScoreLevels;
 using Infrastructure.Identity.Services;
 using Application.Auth;
+using Application.Shared.Services;
 
 namespace Infrastructure
 {
@@ -108,6 +109,7 @@ namespace Infrastructure
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
             services.AddScoped<IScoreLevelService, ScoreLevelService>();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
 
             services.AddScoped<ICacheManagementService, CacheManagementService>();
             services.AddSingleton(ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));

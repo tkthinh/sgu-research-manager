@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
+using Application.Shared.Services;
 
 namespace WebApi.Controllers
 {
@@ -14,11 +16,16 @@ namespace WebApi.Controllers
     {
         private readonly IWorkService _workService;
         private readonly ILogger<WorksController> _logger;
+        private readonly ICurrentUserService _currentUserService;
 
-        public ExcelController(IWorkService workService, ILogger<WorksController> logger)
+        public ExcelController(
+            IWorkService workService, 
+            ILogger<WorksController> logger,
+            ICurrentUserService currentUserService)
         {
             _workService = workService;
             _logger = logger;
+            _currentUserService = currentUserService;
         }
 
         [HttpPost("import")]
@@ -50,18 +57,12 @@ namespace WebApi.Controllers
                     _logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);
                 }
 
-                // Lấy userId từ token
-                var userIdClaim = User.FindFirst("id")?.Value;
-                if (string.IsNullOrEmpty(userIdClaim))
+                // Lấy userId từ service
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+                if (!isSuccess)
                 {
-                    _logger.LogError("Không tìm thấy claim 'id' trong token");
+                    _logger.LogError("Không thể xác định người dùng từ token");
                     return BadRequest(new ApiResponse<object>(false, "Không thể xác định người dùng"));
-                }
-
-                if (!Guid.TryParse(userIdClaim, out var userId))
-                {
-                    _logger.LogError("UserId không hợp lệ: {UserId}", userIdClaim);
-                    return BadRequest(new ApiResponse<object>(false, "ID người dùng không hợp lệ"));
                 }
 
                 _logger.LogInformation("Bắt đầu xuất Excel cho userId: {UserId}", userId);
