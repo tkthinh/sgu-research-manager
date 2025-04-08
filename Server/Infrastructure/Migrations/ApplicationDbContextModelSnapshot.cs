@@ -22,6 +22,59 @@ namespace Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Entities.AcademicYear", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AcademicYears");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("e53bc8e5-a17e-4a9b-a403-0e1b7d3118a2"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndDate = new DateOnly(2024, 6, 30),
+                            Name = "2023-2024",
+                            StartDate = new DateOnly(2023, 9, 1)
+                        },
+                        new
+                        {
+                            Id = new Guid("dab343ac-b1a8-45b4-a7f8-a4260594d7d8"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndDate = new DateOnly(2025, 6, 30),
+                            Name = "2024-2025",
+                            StartDate = new DateOnly(2024, 9, 1)
+                        },
+                        new
+                        {
+                            Id = new Guid("33fdb5af-0778-4d91-8b68-dce2860e138c"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndDate = new DateOnly(2026, 6, 30),
+                            Name = "2025-2026",
+                            StartDate = new DateOnly(2025, 9, 1)
+                        });
+                });
+
             modelBuilder.Entity("Domain.Entities.Assignment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -118,6 +171,35 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Authors");
+                });
+
+            modelBuilder.Entity("Domain.Entities.AuthorRegistration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AcademicYearId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId")
+                        .IsUnique();
+
+                    b.HasIndex("AcademicYearId", "AuthorId")
+                        .IsUnique();
+
+                    b.ToTable("AuthorRegistrations");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -3674,22 +3756,31 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("AcademicYearId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CloseTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsClosed")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("StartDate")
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("OpenTime")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AcademicYearId");
 
                     b.ToTable("SystemConfigs");
                 });
@@ -3759,6 +3850,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsLocked")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -4221,7 +4315,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Entities.User", "User")
-                        .WithMany()
+                        .WithMany("Authors")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -4243,6 +4337,25 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
 
                     b.Navigation("Work");
+                });
+
+            modelBuilder.Entity("Domain.Entities.AuthorRegistration", b =>
+                {
+                    b.HasOne("Domain.Entities.AcademicYear", "AcademicYear")
+                        .WithMany()
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Author", "Author")
+                        .WithOne("AuthorRegistration")
+                        .HasForeignKey("Domain.Entities.AuthorRegistration", "AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AcademicYear");
+
+                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -4308,6 +4421,17 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("WorkType");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SystemConfig", b =>
+                {
+                    b.HasOne("Domain.Entities.AcademicYear", "AcademicYear")
+                        .WithMany("SystemConfigs")
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AcademicYear");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -4380,8 +4504,15 @@ namespace Infrastructure.Migrations
                     b.Navigation("WorkType");
                 });
 
+            modelBuilder.Entity("Domain.Entities.AcademicYear", b =>
+                {
+                    b.Navigation("SystemConfigs");
+                });
+
             modelBuilder.Entity("Domain.Entities.Author", b =>
                 {
+                    b.Navigation("AuthorRegistration");
+
                     b.Navigation("WorkAuthors");
                 });
 
@@ -4414,6 +4545,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Navigation("Assignments");
+
+                    b.Navigation("Authors");
                 });
 
             modelBuilder.Entity("Domain.Entities.Work", b =>

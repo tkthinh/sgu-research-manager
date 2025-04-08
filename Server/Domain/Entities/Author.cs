@@ -27,5 +27,6 @@ namespace Domain.Entities
         public virtual Purpose? Purpose { get; set; }
 
         public virtual ICollection<WorkAuthor>? WorkAuthors { get; set; }
+        public virtual AuthorRegistration? AuthorRegistration { get; set; }
     }
 }

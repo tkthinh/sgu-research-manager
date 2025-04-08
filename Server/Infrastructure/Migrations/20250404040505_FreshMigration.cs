@@ -14,6 +14,22 @@ namespace Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "AcademicYears",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AcademicYears", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Departments",
                 columns: table => new
                 {
@@ -42,22 +58,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SystemConfigs",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsClosed = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SystemConfigs", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "WorkTypes",
                 columns: table => new
                 {
@@ -72,20 +72,43 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SystemConfigs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    OpenDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CloseDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    AcademicYearId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SystemConfigs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SystemConfigs_AcademicYears_AcademicYearId",
+                        column: x => x.AcademicYearId,
+                        principalTable: "AcademicYears",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Specialization = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AcademicTitle = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OfficerRank = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Specialization = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AcademicTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OfficerRank = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IdentityId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DepartmentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FieldId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -215,7 +238,7 @@ namespace Infrastructure.Migrations
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -273,6 +296,7 @@ namespace Infrastructure.Migrations
                     TotalMainAuthors = table.Column<int>(type: "int", nullable: true),
                     Details = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Source = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsLocked = table.Column<bool>(type: "bit", nullable: false),
                     WorkTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     WorkLevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -358,6 +382,33 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AuthorRegistrations",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AcademicYearId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AuthorId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuthorRegistrations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AuthorRegistrations_AcademicYears_AcademicYearId",
+                        column: x => x.AcademicYearId,
+                        principalTable: "AcademicYears",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AuthorRegistrations_Authors_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "Authors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "WorkAuthors",
                 columns: table => new
                 {
@@ -388,6 +439,16 @@ namespace Infrastructure.Migrations
                         principalTable: "Works",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AcademicYears",
+                columns: new[] { "Id", "CreatedDate", "EndDate", "ModifiedDate", "Name", "StartDate" },
+                values: new object[,]
+                {
+                    { new Guid("33fdb5af-0778-4d91-8b68-dce2860e138c"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new DateTime(2026, 6, 30, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "2025-2026", new DateTime(2025, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) },
+                    { new Guid("dab343ac-b1a8-45b4-a7f8-a4260594d7d8"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new DateTime(2025, 6, 30, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "2024-2025", new DateTime(2024, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) },
+                    { new Guid("e53bc8e5-a17e-4a9b-a403-0e1b7d3118a2"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new DateTime(2024, 6, 30, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "2023-2024", new DateTime(2023, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified) }
                 });
 
             migrationBuilder.InsertData(
@@ -495,6 +556,7 @@ namespace Infrastructure.Migrations
                     { new Guid("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), false, null, "Thành viên", new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c") },
                     { new Guid("6304f87f-439a-477d-b989-31df3b6e06b6"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), true, null, "Chủ biên", new Guid("3bbfc66a-3144-4edf-959b-e049d7e33d97") },
                     { new Guid("6dbe3055-a0af-4ea2-971f-f3dbcfb58370"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), false, null, "Thành viên", new Guid("323371c0-26c7-4549-90f2-11c881be402d") },
+                    { new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), true, null, "GV hướng dẫn", new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("77daab84-939d-4d0d-957d-27be75bb79b4"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), true, null, "Đồng chủ biên", new Guid("628a119e-324f-42b8-8ff4-e29ee5c643a9") },
                     { new Guid("822d8f31-2b1d-4367-8c50-e4535fac5b5f"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), false, null, "Phó trưởng ban", new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa") },
                     { new Guid("8560f2b2-7b9b-4f28-b79a-f5ea21f76e97"), new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), true, null, "Chủ biên", new Guid("84a14a8b-eae8-4720-bc7c-e1f93b35a256") },
@@ -702,12 +764,12 @@ namespace Infrastructure.Migrations
                     { new Guid("13610180-0d84-47c8-a280-1d342d52001b"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 54, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Trường được tính đến 0.75 điểm theo Danh mục tạp chí khoa học", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 7, new Guid("23dad081-62db-4944-87d2-43b29c31fa29"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("14b7a7e8-7327-450e-a5ca-f7d836b14499"), null, 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Sách", new Guid("3da2c117-b32f-4687-89b8-ba9544920f35"), 23, null, new Guid("628a119e-324f-42b8-8ff4-e29ee5c643a9") },
                     { new Guid("166958e9-3e92-40d2-b7e6-f6cf019cbec0"), new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"), 120, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Trường được tính đến 0.75 điểm theo Danh mục tạp chí khoa học", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 7, new Guid("23dad081-62db-4944-87d2-43b29c31fa29"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
-                    { new Guid("166988df-84b4-4b0f-a1e0-8d356a1f4346"), null, 40, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Khuyến khích", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 8, new Guid("08becbaf-2a92-4de1-8908-454c4659ad94"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("166988df-84b4-4b0f-a1e0-8d356a1f4346"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 40, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Khuyến khích", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 8, new Guid("08becbaf-2a92-4de1-8908-454c4659ad94"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("173671ca-9de0-4c91-84bb-ffe7dec887e5"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 160, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 4, null, "Bài báo khoa học cấp Quốc tế được tính đến 1.0 điểm theo Danh mục tạp chí khoa học", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 5, new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("18f442a7-0df2-4579-ad53-afe90aedf9b3"), new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"), 400, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 30% tạp chí hàng đầu", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 2, new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("1a015081-cc66-48c4-b6eb-13ffe4aeb756"), new Guid("ee9dc844-73d7-458f-9f6d-ae535824c8ca"), 54, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 1, null, "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn", new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"), null, new Guid("250662c1-1c69-4ef0-a21d-7077cafd1d06"), new Guid("03412ca7-8ccf-4903-9018-457768060ab4") },
                     { new Guid("1d749956-707f-4e55-ae63-7e8ad787d716"), new Guid("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"), 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 1, null, "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn", new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"), null, new Guid("250662c1-1c69-4ef0-a21d-7077cafd1d06"), new Guid("03412ca7-8ccf-4903-9018-457768060ab4") },
-                    { new Guid("1ebfedcf-12c6-408a-82fd-170f9211d0d3"), null, 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Ba", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 9, new Guid("08becbaf-2a92-4de1-8908-454c4659ad94"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("1ebfedcf-12c6-408a-82fd-170f9211d0d3"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Ba", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 9, new Guid("08becbaf-2a92-4de1-8908-454c4659ad94"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("1fabd534-9220-4fed-91bd-5559b286a20c"), new Guid("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"), 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Tác phẩm nghệ thuật", new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"), 13, new Guid("ee81fe90-15e7-48a2-8d94-a46db55f5b8f"), new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c") },
                     { new Guid("216ac8a5-228f-47c3-a2c7-451fbba219b7"), null, 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Kết quả nghiên cứu, ứng dụng khoa học", new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"), 22, new Guid("d84ac5f8-d533-48d6-b829-9cf3556ce5bb"), new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c") },
                     { new Guid("258a7107-baf3-4632-96be-ada15af33184"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 800, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 10% tạp chí hàng đầu", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 1, new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
@@ -723,7 +785,7 @@ namespace Infrastructure.Migrations
                     { new Guid("3f661984-45ac-45af-b665-d7c8f609d172"), new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"), 800, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 10% tạp chí hàng đầu", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 1, new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("3f695362-7c44-4f17-a57e-614e68739b94"), new Guid("ee9e27af-859f-4de6-8678-6ae758654931"), 160, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Tác phẩm nghệ thuật", new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"), 15, new Guid("b2302b5e-1614-484d-88ad-003c411ad248"), new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c") },
                     { new Guid("417cb0bf-ef69-423f-8fa4-3fd4bf3109ad"), new Guid("ee9dc844-73d7-458f-9f6d-ae535824c8ca"), 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 1, null, "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn", new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"), null, new Guid("250662c1-1c69-4ef0-a21d-7077cafd1d06"), new Guid("03412ca7-8ccf-4903-9018-457768060ab4") },
-                    { new Guid("41d45d0a-39ea-417f-ba73-888b495525de"), null, 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Nhất", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 11, new Guid("08becbaf-2a92-4de1-8908-454c4659ad94"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("41d45d0a-39ea-417f-ba73-888b495525de"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Nhất", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 11, new Guid("08becbaf-2a92-4de1-8908-454c4659ad94"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("455360e6-693a-47e9-8671-8a83393149ad"), new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Đề tài nghiên cứu cấp trường", new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"), null, new Guid("b386e9ba-8844-42eb-b910-6cb360c5485b"), new Guid("49cf7589-fb84-4934-be8e-991c6319a348") },
                     { new Guid("457f5822-625c-4ce2-81db-c5c5cc99d0ca"), new Guid("ee9dc844-73d7-458f-9f6d-ae535824c8ca"), 120, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Báo cáo khoa học cấp WoS được đăng toàn văn", new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"), null, new Guid("f81c134b-fd83-4e25-9590-cf7ecfc5b203"), new Guid("03412ca7-8ccf-4903-9018-457768060ab4") },
                     { new Guid("45ad2da3-47b8-4e71-9248-458192dd52c8"), new Guid("5fc7453f-4bc3-4bd2-a8b3-bd99e98a17f5"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Thành tích huấn luyện, thi đấu thể dục thể thao", new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"), 18, new Guid("13e5b0a5-727b-427b-b103-0d58db679dcd"), new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c") },
@@ -743,17 +805,17 @@ namespace Infrastructure.Migrations
                     { new Guid("5a49b577-eb55-4729-a479-0d855d4ce2bd"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 560, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 8, null, "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 4, new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("5a94c31b-93bb-43c3-ad13-f7cfc9c8d702"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 54, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.75 điểm theo Danh mục tạp chí khoa học", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 7, new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("5aac86cc-aa1e-4a24-895e-f5fe61b76f18"), new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Đề tài nghiên cứu cấp Cơ sở", new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"), null, new Guid("b2581ebc-a310-460b-9721-f88c92ed2c81"), new Guid("49cf7589-fb84-4934-be8e-991c6319a348") },
-                    { new Guid("5aeed66d-b2ae-448f-8e30-f7c005c54ff2"), null, 120, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Nhì", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 10, new Guid("6bbf7e31-bcca-4078-b894-7c8d3afba607"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("5aeed66d-b2ae-448f-8e30-f7c005c54ff2"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 120, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Nhì", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 10, new Guid("6bbf7e31-bcca-4078-b894-7c8d3afba607"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("5e2924fb-9268-4ab0-8527-60096dd3d063"), new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"), 640, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 30% tạp chí hàng đầu", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 2, new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("5f1f8da3-5209-485d-82fa-9c09db509e74"), new Guid("ee9e27af-859f-4de6-8678-6ae758654931"), 160, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Tác phẩm nghệ thuật", new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"), 14, new Guid("d84ac5f8-d533-48d6-b829-9cf3556ce5bb"), new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c") },
                     { new Guid("5f4545c3-9f56-4f17-8b74-3ea21825fd50"), new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Nhiệm vụ biên soạn, chỉnh lý giáo trình", new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"), null, new Guid("483f26c2-8218-4d4b-a374-1fbd3a4fc250"), new Guid("323371c0-26c7-4549-90f2-11c881be402d") },
-                    { new Guid("60772df7-9150-4219-9ee8-ce5439144b0c"), null, 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Ba", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 9, new Guid("6bbf7e31-bcca-4078-b894-7c8d3afba607"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("60772df7-9150-4219-9ee8-ce5439144b0c"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Ba", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 9, new Guid("6bbf7e31-bcca-4078-b894-7c8d3afba607"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("60c6a668-ef9f-4e1f-ad70-737f5f23756c"), new Guid("6dbe3055-a0af-4ea2-971f-f3dbcfb58370"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Nhiệm vụ biên soạn, chỉnh lý giáo trình", new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"), null, new Guid("483f26c2-8218-4d4b-a374-1fbd3a4fc250"), new Guid("323371c0-26c7-4549-90f2-11c881be402d") },
                     { new Guid("61ea9a32-4b56-452d-91ec-cf54ba2ee568"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Quốc tế được tính đến 0.5 điểm theo Danh mục tạp chí khoa học", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 6, new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("62155dde-e5d3-4497-898d-b9765212fade"), new Guid("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"), 5, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Tham gia tổ chức Hội thảo khoa học", new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"), null, new Guid("071464ae-332b-4426-9b03-cbdd05c2d5bc"), new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa") },
                     { new Guid("621a47fe-6337-4cf1-a79e-d997627dc1ee"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 400, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 30% tạp chí hàng đầu", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 2, new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("62c97efa-acb4-4e13-9887-881d79a57892"), new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"), 54, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Quốc tế được tính đến 0.75 điểm theo Danh mục tạp chí khoa học", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 7, new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
-                    { new Guid("64780798-ffaf-48eb-be29-8a61fc4854a2"), null, 20, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH trường hợp còn lại", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 12, new Guid("69cc26ee-f6b8-46a6-9229-e42219775d78"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("64780798-ffaf-48eb-be29-8a61fc4854a2"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 20, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH trường hợp còn lại", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 12, new Guid("69cc26ee-f6b8-46a6-9229-e42219775d78"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("6482dbfa-e158-470b-ba51-d6322e7b9684"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 54, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Quốc tế được tính đến 0.75 điểm theo Danh mục tạp chí khoa học", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 7, new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("65309514-86ac-4ca2-a957-67616a478f0d"), new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 8, null, "Bài báo khoa học thuộc top còn lại tạp chí hàng đầu", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 4, new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("68ecc77b-b90c-49cc-adc7-09e5f1257523"), new Guid("4be849d3-b55d-429a-a0b3-78c4bbbcd7eb"), 10, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Tham gia tổ chức Hội thảo khoa học", new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"), null, new Guid("d94f2107-409a-4b2a-a5ae-960d7cc6f3a0"), new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa") },
@@ -802,7 +864,7 @@ namespace Infrastructure.Migrations
                     { new Guid("a593c6f6-b82a-4415-bae9-309524e6f01e"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 640, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 30% tạp chí hàng đầu", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 2, new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("a80a0cd2-2bab-4e32-8cf3-a56d5a33cacc"), new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Đề tài nghiên cứu cấp trường", new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"), null, new Guid("b386e9ba-8844-42eb-b910-6cb360c5485b"), new Guid("49cf7589-fb84-4934-be8e-991c6319a348") },
                     { new Guid("ad3bdf4e-4697-43bd-a20c-d7ab63e6e59e"), new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"), 800, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 10% tạp chí hàng đầu", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 1, new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
-                    { new Guid("aee0c04a-26bc-4ef6-92b7-3d78f6ccaa61"), null, 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Nhất", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 11, new Guid("6bbf7e31-bcca-4078-b894-7c8d3afba607"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("aee0c04a-26bc-4ef6-92b7-3d78f6ccaa61"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Nhất", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 11, new Guid("6bbf7e31-bcca-4078-b894-7c8d3afba607"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("b1131264-329f-4908-8e71-8b36088d3dde"), null, 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Sách", new Guid("32cce5b8-24aa-4a3e-9326-c853e5c50fd7"), 23, null, new Guid("61bbbecc-038a-43b7-aafa-a95e25a93f38") },
                     { new Guid("b1139db5-197e-44a9-a5a1-418a01d36e53"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 600, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 10% tạp chí hàng đầu", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 1, new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("b15d18ef-55c6-42ba-815b-9d8855a20563"), new Guid("822d8f31-2b1d-4367-8c50-e4535fac5b5f"), 5, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Tham gia tổ chức Hội thảo khoa học", new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"), null, new Guid("d94f2107-409a-4b2a-a5ae-960d7cc6f3a0"), new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa") },
@@ -812,7 +874,7 @@ namespace Infrastructure.Migrations
                     { new Guid("b611282d-b594-4e52-b2c5-058911f8a0fb"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 800, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Bài báo khoa học thuộc top 10% tạp chí hàng đầu", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 1, new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("b7464c59-7774-4f77-9bdb-c3ad962d2067"), new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"), 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Nhiệm vụ biên soạn, chỉnh lý giáo trình", new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"), null, new Guid("d588e361-97a2-44cf-a507-24255430dbe7"), new Guid("323371c0-26c7-4549-90f2-11c881be402d") },
                     { new Guid("b74daf03-dc04-4738-ae87-97ec0faa07c1"), null, 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Sách", new Guid("fc948f99-b569-4265-b1c9-ba5aa31d730b"), 23, null, new Guid("8aaf0a8a-35ed-4768-8fd4-44fc4a561cd0") },
-                    { new Guid("b986e0d6-36c8-4b73-ab80-566d519bff16"), null, 40, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Khuyến khích", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 8, new Guid("6bbf7e31-bcca-4078-b894-7c8d3afba607"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("b986e0d6-36c8-4b73-ab80-566d519bff16"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 40, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Khuyến khích", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 8, new Guid("6bbf7e31-bcca-4078-b894-7c8d3afba607"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("b9a61a17-0e15-44a6-b77c-e8804f31bf4b"), new Guid("ad3aa473-c140-46cb-b8f4-faecdf2f338e"), 5, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Tham gia tổ chức Hội thảo khoa học", new Guid("f49c3e00-2819-4c03-90ce-b8705555933c"), null, new Guid("bec79373-6f38-4f53-ba87-e986b83ce3b2"), new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa") },
                     { new Guid("ba83391f-9d8f-48a9-87d9-b67ebe5be696"), new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"), 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Đề tài nghiên cứu cấp khoa", new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"), null, new Guid("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"), new Guid("49cf7589-fb84-4934-be8e-991c6319a348") },
                     { new Guid("bae86fa5-c497-4074-8439-db7b54ae6455"), new Guid("ee9dc844-73d7-458f-9f6d-ae535824c8ca"), 80, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Báo cáo khoa học cấp Quốc gia được đăng toàn văn", new Guid("340bd6e7-9d49-4650-a4cf-f1928358aa7c"), null, new Guid("740e8212-f47b-4080-b57a-839b8b90056c"), new Guid("03412ca7-8ccf-4903-9018-457768060ab4") },
@@ -840,7 +902,7 @@ namespace Infrastructure.Migrations
                     { new Guid("d9d00031-6a8d-4939-bc95-25a747ceeaec"), new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"), 34, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Bộ/Ngành được tính đến 0.5 điểm theo Danh mục tạp chí khoa học", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 6, new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("d9fc76b8-c3bf-4944-b625-971762b1dff6"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 120, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Quốc tế được tính đến 0.75 điểm theo Danh mục tạp chí khoa học", new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"), 7, new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
                     { new Guid("daff3e2a-5f02-435c-81a7-f4794ce32259"), new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"), 34, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Bài báo khoa học cấp Trường được tính đến 0.5 điểm theo Danh mục tạp chí khoa học", new Guid("e6fdbc77-108d-443a-85c4-3c8c361f7f3b"), 6, new Guid("23dad081-62db-4944-87d2-43b29c31fa29"), new Guid("2732c858-77dc-471d-bd9a-464a3142530a") },
-                    { new Guid("dd1ea2c7-4cc5-442d-b8fa-c6a4f8a663a2"), null, 120, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Nhì", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 10, new Guid("08becbaf-2a92-4de1-8908-454c4659ad94"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
+                    { new Guid("dd1ea2c7-4cc5-442d-b8fa-c6a4f8a663a2"), new Guid("73fa58f9-5877-4c31-92b0-ee5665bc0bee"), 120, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Hướng dẫn đề tài NCKH đạt giải Nhì", new Guid("bf7e1da9-bb9f-4b64-827c-9b5f114395db"), 10, new Guid("08becbaf-2a92-4de1-8908-454c4659ad94"), new Guid("e2f7974c-47c3-478e-9b53-74093f6c621f") },
                     { new Guid("e19e5af4-d301-4881-949b-fa595d175b97"), new Guid("ee9dc844-73d7-458f-9f6d-ae535824c8ca"), 54, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), 2, null, "Báo cáo khoa học cấp Quốc gia được đăng toàn văn", new Guid("db5d595d-e4be-4640-ab4e-ca4269d9b1cd"), null, new Guid("740e8212-f47b-4080-b57a-839b8b90056c"), new Guid("03412ca7-8ccf-4903-9018-457768060ab4") },
                     { new Guid("e256917b-cb09-4732-bab1-ad10ac407776"), null, 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Kết quả nghiên cứu, ứng dụng khoa học", new Guid("c27916d9-32b5-4f96-a7f9-7d0a9a0bdfad"), 22, new Guid("13e5b0a5-727b-427b-b103-0d58db679dcd"), new Guid("1ff8d087-e0c3-45df-befc-662c0a80c10c") },
                     { new Guid("e2f96885-2bb7-4668-9c2f-6d6d313c09f7"), null, 240, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, null, "Sách", new Guid("1e9aa201-0e1b-4214-9dbb-2c9eb59a428a"), 23, null, new Guid("84a14a8b-eae8-4720-bc7c-e1f93b35a256") },
@@ -864,6 +926,18 @@ namespace Infrastructure.Migrations
                 name: "IX_Assignments_UserId",
                 table: "Assignments",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuthorRegistrations_AcademicYearId_AuthorId",
+                table: "AuthorRegistrations",
+                columns: new[] { "AcademicYearId", "AuthorId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuthorRegistrations_AuthorId",
+                table: "AuthorRegistrations",
+                column: "AuthorId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuthorRoles_WorkTypeId",
@@ -932,6 +1006,11 @@ namespace Infrastructure.Migrations
                 column: "WorkTypeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SystemConfigs_AcademicYearId",
+                table: "SystemConfigs",
+                column: "AcademicYearId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_DepartmentId",
                 table: "Users",
                 column: "DepartmentId");
@@ -974,6 +1053,9 @@ namespace Infrastructure.Migrations
                 name: "Assignments");
 
             migrationBuilder.DropTable(
+                name: "AuthorRegistrations");
+
+            migrationBuilder.DropTable(
                 name: "Factors");
 
             migrationBuilder.DropTable(
@@ -981,6 +1063,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "WorkAuthors");
+
+            migrationBuilder.DropTable(
+                name: "AcademicYears");
 
             migrationBuilder.DropTable(
                 name: "Authors");
