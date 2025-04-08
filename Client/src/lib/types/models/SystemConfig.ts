@@ -1,20 +1,8 @@
 export interface SystemConfig {
   id: string;
-  startDate: string;
-  endDate: string;
-  isClosed: boolean;
-  createdDate: string;
-  modifiedDate: string | null;
+  name: string;
+  openTime: string;
+  closeTime: string;
+  academicYearId: string;
+  academicYearName?: string;
 }
-
-export interface CreateSystemConfigRequest {
-  startDate: string;
-  endDate: string;
-  isClosed: boolean;
-}
-
-export interface UpdateSystemConfigRequest {
-  startDate: string;
-  endDate: string;
-  isClosed: boolean;
-} 

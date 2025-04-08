@@ -19,13 +19,14 @@ import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 
 import AssignmentPage from "../../features/assignments/AssignmentPage";
-import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
 import UserPage from "../../features/settings/users/UserPage";
 import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import ScoreWorksPage from "../../features/users/UserListPage";
 import UserWorkDetailPage from "../../features/users/UserWorkDetailPage";
 import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
+import SystemConfigPage from "../../features/settings/systemConfigs/SystemConfigPage";
+import AcademicYearPage from "../../features/settings/academicYears/AcademicYearPage";
 
 export const router = createBrowserRouter([
   {
@@ -176,6 +177,14 @@ export const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute allowedRoles={["Admin"]}>
                     <FieldPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: "/cai-dat/nam-hoc",
+                element: (
+                  <ProtectedRoute allowedRoles={["Admin"]}>
+                    <AcademicYearPage />
                   </ProtectedRoute>
                 ),
               },
