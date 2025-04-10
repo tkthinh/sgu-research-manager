@@ -14,14 +14,12 @@ import Stack from "@mui/material/Stack";
 import { styled } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
-import { jwtDecode } from "jwt-decode";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as z from "zod";
 import { useAuth } from "../../app/shared/contexts/AuthContext";
 import { signIn } from "../../lib/api/authApi";
-import { User } from "../../lib/types/models/User";
 
 // Define Zod schema
 const schema = z.object({
@@ -81,7 +79,7 @@ export default function SignIn() {
     shouldUnregister: true,
   });
 
-  const { setUser } = useAuth();
+  const { setUser, refreshUserInfo } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,16 +103,12 @@ export default function SignIn() {
 
       if (response.success) {
         const token = response.data.token;
-        const user: User = response.data.user;
-        user.role =
-          jwtDecode(token)[
-            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-          ];
 
         localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("expiration", response.data.expiration);
-        setUser(user);
+
+        // Use refreshUserInfo to fetch the latest user data
+        await refreshUserInfo();
         navigate("/");
       }
     } catch (error: any) {
