@@ -199,6 +199,27 @@ namespace WebApi.Controllers
             }
         }
 
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult<ApiResponse<UserDto>>> GetCurrentUser()
+        {
+            var currentUserId = httpContextAccessor.HttpContext?.User.FindFirst(c => c.Type == "id");
+            if (currentUserId == null)
+            {
+                return Unauthorized(new ApiResponse<UserDto>(false, "Không có quyền truy cập thông tin người dùng"));
+            }
+            var user = await userService.GetByIdAsync(Guid.Parse(currentUserId.Value));
+            if (user is null)
+            {
+                return NotFound(new ApiResponse<UserDto>(false, "Không tìm thấy thông tin người dùng"));
+            }
+            return Ok(new ApiResponse<UserDto>(
+                      true,
+                      "Lấy thông tin người dùng thành công",
+                      user
+                  ));
+        }
+
         [HttpDelete("{id}")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteUser([FromRoute] Guid id)
         {

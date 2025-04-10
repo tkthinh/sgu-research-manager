@@ -1,4 +1,5 @@
-﻿using Application.Shared.Services;
+﻿using System.Text.Json;
+using Application.Shared.Services;
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
@@ -18,14 +19,54 @@ namespace Application.AcademicYears
         {
         }
 
-        public async Task<AcademicYearDto> GetCurrentAcademicYear()
+        public async Task<AcademicYearDto> GetCurrentAcademicYear(CancellationToken cancellationToken = default)
         {
+            if (isCacheAvailable)
+            {
+                string cacheKey = $"{cacheKeyPrefix}_current";
+                string? cachedData = null;
+
+                try
+                {
+                    cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    HandleCacheException(ex, $"Error reading cache for key {cacheKey}");
+                }
+
+                if (!string.IsNullOrEmpty(cachedData))
+                {
+                    try
+                    {
+                        return JsonSerializer.Deserialize<AcademicYearDto>(cachedData)!;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error deserializing cached data for key {CacheKey}", cacheKey);
+                    }
+                }
+            }
+
+            // If cache is unavailable or empty, get from database
             DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
 
             var currentAcademicYear = await unitOfWork.Repository<AcademicYear>().FirstOrDefaultAsync(
-                x => x.StartDate <= today && x.EndDate >= today);
+                x => x.StartDate <= today && x.EndDate >= today, cancellationToken);
 
-            return mapper.MapToDto(currentAcademicYear);
+            var dto = mapper.MapToDto(currentAcademicYear);
+
+            // Only try to cache if it was available
+            if (isCacheAvailable && dto != null)
+            {
+                await SafeSetCacheAsync(
+                    $"{cacheKeyPrefix}_current",
+                    JsonSerializer.Serialize(dto),
+                    TimeSpan.FromMinutes(30),
+                    cancellationToken);
+            }
+
+            return dto;
         }
 
     }

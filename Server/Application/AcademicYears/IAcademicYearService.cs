@@ -4,6 +4,6 @@ namespace Application.AcademicYears
 {
     public interface IAcademicYearService : IGenericService<AcademicYearDto>
     {
-        Task<AcademicYearDto> GetCurrentAcademicYear();
+        Task<AcademicYearDto> GetCurrentAcademicYear(CancellationToken cancellationToken = default);
     }
 }
