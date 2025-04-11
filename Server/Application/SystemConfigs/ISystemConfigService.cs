@@ -1,10 +1,11 @@
-﻿namespace Application.SystemConfigs
+﻿using Domain.Interfaces;
+
+namespace Application.SystemConfigs
 {
-    public interface ISystemConfigService
+    public interface ISystemConfigService : IGenericService<SystemConfigDto>
     {
-        Task<SystemConfigDto> GetSystemConfigAsync(CancellationToken cancellationToken = default);
-        Task UpdateSystemConfigAsync(UpdateSystemConfigRequestDto config, CancellationToken cancellationToken = default);
-        Task CreateSystemConfigAsync(CreateSystemConfigRequestDto config, CancellationToken cancellationToken = default);
-        Task<bool> IsSystemOpenAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<SystemConfigDto>> GetSystemConfigsOfYear(Guid academicYearId);
+        Task<SystemConfigDto?> GetSystemState();
+        Task<bool> IsSystemOpenAsync(DateTime date, CancellationToken cancellationToken = default);
     }
 }

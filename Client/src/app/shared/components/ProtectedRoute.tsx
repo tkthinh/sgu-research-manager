@@ -7,10 +7,9 @@ interface ProtectedRouteProps {
 }
 
 const isAuthenticated = (): boolean => {
-  const user = localStorage.getItem("user");
   const token = localStorage.getItem("token");
   const expiration = localStorage.getItem("expiration");
-  if (!user || !token || !expiration) return false;
+  if ( !token || !expiration) return false;
   return new Date(expiration).getTime() > Date.now();
 };
 

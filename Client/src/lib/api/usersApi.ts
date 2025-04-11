@@ -18,6 +18,11 @@ export const getUsers = async (): Promise<ApiResponse<User[]>> => {
   return response.data;
 }
 
+export const getMyInfo = async (): Promise<ApiResponse<User>> => {
+  const response = await apiClient.get<ApiResponse<User>>('/users/me');
+  return response.data;
+}
+
 export const updateUser = async (userId: string, data: Partial<User>): Promise<ApiResponse<User>> => {
   const response = await apiClient.put<ApiResponse<User>>(`/users/${userId}`, data);
   return response.data;

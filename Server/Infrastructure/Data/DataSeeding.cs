@@ -2932,5 +2932,20 @@ namespace Infrastructure.Data.Seeding
 
             builder.HasData(scimagoFields);
         }
+
+    }
+    public class AcademicYearSeeding : IEntityTypeConfiguration<AcademicYear>
+    {
+        public void Configure(EntityTypeBuilder<AcademicYear> builder)
+        {
+            var academicYears = new List<AcademicYear>
+                {
+                    new AcademicYear { Id = Guid.Parse("e53bc8e5-a17e-4a9b-a403-0e1b7d3118a2"), Name = "2023-2024", StartDate = new DateOnly(2023, 9, 1), EndDate = new DateOnly(2024, 6, 30) },
+                    new AcademicYear { Id = Guid.Parse("dab343ac-b1a8-45b4-a7f8-a4260594d7d8"), Name = "2024-2025", StartDate = new DateOnly(2024, 9, 1), EndDate = new DateOnly(2025, 6, 30) },
+                    new AcademicYear { Id = Guid.Parse("33fdb5af-0778-4d91-8b68-dce2860e138c"), Name = "2025-2026", StartDate = new DateOnly(2025, 9, 1), EndDate = new DateOnly(2026, 6, 30) },
+
+                };
+            builder.HasData(academicYears);
+        }
     }
 }

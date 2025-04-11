@@ -26,13 +26,12 @@ const BRANDING = {
 };
 
 export default function App() {
-  const [customSession, setCustomSession] = useState<CustomSession | null>(
-    null,
-  );
+  const [customSession, setCustomSession] = useState<CustomSession | null>(null);
   const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
   const [showProfileUpdateDialog, setShowProfileUpdateDialog] = useState(false);
 
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
   const userRole = user?.role;
 
   const navigation = useMemo(() => {
@@ -70,18 +69,18 @@ export default function App() {
     };
   }, []);
 
-  // Load user session from local storage
+  // Update session when user changes
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user) {
       if (isUserProfileIncomplete(user)) {
         setShowProfileUpdateDialog(true);
       }
-
+      
       setCustomSession({ user });
+    } else if (!loading) {
+      setCustomSession(null);
     }
-  }, []);
+  }, [user, loading]);
 
   // Automatically sign out user when token expires
   useEffect(() => {

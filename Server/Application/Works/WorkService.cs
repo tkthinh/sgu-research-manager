@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 using System.Globalization;
 using System.Data;
+using System.Linq.Expressions;
+using Application.Shared.Messages;
 
 namespace Application.Works
 {
@@ -77,7 +79,7 @@ namespace Application.Works
         public async Task<WorkDto> CreateWorkWithAuthorAsync(CreateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
-            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
                 throw new Exception(ErrorMessages.SystemClosedNewWork);
 
             var existingWork = await _unitOfWork.Repository<Work>()
@@ -96,6 +98,7 @@ namespace Application.Works
                 Source = WorkSource.NguoiDungKeKhai,
                 WorkTypeId = request.WorkTypeId,
                 WorkLevelId = request.WorkLevelId,
+                ExchangeDeadline = request.TimePublished.HasValue ? request.TimePublished.Value.AddMonths(18) : null,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -140,7 +143,7 @@ namespace Application.Works
             var authorHour = await CalculateAuthorHour(workHour, request.TotalAuthors ?? 0,
                 request.TotalMainAuthors ?? 0, request.Author.AuthorRoleId);
             author.AuthorHour = authorHour;
-            author.MarkedForScoring = false;
+            //author.MarkedForScoring = false;
 
             // Loại bỏ userId của tác giả chính khỏi request.CoAuthorUserIds để tránh trùng lặp
             var coAuthorUserIds = request.CoAuthorUserIds
@@ -231,7 +234,7 @@ namespace Application.Works
         public async Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
-            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
                 throw new Exception(ErrorMessages.SystemClosedMarkingWork);
 
             // Lấy thông tin tác giả
@@ -272,7 +275,7 @@ namespace Application.Works
                 // 2. Đếm số lượng công trình đã được đánh dấu với cùng điều kiện
                 var markedAuthors = await _unitOfWork.Repository<Author>().FindAsync(a =>
                     a.UserId == author.UserId &&
-                    a.MarkedForScoring &&
+                    //a.MarkedForScoring &&
                     a.PurposeId == author.PurposeId &&
                     a.ScoreLevel == author.ScoreLevel);
 
@@ -303,8 +306,8 @@ namespace Application.Works
             }
 
             // Cập nhật trạng thái đánh dấu
-            author.MarkedForScoring = marked;
-            author.ModifiedDate = DateTime.UtcNow;
+            //author.MarkedForScoring = marked;
+
             await _unitOfWork.Repository<Author>().UpdateAsync(author);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await SafeInvalidateCacheAsync(author.WorkId);
@@ -354,6 +357,7 @@ namespace Application.Works
             work.Source = workRequest.Source;
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
+            work.ExchangeDeadline = work.TimePublished.HasValue ? work.TimePublished.Value.AddMonths(18) : null;
             work.ModifiedDate = DateTime.UtcNow;
         }
 
@@ -573,7 +577,7 @@ namespace Application.Works
             var currentAuthor = await _unitOfWork.Repository<Author>()
                 .FirstOrDefaultAsync(a => a.WorkId == work.Id && a.UserId == userId, cancellationToken);
 
-            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
             {
                 if (currentAuthor is null || currentAuthor.ProofStatus != ProofStatus.KhongHopLe)
                     throw new Exception(ErrorMessages.SystemClosedEditWork);
@@ -590,6 +594,7 @@ namespace Application.Works
             work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
+            work.ExchangeDeadline = work.TimePublished.HasValue ? work.TimePublished.Value.AddMonths(18) : null;
             work.ModifiedDate = DateTime.UtcNow;
         }
 
@@ -968,7 +973,7 @@ namespace Application.Works
             if (work is null)
                 throw new Exception(ErrorMessages.WorkNotFound);
 
-            if (!await _systemConfigService.IsSystemOpenAsync(cancellationToken))
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
                 throw new Exception(ErrorMessages.SystemClosedDeleteWork);
 
             // Xóa các tác giả liên quan
@@ -1508,7 +1513,7 @@ namespace Application.Works
                     FieldId = field?.Id,
                     Position = dto.Position,
                     ScoreLevel = dto.ScoreLevel,
-                    MarkedForScoring = false,
+                    //MarkedForScoring = false,
                     ProofStatus = ProofStatus.ChuaXuLy
                 };
 

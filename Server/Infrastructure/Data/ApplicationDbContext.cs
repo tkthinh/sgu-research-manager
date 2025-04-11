@@ -27,6 +27,8 @@ namespace Infrastructure.Data
         public DbSet<SCImagoField> SCImagoFields { get; set; }
         public DbSet<SystemConfig> SystemConfigs { get; set; }
         public DbSet<WorkAuthor> WorkAuthors { get; set; }
+        public DbSet<AcademicYear> AcademicYears { get; set; }
+        public DbSet<AuthorRegistration> AuthorRegistrations { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -97,7 +99,7 @@ namespace Infrastructure.Data
 
             builder.Entity<Author>()
                 .HasOne(a => a.User)
-                .WithMany()
+                .WithMany(u => u.Authors)
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
@@ -133,7 +135,7 @@ namespace Infrastructure.Data
 
             builder.Entity<Author>()
                 .HasIndex(a => new { a.WorkId, a.UserId })
-            .IsUnique();
+                .IsUnique();
 
             builder.Entity<Author>()
             .Property(a => a.AuthorHour)
@@ -209,10 +211,32 @@ namespace Infrastructure.Data
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // AcademicYear
+            builder.Entity<AcademicYear>()
+                .HasMany(a => a.SystemConfigs)
+                .WithOne(sc => sc.AcademicYear)
+                .HasForeignKey(sc => sc.AcademicYearId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // SystemConfig
+            builder.Entity<SystemConfig>()
+                .HasQueryFilter(sc => !sc.IsDeleted);
+
+            // AuthorRegistration
+            builder.Entity<AuthorRegistration>()
+               .HasIndex(er => new { er.AcademicYearId, er.AuthorId })
+               .IsUnique();
+
+            builder.Entity<AuthorRegistration>()
+                .HasOne(er => er.Author)
+                .WithOne(a => a.AuthorRegistration)
+                .HasForeignKey<AuthorRegistration>(er => er.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Enum to string
             builder.Entity<Work>()
-                   .Property(w => w.Source)
-                   .HasConversion<string>();
+                .Property(w => w.Source)
+                .HasConversion<string>();
 
             builder.Entity<User>()
                .Property(e => e.AcademicTitle)
@@ -231,6 +255,7 @@ namespace Infrastructure.Data
             builder.ApplyConfiguration(new PurposeSeeding());
             builder.ApplyConfiguration(new SCImagoFieldSeeding());
             builder.ApplyConfiguration(new FactorSeeding());
+            builder.ApplyConfiguration(new AcademicYearSeeding());
         }
 
     }

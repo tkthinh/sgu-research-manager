@@ -206,21 +206,21 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPatch("authors/{authorId}/mark")]
-        [Authorize(Roles = "User")]
-        public async Task<ActionResult<ApiResponse<object>>> SetMarkedForScoring([FromRoute] Guid authorId, [FromBody] bool marked)
-        {
-            try
-            {
-                await _workService.SetMarkedForScoringAsync(authorId, marked);
-                return Ok(new ApiResponse<object>(true, "Cập nhật trạng thái MarkedForScoring thành công"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi cập nhật trạng thái MarkedForScoring");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
-        }
+        //[HttpPatch("authors/{authorId}/mark")]
+        //[Authorize(Roles = "User")]
+        //public async Task<ActionResult<ApiResponse<object>>> SetMarkedForScoring([FromRoute] Guid authorId, [FromBody] bool marked)
+        //{
+        //    try
+        //    {
+        //        await _workService.SetMarkedForScoringAsync(authorId, marked);
+        //        return Ok(new ApiResponse<object>(true, "Cập nhật trạng thái MarkedForScoring thành công"));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Lỗi khi cập nhật trạng thái MarkedForScoring");
+        //        return BadRequest(new ApiResponse<object>(false, ex.Message));
+        //    }
+        //}
 
         [HttpPatch("{workId}/admin-update/{userId}")]
         [Authorize(Roles = "Admin, Manager")]

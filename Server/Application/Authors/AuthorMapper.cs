@@ -11,6 +11,7 @@ namespace Application.Authors
             {
                 Id = entity.Id,
                 WorkId = entity.WorkId,
+                WorkTitle = entity.Work?.Title,
                 UserId = entity.UserId,
                 AuthorRoleId = entity.AuthorRoleId,
                 AuthorRoleName = entity.AuthorRole?.Name,
@@ -24,11 +25,9 @@ namespace Application.Authors
                 ScoreLevel = entity.ScoreLevel,
                 AuthorHour = entity.AuthorHour,
                 WorkHour = entity.WorkHour,
-                MarkedForScoring = entity.MarkedForScoring,
+                //MarkedForScoring = entity.MarkedForScoring,
                 ProofStatus = entity.ProofStatus,
                 Note = entity.Note,
-                CreatedDate = entity.CreatedDate,
-                ModifiedDate = entity.ModifiedDate
             };
         }
 
@@ -47,11 +46,9 @@ namespace Application.Authors
                 ScoreLevel = dto.ScoreLevel,
                 AuthorHour = dto.AuthorHour,
                 WorkHour = dto.WorkHour,
-                MarkedForScoring = dto.MarkedForScoring,
+                //MarkedForScoring = dto.MarkedForScoring,
                 ProofStatus = dto.ProofStatus,
                 Note = dto.Note,
-                CreatedDate = dto.CreatedDate,
-                ModifiedDate = dto.ModifiedDate
             };
         }
 

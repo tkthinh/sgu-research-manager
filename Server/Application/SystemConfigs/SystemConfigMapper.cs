@@ -11,11 +11,11 @@ namespace Application.SystemConfigs
             return new SystemConfigDto
             {
                 Id = entity.Id,
-                StartDate = entity.StartDate,
-                EndDate = entity.EndDate,
-                IsClosed = entity.IsClosed,
-                CreatedDate = entity.CreatedDate,
-                ModifiedDate = entity.ModifiedDate
+                Name = entity.Name,
+                OpenTime = entity.OpenTime,
+                CloseTime = entity.CloseTime,
+                AcademicYearId = entity.AcademicYearId,
+                AcademicYearName = entity.AcademicYear?.Name
             };
         }
 
@@ -24,11 +24,10 @@ namespace Application.SystemConfigs
             return new SystemConfig
             {
                 Id = dto.Id,
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                IsClosed = dto.IsClosed,
-                CreatedDate = dto.CreatedDate,
-                ModifiedDate = dto.ModifiedDate
+                Name = dto.Name ?? "-",
+                OpenTime = dto.OpenTime,
+                CloseTime = dto.CloseTime,
+                AcademicYearId = dto.AcademicYearId
             };
         }
 

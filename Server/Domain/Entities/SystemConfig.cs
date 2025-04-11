@@ -2,8 +2,14 @@
 {
     public class SystemConfig : BaseEntity
     {
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public bool IsClosed { get; set; }
+        public required string Name { get; set; }
+        public DateTime OpenTime { get; set; }
+        public DateTime CloseTime { get; set; }
+
+        // Soft delete flag
+        public bool IsDeleted { get; set; } = false;
+
+        public Guid AcademicYearId { get; set; }
+        public virtual AcademicYear? AcademicYear { get; set; }
     }
 }

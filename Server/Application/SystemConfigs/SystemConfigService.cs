@@ -1,101 +1,132 @@
-﻿using Domain.Entities;
+﻿using System.Text.Json;
+using Application.Shared.Services;
+using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
 namespace Application.SystemConfigs
 {
-    public class SystemConfigService : ISystemConfigService
+    public class SystemConfigService : GenericCachedService<SystemConfigDto, SystemConfig>, ISystemConfigService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IGenericMapper<SystemConfigDto, SystemConfig> _mapper;
-        private readonly ILogger<SystemConfigService> _logger;
-
         public SystemConfigService(
             IUnitOfWork unitOfWork,
             IGenericMapper<SystemConfigDto, SystemConfig> mapper,
-            ILogger<SystemConfigService> logger)
+            IDistributedCache cache,
+            ILogger<SystemConfigService> logger
+        )
+        : base(unitOfWork, mapper, cache, logger)
         {
-            _unitOfWork = unitOfWork;
-            _mapper = mapper;
-            _logger = logger;
         }
 
-        public async Task<SystemConfigDto> GetSystemConfigAsync(CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<SystemConfigDto>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var configs = await _unitOfWork.Repository<SystemConfig>().FindAsync(c => true);
-            var config = configs.FirstOrDefault();
-
-            if (config == null)
+            if (isCacheAvailable)
             {
-                _logger.LogWarning("No SystemConfig found. Admin needs to configure the system.");
-                throw new Exception("System configuration is not set. Please contact admin to configure.");
+                string cacheKey = $"{cacheKeyPrefix}_all";
+                string? cachedData = null;
+
+                try
+                {
+                    cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    HandleCacheException(ex, $"Error reading cache for key {cacheKey}");
+                }
+
+                if (!string.IsNullOrEmpty(cachedData))
+                {
+                    try
+                    {
+                        return JsonSerializer.Deserialize<IEnumerable<SystemConfigDto>>(cachedData)!;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error deserializing cached data for key {CacheKey}", cacheKey);
+                    }
+                }
             }
 
-            return _mapper.MapToDto(config);
+            // If cache is unavailable or empty, get from database
+            var entities = await unitOfWork.Repository<SystemConfig>()
+                .Include(sc => sc.AcademicYear)
+                .ToListAsync(cancellationToken);
+
+            var dtos = mapper.MapToDtos(entities);
+
+            // Only try to cache if it was available
+            if (isCacheAvailable)
+            {
+                await SafeSetCacheAsync(
+                    $"{cacheKeyPrefix}_all",
+                    JsonSerializer.Serialize(dtos),
+                    TimeSpan.FromMinutes(30),
+                    cancellationToken);
+            }
+
+            return dtos;
         }
 
-        public async Task UpdateSystemConfigAsync(UpdateSystemConfigRequestDto config, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<SystemConfigDto>> GetSystemConfigsOfYear(Guid academicYearId)
         {
-            var configs = await _unitOfWork.Repository<SystemConfig>().FindAsync(c => true);
-            var existingConfig = configs.FirstOrDefault();
-
-            if (existingConfig == null)
-            {
-                _logger.LogWarning("No SystemConfig found for update. Creating a new one.");
-                throw new Exception("No existing configuration found. Please create a configuration first.");
-            }
-
-            // Cập nhật các trường từ DTO
-            existingConfig.StartDate = config.StartDate;
-            existingConfig.EndDate = config.EndDate;
-            existingConfig.IsClosed = config.IsClosed;
-            existingConfig.ModifiedDate = DateTime.UtcNow;
-
-            await _unitOfWork.Repository<SystemConfig>().UpdateAsync(existingConfig);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            _logger.LogInformation("System configuration updated: StartDate={StartDate}, EndDate={EndDate}, IsClosed={IsClosed}",
-                existingConfig.StartDate, existingConfig.EndDate, existingConfig.IsClosed);
+            var configs = await unitOfWork.Repository<SystemConfig>()
+                .Include(sc => sc.AcademicYear)
+                .Where(sc => sc.AcademicYear.Id == academicYearId
+                    && !sc.IsDeleted)
+                .ToListAsync();
+            return mapper.MapToDtos(configs);
         }
 
-        public async Task CreateSystemConfigAsync(CreateSystemConfigRequestDto config, CancellationToken cancellationToken = default)
+        public async Task<SystemConfigDto?> GetSystemState()
         {
-            var configs = await _unitOfWork.Repository<SystemConfig>().FindAsync(c => true);
-            if (configs.Any())
+            DateTime currentTime = DateTime.UtcNow;
+            var isOpen = await IsSystemOpenAsync(currentTime);
+
+            if (!isOpen)
             {
-                _logger.LogWarning("SystemConfig already exists. Use update instead.");
-                throw new Exception("System configuration already exists. Please use update instead.");
+                return null;
             }
-
-            var newConfig = new SystemConfig
+            else
             {
-                Id = Guid.NewGuid(),
-                StartDate = config.StartDate,
-                EndDate = config.EndDate,
-                IsClosed = config.IsClosed,
-                CreatedDate = DateTime.UtcNow
-            };
+                var config = await unitOfWork.Repository<SystemConfig>()
+                    .Include(sc => sc.AcademicYear)
+                    .Where(sc => sc.OpenTime <= currentTime && sc.CloseTime >= currentTime
+                        && !sc.IsDeleted)
+                    .FirstOrDefaultAsync();
 
-            await _unitOfWork.Repository<SystemConfig>().CreateAsync(newConfig);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            _logger.LogInformation("System configuration created: StartDate={StartDate}, EndDate={EndDate}, IsClosed={IsClosed}",
-                newConfig.StartDate, newConfig.EndDate, newConfig.IsClosed);
+                return mapper.MapToDto(config);
+            }
         }
 
-        public async Task<bool> IsSystemOpenAsync(CancellationToken cancellationToken = default)
+        public async Task<bool> IsSystemOpenAsync(DateTime time, CancellationToken cancellationToken = default)
         {
-            var configs = await _unitOfWork.Repository<SystemConfig>().FindAsync(c => true);
-            var config = configs.FirstOrDefault();
+            var config = await unitOfWork.Repository<SystemConfig>()
+                .FirstOrDefaultAsync(
+                    c => c.OpenTime <= time && c.CloseTime >= time
+                        && !c.IsDeleted,
+                    cancellationToken
+                    );
 
-            if (config == null)
+            return config != null;
+        }
+
+        public override async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var systemConfig = await unitOfWork.Repository<SystemConfig>().GetByIdAsync(id);
+            if (systemConfig != null)
             {
-                _logger.LogWarning("No SystemConfig found. Assuming system is closed.");
-                return false;
-            }
+                systemConfig.IsDeleted = true;
+                await unitOfWork.Repository<SystemConfig>().UpdateAsync(systemConfig);
+                await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            var now = DateTime.UtcNow;
-            return now >= config.StartDate && now <= config.EndDate && !config.IsClosed;
+                await SafeInvalidateCacheAsync(id, cancellationToken);
+            }
+            else
+            {
+                throw new Exception("System config not found");
+            }
         }
     }
 }

@@ -18,51 +18,41 @@ namespace WebApi.Controllers
             this.logger = logger;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<ApiResponse<IEnumerable<AuthorDto>>>> GetAuthors()
-        {
-            var authors = await authorService.GetAllAsync();
-            return Ok(new ApiResponse<IEnumerable<AuthorDto>>(
-                true,
-                "Lấy dữ liệu phân công thành công",
-                authors
-            ));
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ApiResponse<AuthorDto>>> GetAuthor([FromRoute] Guid id)
-        {
-            var author = await authorService.GetByIdAsync(id);
-            if (author == null)
-            {
-                return NotFound(new ApiResponse<AuthorDto>(false, "Không tìm thấy phân công"));
-            }
-            return Ok(new ApiResponse<AuthorDto>(
-                true,
-                "Lấy dữ liệu phân công thành công",
-                author
-            ));
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<ApiResponse<object>>> DeleteAuthor([FromRoute] Guid id)
+        [HttpGet("registrable")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<AuthorDto>>>> GetRegistableAuthors()
         {
             try
             {
-                var existingAuthor = await authorService.GetByIdAsync(id);
-                if (existingAuthor == null)
-                {
-                    return NotFound(new ApiResponse<object>(false, "Không tìm thấy phân công"));
-                }
+                var userId = GetCurrentUserId();
 
-                await authorService.DeleteAsync(id);
-                return Ok(new ApiResponse<object>(true, "Xóa phân công thành công"));
+                var authors = await authorService.GetAllRegistableAuthorsOfUser(userId);
+                return Ok(new ApiResponse<IEnumerable<AuthorDto>>(
+                    true,
+                    "Lấy dữ liệu tác giả thành công",
+                    authors
+                ));
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error deleting author");
-                return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
+                logger.LogError(ex, "Lỗi khi lấy dữ liệu tác giả");
+                return BadRequest(new ApiResponse<object>(
+                    false,
+                    "Lỗi khi lấy dữ liệu tác giả",
+                    null
+                ));
             }
+        }
+
+        private Guid GetCurrentUserId()
+        {
+            var userClaims = HttpContext.User.Claims;
+
+            var userId = userClaims.FirstOrDefault(c => c.Type == "id")?.Value;
+            if (userId == null)
+            {
+                throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
+            }
+            return Guid.Parse(userId);
         }
     }
 }

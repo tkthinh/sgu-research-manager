@@ -171,6 +171,10 @@ export const NAVIGATION_ADMIN: Navigation = [
         segment: "nganh",
         title: "Ngành",
       },
+      {
+        segment: "nam-hoc",
+        title: "Năm học",
+      },
     ],
   },
 ];

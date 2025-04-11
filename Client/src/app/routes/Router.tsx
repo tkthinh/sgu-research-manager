@@ -19,10 +19,14 @@ import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 
 import AssignmentPage from "../../features/assignments/AssignmentPage";
-import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigPage";
+import AcademicYearPage from "../../features/settings/academicYears/AcademicYearPage";
+import SystemConfigPage from "../../features/settings/systemConfigs/SystemConfigPage";
 import UserPage from "../../features/settings/users/UserPage";
-import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
+import NotFound from "../shared/pages/NotFound";
+import Unauthorized from "../shared/pages/Unauthorized";
+
+import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import WorkScoreDetailPage from "../../features/work-scores/WorkScoreDetailPage";
 import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
 import WorkScorePage from "../../features/work-scores/WorkScorePage";
@@ -56,21 +60,21 @@ export const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
-              { 
-                path: "/cham-diem", 
+              {
+                path: "/cham-diem",
                 element: (
                   <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
                     <WorkScorePage /> 
                   </ProtectedRoute>
-                )
+                ),
               },
-              { 
-                path: "/cham-diem/user/:userId", 
+              {
+                path: "/cham-diem/user/:userId",
                 element: (
                   <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
                     <WorkScoreDetailPage /> 
                   </ProtectedRoute>
-                )
+                ),
               },
               {
                 path: "/phan-cong",
@@ -179,6 +183,14 @@ export const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
+              {
+                path: "/cai-dat/nam-hoc",
+                element: (
+                  <ProtectedRoute allowedRoles={["Admin"]}>
+                    <AcademicYearPage />
+                  </ProtectedRoute>
+                ),
+              },
             ],
           },
         ],
@@ -194,4 +206,8 @@ export const router = createBrowserRouter([
     path: "/dang-nhap",
     element: <SignIn />,
   },
+
+  // ============== TRANG KHÁC ==============
+  { path: "/unauthorized", element: <Unauthorized /> },
+  { path: "*", element: <NotFound /> },
 ]);

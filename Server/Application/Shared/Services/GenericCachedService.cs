@@ -160,13 +160,13 @@ namespace Application.Shared.Services
          await SafeInvalidateCacheAsync(id);
       }
 
-      private void HandleCacheException(Exception ex, string message)
+      protected void HandleCacheException(Exception ex, string message)
       {
          isCacheAvailable = false;
          logger.LogWarning(ex, $"{message} - Cache appears to be unavailable");
       }
 
-      private async Task SafeSetCacheAsync(string key, string value, TimeSpan expiration, CancellationToken cancellationToken = default)
+      protected async Task SafeSetCacheAsync(string key, string value, TimeSpan expiration, CancellationToken cancellationToken = default)
       {
          if (!isCacheAvailable) return;
 

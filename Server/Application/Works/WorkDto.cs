@@ -18,6 +18,8 @@ namespace Application.Works
         public Guid? WorkLevelId { get; set; }
         public string? WorkLevelName { get; set; }
 
+        public DateOnly? ExchangeDeadline { get; set; }
+
         public IEnumerable<AuthorDto>? Authors { get; set; }
         public List<Guid> CoAuthorUserIds { get; set; } = new List<Guid>();
 

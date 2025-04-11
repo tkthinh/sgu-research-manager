@@ -28,6 +28,7 @@ namespace Application.Works
                 WorkTypeName = entity.WorkType?.Name,
                 WorkLevelId = entity.WorkLevelId,
                 WorkLevelName = entity.WorkLevel?.Name,
+                ExchangeDeadline = entity.ExchangeDeadline,
                 Authors = entity.Authors != null ? _authorMapper.MapToDtos(entity.Authors) : null,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate

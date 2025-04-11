@@ -29,7 +29,8 @@ using StackExchange.Redis;
 using Application.ScoreLevels;
 using Infrastructure.Identity.Services;
 using Application.Auth;
-using Application.Shared.Services;
+using Application.AcademicYears;
+using Application.AuthorRegistrations;
 
 namespace Infrastructure
 {
@@ -109,15 +110,15 @@ namespace Infrastructure
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
             services.AddScoped<IScoreLevelService, ScoreLevelService>();
-            services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<IAcademicYearService, AcademicYearService>();
+            services.AddScoped<ISystemConfigService, SystemConfigService>();
+            services.AddScoped<IAuthorRegistrationService, AuthorRegistrationService>();
 
             services.AddScoped<ICacheManagementService, CacheManagementService>();
             services.AddSingleton(ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
 
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserImportService, UserImportService>();
-
-            services.AddScoped<ISystemConfigService, SystemConfigService>();
 
             // Đăng ký các mapper
             services.AddScoped<IGenericMapper<DepartmentDto, Department>, DepartmentMapper>();
@@ -133,7 +134,8 @@ namespace Infrastructure
             services.AddScoped<IGenericMapper<UserDto, User>, UserMapper>();
             services.AddScoped<IGenericMapper<SCImagoFieldDto, SCImagoField>, SCImagoFieldMapper>();
             services.AddScoped<IGenericMapper<SystemConfigDto, SystemConfig>, SystemConfigMapper>();
-
+            services.AddScoped<IGenericMapper<AcademicYearDto, AcademicYear>, AcademicYearMapper>();
+            services.AddScoped<IGenericMapper<AuthorRegistrationDto, AuthorRegistration>, AuthorRegistrationMapper>();
 
 
             // Đăng ký custom repository (nếu có)
