@@ -19,14 +19,16 @@ import WorkLevelPage from "../../features/settings/workLevels/WorkLevelPage";
 import WorkTypePage from "../../features/settings/workTypes/WorkTypePage";
 
 import AssignmentPage from "../../features/assignments/AssignmentPage";
+import AcademicYearPage from "../../features/settings/academicYears/AcademicYearPage";
+import SystemConfigPage from "../../features/settings/systemConfigs/SystemConfigPage";
 import UserPage from "../../features/settings/users/UserPage";
-import MarkedWorksPage from "../../features/works/MarkedWorksPage";
-import ProtectedRoute from "../shared/components/ProtectedRoute";
+import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
 import ScoreWorksPage from "../../features/users/UserListPage";
 import UserWorkDetailPage from "../../features/users/UserWorkDetailPage";
-import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
-import SystemConfigPage from "../../features/settings/systemConfigs/SystemConfigPage";
-import AcademicYearPage from "../../features/settings/academicYears/AcademicYearPage";
+import MarkedWorksPage from "../../features/works/MarkedWorksPage";
+import ProtectedRoute from "../shared/components/ProtectedRoute";
+import NotFound from "../shared/pages/NotFound";
+import Unauthorized from "../shared/pages/Unauthorized";
 
 export const router = createBrowserRouter([
   {
@@ -57,21 +59,21 @@ export const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
-              { 
-                path: "/cham-diem", 
+              {
+                path: "/cham-diem",
                 element: (
                   <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
-                    <ScoreWorksPage /> 
+                    <ScoreWorksPage />
                   </ProtectedRoute>
-                )
+                ),
               },
-              { 
-                path: "/cham-diem/user/:userId", 
+              {
+                path: "/cham-diem/user/:userId",
                 element: (
                   <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
-                    <UserWorkDetailPage /> 
+                    <UserWorkDetailPage />
                   </ProtectedRoute>
-                )
+                ),
               },
               {
                 path: "/phan-cong",
@@ -203,4 +205,8 @@ export const router = createBrowserRouter([
     path: "/dang-nhap",
     element: <SignIn />,
   },
+
+  // ============== TRANG KHÁC ==============
+  { path: "/unauthorized", element: <Unauthorized /> },
+  { path: "*", element: <NotFound /> },
 ]);
