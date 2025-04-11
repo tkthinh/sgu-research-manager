@@ -1,6 +1,5 @@
 ﻿using Infrastructure;
 using Serilog;
-using WebApi.Hubs;
 using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,7 +37,6 @@ var app = builder.Build();
 
 app.UseSerilogRequestLogging();
 
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -53,9 +51,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Đăng ký endpoint cho SignalR Hub
-app.MapHub<NotificationHub>("/notificationHub");
 
 await AuthDbInitializer.SeedDataAsync(app.Services);
 

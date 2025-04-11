@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250401143449_UpdateSeedingData")]
+    partial class UpdateSeedingData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,59 +24,6 @@ namespace Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Domain.Entities.AcademicYear", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateOnly>("EndDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateOnly>("StartDate")
-                        .HasColumnType("date");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AcademicYears");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("e53bc8e5-a17e-4a9b-a403-0e1b7d3118a2"),
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndDate = new DateOnly(2024, 6, 30),
-                            Name = "2023-2024",
-                            StartDate = new DateOnly(2023, 9, 1)
-                        },
-                        new
-                        {
-                            Id = new Guid("dab343ac-b1a8-45b4-a7f8-a4260594d7d8"),
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndDate = new DateOnly(2025, 6, 30),
-                            Name = "2024-2025",
-                            StartDate = new DateOnly(2024, 9, 1)
-                        },
-                        new
-                        {
-                            Id = new Guid("33fdb5af-0778-4d91-8b68-dce2860e138c"),
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndDate = new DateOnly(2026, 6, 30),
-                            Name = "2025-2026",
-                            StartDate = new DateOnly(2025, 9, 1)
-                        });
-                });
 
             modelBuilder.Entity("Domain.Entities.Assignment", b =>
                 {
@@ -120,6 +70,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid?>("FieldId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("MarkedForScoring")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -168,35 +121,6 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Authors");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AuthorRegistration", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AcademicYearId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthorId")
-                        .IsUnique();
-
-                    b.HasIndex("AcademicYearId", "AuthorId")
-                        .IsUnique();
-
-                    b.ToTable("AuthorRegistrations");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -3889,31 +3813,22 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AcademicYearId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CloseTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDeleted")
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsClosed")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("OpenTime")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AcademicYearId");
 
                     b.ToTable("SystemConfigs");
                 });
@@ -3983,9 +3898,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateOnly?>("ExchangeDeadline")
-                        .HasColumnType("date");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -4454,7 +4366,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Entities.User", "User")
-                        .WithMany("Authors")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -4476,25 +4388,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
 
                     b.Navigation("Work");
-                });
-
-            modelBuilder.Entity("Domain.Entities.AuthorRegistration", b =>
-                {
-                    b.HasOne("Domain.Entities.AcademicYear", "AcademicYear")
-                        .WithMany()
-                        .HasForeignKey("AcademicYearId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.Author", "Author")
-                        .WithOne("AuthorRegistration")
-                        .HasForeignKey("Domain.Entities.AuthorRegistration", "AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AcademicYear");
-
-                    b.Navigation("Author");
                 });
 
             modelBuilder.Entity("Domain.Entities.AuthorRole", b =>
@@ -4560,17 +4453,6 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("WorkType");
-                });
-
-            modelBuilder.Entity("Domain.Entities.SystemConfig", b =>
-                {
-                    b.HasOne("Domain.Entities.AcademicYear", "AcademicYear")
-                        .WithMany("SystemConfigs")
-                        .HasForeignKey("AcademicYearId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AcademicYear");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -4643,15 +4525,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("WorkType");
                 });
 
-            modelBuilder.Entity("Domain.Entities.AcademicYear", b =>
-                {
-                    b.Navigation("SystemConfigs");
-                });
-
             modelBuilder.Entity("Domain.Entities.Author", b =>
                 {
-                    b.Navigation("AuthorRegistration");
-
                     b.Navigation("WorkAuthors");
                 });
 
@@ -4684,8 +4559,6 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Navigation("Assignments");
-
-                    b.Navigation("Authors");
                 });
 
             modelBuilder.Entity("Domain.Entities.Work", b =>

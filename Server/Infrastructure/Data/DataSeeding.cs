@@ -1,6 +1,5 @@
 ﻿using Domain.Entities;
 using Domain.Enums;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -94,6 +93,7 @@ namespace Infrastructure.Data.Seeding
                     new WorkType { Id = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"), Name = "Bài báo khoa học" },
                     new WorkType { Id = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"), Name = "Báo cáo khoa học" },
                     new WorkType { Id = Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348"), Name = "Đề tài" },
+                    new WorkType { Id = Guid.Parse("9787de81-78f2-4797-b810-0f5ec411125b"), Name = "Tài liệu giảng dạy" },
                     new WorkType { Id = Guid.Parse("323371c0-26c7-4549-90f2-11c881be402d"), Name = "Giáo trình" },
                     new WorkType { Id = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa"), Name = "Hội thảo, hội nghị" },
                     new WorkType { Id = Guid.Parse("e2f7974c-47c3-478e-9b53-74093f6c621f"), Name = "Hướng dẫn SV NCKH" },
@@ -116,11 +116,11 @@ namespace Infrastructure.Data.Seeding
             var workLevels = new List<WorkLevel>
                 {
                     // Đề tài
-                    new WorkLevel {
-                        Id = Guid.Parse("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),
-                        Name = "Khoa",
-                        WorkTypeId = Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348")
-                    },
+                    //new WorkLevel {
+                    //    Id = Guid.Parse("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),
+                    //    Name = "Khoa",
+                    //    WorkTypeId = Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348")
+                    //},
                     new WorkLevel {
                         Id = Guid.Parse("b386e9ba-8844-42eb-b910-6cb360c5485b"),
                         Name = "Trường",
@@ -145,6 +145,13 @@ namespace Infrastructure.Data.Seeding
                         Id = Guid.Parse("b2581ebc-a310-460b-9721-f88c92ed2c81"),
                         Name = "Quốc tế",
                         WorkTypeId = Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348")
+                    },
+
+                    // Tài liệu giảng dạy
+                    new WorkLevel {
+                        Id = Guid.Parse("c6846c10-1297-40c7-820a-76cc286fce31"),
+                        Name = "Khoa",
+                        WorkTypeId = Guid.Parse("9787de81-78f2-4797-b810-0f5ec411125b")
                     },
 
                     // Giáo trình
@@ -469,6 +476,19 @@ namespace Infrastructure.Data.Seeding
                         WorkTypeId = Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348")
                     },
 
+                    // Tài liệu giảng dạy
+                    new AuthorRole {
+                        Id = Guid.Parse("efb42251-5b12-4ac2-b291-e6f8ebd716d4"),
+                        Name = "Chủ nhiệm",
+                        IsMainAuthor = true,
+                        WorkTypeId = Guid.Parse("9787de81-78f2-4797-b810-0f5ec411125b")
+                    },
+                    new AuthorRole {
+                        Id = Guid.Parse("e79d70b3-ea7c-43d8-b441-5317c975ddb3"),
+                        Name = "Thành viên",
+                        IsMainAuthor = false,
+                        WorkTypeId = Guid.Parse("9787de81-78f2-4797-b810-0f5ec411125b")
+                    },
                     // Giáo trình
                     new AuthorRole {
                         Id = Guid.Parse("1c563e5d-0bc0-4861-8ae0-62835d64daa9"),
@@ -487,19 +507,19 @@ namespace Infrastructure.Data.Seeding
                     new AuthorRole {
                         Id = Guid.Parse("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"),
                         Name = "Trưởng ban",
-                        IsMainAuthor = false,
+                        IsMainAuthor = true,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
                         Id = Guid.Parse("822d8f31-2b1d-4367-8c50-e4535fac5b5f"),
                         Name = "Phó trưởng ban",
-                        IsMainAuthor = false,
+                        IsMainAuthor = true,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
                         Id = Guid.Parse("ad3aa473-c140-46cb-b8f4-faecdf2f338e"),
                         Name = "Ủy viên thường trực",
-                        IsMainAuthor = false,
+                        IsMainAuthor = true,
                         WorkTypeId = Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                     },
                     new AuthorRole {
@@ -565,6 +585,13 @@ namespace Infrastructure.Data.Seeding
                         Id = Guid.Parse("b622853d-f917-4871-a3b9-9a1d29ce9506"),
                         Name = "Quy đổi giờ nghĩa vụ",
                         WorkTypeId = Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348")
+                    },
+
+                    // Tài liệu giảng dạy
+                    new Purpose {
+                        Id = Guid.Parse("63db31b6-8f8f-4a23-8069-331708fe8ebe"),
+                        Name = "Quy đổi giờ nghĩa vụ",
+                        WorkTypeId = Guid.Parse("9787de81-78f2-4797-b810-0f5ec411125b")
                     },
 
                     // Giáo trình
@@ -641,7 +668,32 @@ namespace Infrastructure.Data.Seeding
         {
             var factors = new List<Factor>
             {
-                // Bài báo khoa học
+                // Bài báo khoa học 
+                new Factor
+                {
+                    Id = Guid.Parse("efce39b7-5723-41e7-acd2-0e7bd5b66d1d"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+
+                new Factor
+                {
+                    Id = Guid.Parse("52e2bd00-fcbb-40a4-b059-4db425c61202"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),   // Cấp WoS
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
                 new Factor
                 {
                     Id = Guid.Parse("ad3bdf4e-4697-43bd-a20c-d7ab63e6e59e"),
@@ -654,6 +706,7 @@ namespace Infrastructure.Data.Seeding
                     MaxAllowed = null,
                     ConvertHour = 800
                 },
+
                 new Factor
                 {
                     Id = Guid.Parse("258a7107-baf3-4632-96be-ada15af33184"),
@@ -834,7 +887,30 @@ namespace Infrastructure.Data.Seeding
                     MaxAllowed = 8,
                     ConvertHour = 240
                 },
-
+                new Factor
+                {
+                    Id = Guid.Parse("df7fd664-6298-4acf-9094-d0212bf923b6"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản  phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("ac12bd71-e645-485d-9f57-6d2efb931657"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("34f94668-7151-457d-aa06-4bf4e2b27df3"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản  phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
                 new Factor
                 {
                     Id = Guid.Parse("3f661984-45ac-45af-b665-d7c8f609d172"),
@@ -1017,7 +1093,18 @@ namespace Infrastructure.Data.Seeding
                     MaxAllowed = 8,
                     ConvertHour = 240
                 },
-
+                new Factor
+                {
+                    Id = Guid.Parse("135f96eb-8ab0-494c-ac9a-c115b470c3d6"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
                 new Factor
                 {
                     Id = Guid.Parse("4eb5955a-db99-4a23-99a7-50a94d05ce3c"),
@@ -1029,6 +1116,42 @@ namespace Infrastructure.Data.Seeding
                     ScoreLevel = ScoreLevel.BaiBaoMotDiem,
                     MaxAllowed = 4,
                     ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("a575e613-c9ab-44b5-8eb6-33f8914c36d4"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản  phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("89760e99-da91-46ef-bda4-976f3c6572b0"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản  phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),  // Thành viên
+                    Name = "",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("b18b9a28-d43d-4258-a3f5-14939ee182ef"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("23dad081-62db-4944-87d2-43b29c31fa29"),   // Cấp Trường
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản  phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "",
+                    ScoreLevel = ScoreLevel.BaiBaoMotDiem,
+                    MaxAllowed = null,
+                    ConvertHour = 0
                 },
                 new Factor
                 {
@@ -1065,6 +1188,30 @@ namespace Infrastructure.Data.Seeding
                     ScoreLevel = ScoreLevel.BaiBaoMotDiem,
                     MaxAllowed = 4,
                     ConvertHour = 160
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("d643e931-18d9-4436-a3f6-0e0cb8fc5d38"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("22505328-67be-49d6-9869-7431bd91f663"),
+                    WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"),    // Bài báo
+                    WorkLevelId = Guid.Parse("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("5cf30509-8632-4d62-ad14-55949b9b9336"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("069b5046-0a7e-47d9-a8f0-af09db20a697"),  // Tác giả chính
+                    Name = "",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
                 },
                 new Factor
                 {
@@ -1723,31 +1870,33 @@ namespace Infrastructure.Data.Seeding
                     ConvertHour = 120
                 },
 
+                // Tài liệu giảng dạy
+                new Factor
+                {
+                    Id = Guid.Parse("ec1679cd-c303-4545-a774-82bbdbff81c0"),
+                    WorkTypeId = Guid.Parse("9787de81-78f2-4797-b810-0f5ec411125b"),    // Tài liệu giảng dạy
+                    WorkLevelId = Guid.Parse("c6846c10-1297-40c7-820a-76cc286fce31"),   // Cấp Khoa
+                    PurposeId = Guid.Parse("63db31b6-8f8f-4a23-8069-331708fe8ebe"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("efb42251-5b12-4ac2-b291-e6f8ebd716d4"),  // Chủ nhiệm
+                    Name = "Tài liệu giảng dạy cấp khoa",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 80
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("a1e70b5f-1670-4254-b0a9-6b3c3936356e"),
+                    WorkTypeId = Guid.Parse("9787de81-78f2-4797-b810-0f5ec411125b"),    // Tài liệu giảng dạy
+                    WorkLevelId = Guid.Parse("c6846c10-1297-40c7-820a-76cc286fce31"),   // Cấp Khoa
+                    PurposeId = Guid.Parse("63db31b6-8f8f-4a23-8069-331708fe8ebe"),     // Giờ nghĩa vụ
+                    AuthorRoleId = Guid.Parse("e79d70b3-ea7c-43d8-b441-5317c975ddb3"),  // Thành viên
+                    Name = "Tài liệu giảng dạy cấp khoa",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 80
+                },
+
                 // Đề tài
-                new Factor
-                {
-                    Id = Guid.Parse("c1233f27-8e66-4c73-9efc-121eb07979f9"),
-                    WorkTypeId = Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348"),    // Đề tài
-                    WorkLevelId = Guid.Parse("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),   // Cấp Khoa
-                    PurposeId = Guid.Parse("b622853d-f917-4871-a3b9-9a1d29ce9506"),     // Giờ nghĩa vụ
-                    AuthorRoleId = Guid.Parse("e51ba448-a481-4d5e-a560-4b81c45a0530"),  // Chủ nhiệm
-                    Name = "Đề tài nghiên cứu cấp khoa",
-                    ScoreLevel = null,
-                    MaxAllowed = null,
-                    ConvertHour = 80
-                },
-                new Factor
-                {
-                    Id = Guid.Parse("ba83391f-9d8f-48a9-87d9-b67ebe5be696"),
-                    WorkTypeId = Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348"),    // Đề tài
-                    WorkLevelId = Guid.Parse("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),   // Cấp Khoa
-                    PurposeId = Guid.Parse("b622853d-f917-4871-a3b9-9a1d29ce9506"),     // Giờ nghĩa vụ
-                    AuthorRoleId = Guid.Parse("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"),  // Thành viên
-                    Name = "Đề tài nghiên cứu cấp khoa",
-                    ScoreLevel = null,
-                    MaxAllowed = null,
-                    ConvertHour = 80
-                },
                 new Factor
                 {
                     Id = Guid.Parse("455360e6-693a-47e9-8671-8a83393149ad"),

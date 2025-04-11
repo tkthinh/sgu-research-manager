@@ -26,6 +26,7 @@ import { User } from "../../lib/types/models/User";
 import { useQuery } from "@tanstack/react-query";
 import { getScoreLevelsByFilters } from "../../lib/api/scoreLevelsApi";
 import { getScoreLevelFullDescription } from '../../lib/utils/scoreLevelUtils';
+import { __unsafe_useEmotionCache } from "@emotion/react";
 
 // Define validation schema
 const schema = z.object({
@@ -175,7 +176,7 @@ export default function WorkForm({
       // Các cấp khác: Trường, bộ/ngành, quốc tế
       else {
         return [
-          { key: "Tên tạp chí", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
           { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
           { key: "Số trang", label: "Số trang", required: false },
           { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
@@ -188,7 +189,7 @@ export default function WorkForm({
       // Cấp WoS
       if (workLevelId === "f81c134b-fd83-4e25-9590-cf7ecfc5b203") {
         return [
-          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tên ấn phẩm", label: "Tên ấn phẩm", required: true },
           { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
           { key: "Số trang", label: "Số trang", required: false },
           { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
@@ -200,7 +201,7 @@ export default function WorkForm({
       // Cấp Scopus
       else if (workLevelId === "f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9") {
         return [
-          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tên ấn phẩm", label: "Tên ấn phẩm", required: true },
           { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
           { key: "Số trang", label: "Số trang", required: false },
           { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
@@ -211,7 +212,7 @@ export default function WorkForm({
       // Các cấp khác: Trường, bộ/ngành, quốc tế, quốc gia
       else {
         return [
-          { key: "Tên tạp chí", label: "Tên tạp chí khoa học", required: true },
+          { key: "Tên ấn phẩm", label: "Tên ấn phẩm", required: true },
           { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
           { key: "Số trang", label: "Số trang", required: false },
           { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
@@ -224,25 +225,52 @@ export default function WorkForm({
               "628a119e-324f-42b8-8ff4-e29ee5c643a9", "84a14a8b-eae8-4720-bc7c-e1f93b35a256", 
               "8aaf0a8a-35ed-4768-8fd4-44fc4a561cd0", "1ff8d087-e0c3-45df-befc-662c0a80c10c"].includes(workTypeId)) {
       return [
-        { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
-        { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
-        { key: "Số trang", label: "Số trang", required: false },
-        { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
-        { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
+        { key: "Tập, số phát hành", label: "Tập, số phát hành", required: true },
+        { key: "Số trang", label: "Số trang", required: true },
+        { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: true },
+        { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: true },        
+        { key: "Dạng tài liệu", label: "Dạng tài liệu", required: true }
+
       ];
     }
-    // Đề tài, giáo trình
-    else if (["49cf7589-fb84-4934-be8e-991c6319a348", "323371c0-26c7-4549-90f2-11c881be402d"].includes(workTypeId)) {
+    // Đề tài
+    else if (["49cf7589-fb84-4934-be8e-991c6319a348"].includes(workTypeId)) {
       return [
         { key: "Mã số đề tài", label: "Mã số đề tài", required: true },
-        { key: "Sản phẩm thuộc đề tài", label: "Sản phẩm thuộc đề tài", required: false },
+        { key: "Sản phẩm thuộc đề tài", label: "Sản phẩm thuộc đề tài", required: true },
         { key: "Xếp loại", label: "Xếp loại", required: false },
       ];
     }
-    // Hội thảo, hội nghị và hướng dẫn SV NCKH
-    else if (["140a3e34-ded1-4bfa-8633-fbea545cbdaa", "e2f7974c-47c3-478e-9b53-74093f6c621f"].includes(workTypeId)) {
+    // Giáo trình
+    else if (["323371c0-26c7-4549-90f2-11c881be402d"].includes(workTypeId)) {
       return [
-        { key: "Hoạt động", label: "Hoạt động", required: true },
+        { key: "Mã số giáo trình", label: "Mã số giáo trình", required: true },
+        { key: "Xếp loại", label: "Xếp loại", required: false },
+      ];
+    }
+    // Tài liệu giảng dạy
+    else if (["9787de81-78f2-4797-b810-0f5ec411125b"].includes(workTypeId)) {
+      return [
+        { key: "Mã số tài liệu", label: "Mã số tài liệu", required: true },
+        { key: "Xếp loại", label: "Xếp loại", required: false },
+      ];
+    }
+    // Hội thảo, hội nghị 
+    else if (["140a3e34-ded1-4bfa-8633-fbea545cbdaa"].includes(workTypeId)) {
+      return [
+        { key: "Chi tiết", label: "Chi tiết", required: true },
+      ];
+    }
+    // Hướng dẫn SV NCKH
+    else if (["e2f7974c-47c3-478e-9b53-74093f6c621f"].includes(workTypeId)) {
+      return [
+        { key: "Mã số đề tài của sinh viên", label: "Mã số đề tài của sinh viên", required: true },
+      ];
+    }
+    // Khác
+    else if (["1ff8d087-e0c3-45df-befc-662c0a80c10c"].includes(workTypeId)) {
+      return [
+        { key: "Chi tiết", label: "Chi tiết", required: true },
       ];
     }
     
