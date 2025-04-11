@@ -15,23 +15,31 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GenericTable from "../../app/shared/components/tables/DataTable";
-import { getDepartments } from "../../lib/api/departmentsApi";
+import { getDepartments, getDepartmentsByManagerId } from "../../lib/api/departmentsApi";
 import { getUsersByDepartmentId } from "../../lib/api/usersApi";
 import { Department } from "../../lib/types/models/Department";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
+import { useAuth } from "../../app/shared/contexts/AuthContext";
 
-export default function ScoreWorksPage() {
+export default function WorkScorePage() {
   const navigate = useNavigate();
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
+  const { user } = useAuth();
   
-  // Lấy danh sách phòng ban
+  // Lấy danh sách phòng ban dựa trên role
   const {
     data: departmentsData,
     isLoading: isLoadingDepartments,
     error: departmentsError
   } = useQuery({
-    queryKey: ["departments"],
-    queryFn: getDepartments
+    queryKey: ["departments", user?.role, user?.id],
+    queryFn: async () => {
+      if (user?.role === "Manager") {
+        return await getDepartmentsByManagerId(user.id);
+      }
+      return await getDepartments();
+    },
+    enabled: !!user // Chỉ gọi API khi đã có thông tin user
   });
 
   // Lấy danh sách người dùng theo phòng ban
@@ -122,12 +130,12 @@ export default function ScoreWorksPage() {
 
   return (
     <Container maxWidth="xl">
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Typography variant="h4">Chấm điểm công trình</Typography>
-      </Box>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Danh sách người dùng theo phòng ban
+        </Typography>
 
-      <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth sx={{ maxWidth: 400 }}>
+        <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel id="department-select-label">Chọn phòng ban</InputLabel>
           <Select
             labelId="department-select-label"

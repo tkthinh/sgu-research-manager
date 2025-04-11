@@ -23,9 +23,9 @@ import SystemConfigPage from "../../features/settings/systemConfig/SystemConfigP
 import UserPage from "../../features/settings/users/UserPage";
 import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
-import ScoreWorksPage from "../../features/users/UserListPage";
-import UserWorkDetailPage from "../../features/users/UserWorkDetailPage";
+import WorkScoreDetailPage from "../../features/work-scores/WorkScoreDetailPage";
 import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
+import WorkScorePage from "../../features/work-scores/WorkScorePage";
 
 export const router = createBrowserRouter([
   {
@@ -60,7 +60,7 @@ export const router = createBrowserRouter([
                 path: "/cham-diem", 
                 element: (
                   <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
-                    <ScoreWorksPage /> 
+                    <WorkScorePage /> 
                   </ProtectedRoute>
                 )
               },
@@ -68,7 +68,7 @@ export const router = createBrowserRouter([
                 path: "/cham-diem/user/:userId", 
                 element: (
                   <ProtectedRoute allowedRoles={["Manager", "Admin"]}>
-                    <UserWorkDetailPage /> 
+                    <WorkScoreDetailPage /> 
                   </ProtectedRoute>
                 )
               },

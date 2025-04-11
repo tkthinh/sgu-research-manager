@@ -12,6 +12,11 @@ export const getDepartmentById = async (id: string): Promise<ApiResponse<Departm
   return response.data;
 };
 
+export const getDepartmentsByManagerId = async (managerId: string): Promise<ApiResponse<Department[]>> => {
+  const response = await apiClient.get<ApiResponse<Department[]>>(`/departments/by-manager/${managerId}`);
+  return response.data;
+};
+
 export const createDepartment = async (data: Partial<Department>): Promise<ApiResponse<Department>> => {
   const response = await apiClient.post<ApiResponse<Department>>("/departments", data);
   return response.data;
