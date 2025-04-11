@@ -804,14 +804,19 @@ export default function WorkForm({
                 <Controller
                 name="author.position"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...field}
+                      {...restField}
                     label="Vị trí tác giả"
                     type="number"
                     fullWidth
                     error={!!errors.author?.position}
                     helperText={errors.author?.position?.message?.toString()}
+                    value={value === null ? "" : value}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      onChange(inputValue === "" ? null : Number(inputValue));
+                    }}
                   />
                 )}
               />
