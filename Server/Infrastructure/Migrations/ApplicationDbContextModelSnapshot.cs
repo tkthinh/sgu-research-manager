@@ -121,6 +121,9 @@ namespace Infrastructure.Migrations
                     b.Property<Guid?>("FieldId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("MarkedForScoring")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
@@ -456,7 +459,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = new Guid("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsMainAuthor = false,
+                            IsMainAuthor = true,
                             Name = "Trưởng ban",
                             WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                         },
@@ -464,7 +467,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = new Guid("822d8f31-2b1d-4367-8c50-e4535fac5b5f"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsMainAuthor = false,
+                            IsMainAuthor = true,
                             Name = "Phó trưởng ban",
                             WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                         },
@@ -472,7 +475,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = new Guid("ad3aa473-c140-46cb-b8f4-faecdf2f338e"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsMainAuthor = false,
+                            IsMainAuthor = true,
                             Name = "Ủy viên thường trực",
                             WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                         },

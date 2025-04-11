@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250405091321_UpdateSystemConfig")]
-    partial class UpdateSystemConfig
+    [Migration("20250411095758_FreshMigration")]
+    partial class FreshMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,8 +34,8 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -44,8 +44,8 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 
@@ -56,25 +56,25 @@ namespace Infrastructure.Migrations
                         {
                             Id = new Guid("e53bc8e5-a17e-4a9b-a403-0e1b7d3118a2"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndDate = new DateTime(2024, 6, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndDate = new DateOnly(2024, 6, 30),
                             Name = "2023-2024",
-                            StartDate = new DateTime(2023, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                            StartDate = new DateOnly(2023, 9, 1)
                         },
                         new
                         {
                             Id = new Guid("dab343ac-b1a8-45b4-a7f8-a4260594d7d8"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndDate = new DateTime(2025, 6, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndDate = new DateOnly(2025, 6, 30),
                             Name = "2024-2025",
-                            StartDate = new DateTime(2024, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                            StartDate = new DateOnly(2024, 9, 1)
                         },
                         new
                         {
                             Id = new Guid("33fdb5af-0778-4d91-8b68-dce2860e138c"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndDate = new DateTime(2026, 6, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndDate = new DateOnly(2026, 6, 30),
                             Name = "2025-2026",
-                            StartDate = new DateTime(2025, 9, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                            StartDate = new DateOnly(2025, 9, 1)
                         });
                 });
 
@@ -123,9 +123,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid?>("FieldId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("MarkedForScoring")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -428,6 +425,22 @@ namespace Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = new Guid("efb42251-5b12-4ac2-b291-e6f8ebd716d4"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsMainAuthor = true,
+                            Name = "Chủ nhiệm",
+                            WorkTypeId = new Guid("9787de81-78f2-4797-b810-0f5ec411125b")
+                        },
+                        new
+                        {
+                            Id = new Guid("e79d70b3-ea7c-43d8-b441-5317c975ddb3"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsMainAuthor = false,
+                            Name = "Thành viên",
+                            WorkTypeId = new Guid("9787de81-78f2-4797-b810-0f5ec411125b")
+                        },
+                        new
+                        {
                             Id = new Guid("1c563e5d-0bc0-4861-8ae0-62835d64daa9"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsMainAuthor = true,
@@ -446,7 +459,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = new Guid("4ef8dcc3-7bcc-4ab2-a890-d673546a1089"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsMainAuthor = false,
+                            IsMainAuthor = true,
                             Name = "Trưởng ban",
                             WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                         },
@@ -454,7 +467,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = new Guid("822d8f31-2b1d-4367-8c50-e4535fac5b5f"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsMainAuthor = false,
+                            IsMainAuthor = true,
                             Name = "Phó trưởng ban",
                             WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                         },
@@ -462,7 +475,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = new Guid("ad3aa473-c140-46cb-b8f4-faecdf2f338e"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IsMainAuthor = false,
+                            IsMainAuthor = true,
                             Name = "Ủy viên thường trực",
                             WorkTypeId = new Guid("140a3e34-ded1-4bfa-8633-fbea545cbdaa")
                         },
@@ -715,6 +728,28 @@ namespace Infrastructure.Migrations
                     b.HasData(
                         new
                         {
+                            Id = new Guid("efce39b7-5723-41e7-acd2-0e7bd5b66d1d"),
+                            AuthorRoleId = new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
+                            Id = new Guid("52e2bd00-fcbb-40a4-b059-4db425c61202"),
+                            AuthorRoleId = new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            WorkLevelId = new Guid("0b031a2d-4ac5-48fb-9759-f7a2fe2f7290"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
                             Id = new Guid("ad3bdf4e-4697-43bd-a20c-d7ab63e6e59e"),
                             AuthorRoleId = new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"),
                             ConvertHour = 800,
@@ -915,6 +950,28 @@ namespace Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = new Guid("df7fd664-6298-4acf-9094-d0212bf923b6"),
+                            AuthorRoleId = new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
+                            Id = new Guid("ac12bd71-e645-485d-9f57-6d2efb931657"),
+                            AuthorRoleId = new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            WorkLevelId = new Guid("34f94668-7151-457d-aa06-4bf4e2b27df3"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
                             Id = new Guid("3f661984-45ac-45af-b665-d7c8f609d172"),
                             AuthorRoleId = new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"),
                             ConvertHour = 800,
@@ -1102,6 +1159,17 @@ namespace Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = new Guid("135f96eb-8ab0-494c-ac9a-c115b470c3d6"),
+                            AuthorRoleId = new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
                             Id = new Guid("4eb5955a-db99-4a23-99a7-50a94d05ce3c"),
                             AuthorRoleId = new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),
                             ConvertHour = 160,
@@ -1109,6 +1177,42 @@ namespace Infrastructure.Migrations
                             MaxAllowed = 4,
                             Name = "Bài báo khoa học cấp Trường được tính đến 1.0 điểm theo Danh mục tạp chí khoa học",
                             PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
+                            ScoreLevel = 5,
+                            WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
+                            Id = new Guid("a575e613-c9ab-44b5-8eb6-33f8914c36d4"),
+                            AuthorRoleId = new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            ScoreLevel = 5,
+                            WorkLevelId = new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
+                            Id = new Guid("89760e99-da91-46ef-bda4-976f3c6572b0"),
+                            AuthorRoleId = new Guid("c20d5d29-cf3e-40c5-be56-a2798511c3bc"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            ScoreLevel = 5,
+                            WorkLevelId = new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
+                            Id = new Guid("b18b9a28-d43d-4258-a3f5-14939ee182ef"),
+                            AuthorRoleId = new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
                             ScoreLevel = 5,
                             WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
                             WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
@@ -1150,6 +1254,28 @@ namespace Infrastructure.Migrations
                             PurposeId = new Guid("34fe4df6-0a28-4ddf-930f-19e5febebdee"),
                             ScoreLevel = 5,
                             WorkLevelId = new Guid("23dad081-62db-4944-87d2-43b29c31fa29"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
+                            Id = new Guid("d643e931-18d9-4436-a3f6-0e0cb8fc5d38"),
+                            AuthorRoleId = new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            WorkLevelId = new Guid("2d8e237a-bdb3-4d8c-b20a-860f23f65627"),
+                            WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
+                        },
+                        new
+                        {
+                            Id = new Guid("22505328-67be-49d6-9869-7431bd91f663"),
+                            AuthorRoleId = new Guid("069b5046-0a7e-47d9-a8f0-af09db20a697"),
+                            ConvertHour = 0,
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "",
+                            PurposeId = new Guid("5cf30509-8632-4d62-ad14-55949b9b9336"),
+                            WorkLevelId = new Guid("b1f4b511-99fc-49a5-a82a-99e1ebb2207d"),
                             WorkTypeId = new Guid("2732c858-77dc-471d-bd9a-464a3142530a")
                         },
                         new
@@ -1832,25 +1958,25 @@ namespace Infrastructure.Migrations
                         },
                         new
                         {
-                            Id = new Guid("c1233f27-8e66-4c73-9efc-121eb07979f9"),
-                            AuthorRoleId = new Guid("e51ba448-a481-4d5e-a560-4b81c45a0530"),
+                            Id = new Guid("ec1679cd-c303-4545-a774-82bbdbff81c0"),
+                            AuthorRoleId = new Guid("efb42251-5b12-4ac2-b291-e6f8ebd716d4"),
                             ConvertHour = 80,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Đề tài nghiên cứu cấp khoa",
-                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
-                            WorkLevelId = new Guid("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),
-                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                            Name = "Tài liệu giảng dạy cấp khoa",
+                            PurposeId = new Guid("63db31b6-8f8f-4a23-8069-331708fe8ebe"),
+                            WorkLevelId = new Guid("c6846c10-1297-40c7-820a-76cc286fce31"),
+                            WorkTypeId = new Guid("9787de81-78f2-4797-b810-0f5ec411125b")
                         },
                         new
                         {
-                            Id = new Guid("ba83391f-9d8f-48a9-87d9-b67ebe5be696"),
-                            AuthorRoleId = new Guid("d8a24a90-4f1e-447e-bfe5-958fb9ce231c"),
+                            Id = new Guid("a1e70b5f-1670-4254-b0a9-6b3c3936356e"),
+                            AuthorRoleId = new Guid("e79d70b3-ea7c-43d8-b441-5317c975ddb3"),
                             ConvertHour = 80,
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Đề tài nghiên cứu cấp khoa",
-                            PurposeId = new Guid("b622853d-f917-4871-a3b9-9a1d29ce9506"),
-                            WorkLevelId = new Guid("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),
-                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                            Name = "Tài liệu giảng dạy cấp khoa",
+                            PurposeId = new Guid("63db31b6-8f8f-4a23-8069-331708fe8ebe"),
+                            WorkLevelId = new Guid("c6846c10-1297-40c7-820a-76cc286fce31"),
+                            WorkTypeId = new Guid("9787de81-78f2-4797-b810-0f5ec411125b")
                         },
                         new
                         {
@@ -2962,6 +3088,13 @@ namespace Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = new Guid("63db31b6-8f8f-4a23-8069-331708fe8ebe"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Quy đổi giờ nghĩa vụ",
+                            WorkTypeId = new Guid("9787de81-78f2-4797-b810-0f5ec411125b")
+                        },
+                        new
+                        {
                             Id = new Guid("4511eace-33a7-40eb-b7b8-5570c5ea1cb1"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Quy đổi giờ nghĩa vụ",
@@ -3762,7 +3895,7 @@ namespace Infrastructure.Migrations
                     b.Property<Guid>("AcademicYearId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CloseDate")
+                    b.Property<DateTime>("CloseTime")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedDate")
@@ -3778,7 +3911,7 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("OpenDate")
+                    b.Property<DateTime>("OpenTime")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -3854,8 +3987,8 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsLocked")
-                        .HasColumnType("bit");
+                    b.Property<DateOnly?>("ExchangeDeadline")
+                        .HasColumnType("date");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -3949,13 +4082,6 @@ namespace Infrastructure.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("f63f1ff3-f33b-4c19-aa00-6f2206e65b07"),
-                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Khoa",
-                            WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
-                        },
-                        new
-                        {
                             Id = new Guid("b386e9ba-8844-42eb-b910-6cb360c5485b"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Trường",
@@ -3988,6 +4114,13 @@ namespace Infrastructure.Migrations
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Quốc tế",
                             WorkTypeId = new Guid("49cf7589-fb84-4934-be8e-991c6319a348")
+                        },
+                        new
+                        {
+                            Id = new Guid("c6846c10-1297-40c7-820a-76cc286fce31"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Khoa",
+                            WorkTypeId = new Guid("9787de81-78f2-4797-b810-0f5ec411125b")
                         },
                         new
                         {
@@ -4218,6 +4351,12 @@ namespace Infrastructure.Migrations
                             Id = new Guid("49cf7589-fb84-4934-be8e-991c6319a348"),
                             CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Đề tài"
+                        },
+                        new
+                        {
+                            Id = new Guid("9787de81-78f2-4797-b810-0f5ec411125b"),
+                            CreatedDate = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Name = "Tài liệu giảng dạy"
                         },
                         new
                         {

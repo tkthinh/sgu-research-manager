@@ -5,25 +5,25 @@
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateSystemConfig : Migration
+    public partial class AddMarkedForScoring : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Name",
-                table: "SystemConfigs",
-                type: "nvarchar(max)",
+            migrationBuilder.AddColumn<bool>(
+                name: "MarkedForScoring",
+                table: "Authors",
+                type: "bit",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: false);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Name",
-                table: "SystemConfigs");
+                name: "MarkedForScoring",
+                table: "Authors");
         }
     }
 }

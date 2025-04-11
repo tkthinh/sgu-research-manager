@@ -31,6 +31,7 @@ using Infrastructure.Identity.Services;
 using Application.Auth;
 using Application.AcademicYears;
 using Application.AuthorRegistrations;
+using Application.Shared.Services;
 
 namespace Infrastructure
 {
@@ -108,6 +109,7 @@ namespace Infrastructure
             services.AddScoped<IAuthorService, AuthorService>();
             services.AddScoped<IWorkService, WorkService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();
             services.AddScoped<IScoreLevelService, ScoreLevelService>();
             services.AddScoped<IAcademicYearService, AcademicYearService>();
