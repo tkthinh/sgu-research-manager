@@ -12,6 +12,8 @@ using System.Globalization;
 using System.Data;
 using System.Linq.Expressions;
 using Application.Shared.Messages;
+using Application.AcademicYears;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Works
 {
@@ -28,6 +30,7 @@ namespace Application.Works
         private readonly IUserRepository _userRepository;
         private readonly ILogger<WorkService> _logger;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAcademicYearService _academicYearService;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -39,7 +42,8 @@ namespace Application.Works
             ISystemConfigService systemConfigService,
             IHttpContextAccessor httpContextAccessor,
             IUserRepository userRepository,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IAcademicYearService academicYearService)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
@@ -53,6 +57,7 @@ namespace Application.Works
             _userRepository = userRepository;
             _logger = logger;
             _currentUserService = currentUserService;
+            _academicYearService = academicYearService;
         }
 
         public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
@@ -237,45 +242,34 @@ namespace Application.Works
             if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
                 throw new Exception(ErrorMessages.SystemClosedMarkingWork);
 
-            // Lấy thông tin tác giả
-            var author = await _unitOfWork.Repository<Author>().GetByIdAsync(authorId);
-            if (author is null)
+            // Lấy thông tin tác giả và công trình
+            var author = await _unitOfWork.Repository<Author>()
+                .Include(a => a.Work)
+                .FirstOrDefaultAsync(a => a.Id == authorId);
+
+            if (author == null)
                 throw new Exception(ErrorMessages.AuthorNotFound);
 
-            // Lấy thông tin công trình
-            var work = await _unitOfWork.Repository<Work>().GetByIdAsync(author.WorkId);
-            if (work is null)
+            var work = author.Work;
+            if (work == null)
                 throw new Exception(ErrorMessages.WorkNotFound);
 
-            // Nếu đánh dấu công trình, kiểm tra giới hạn
+            // Kiểm tra giới hạn nếu có
             if (marked)
             {
-                // 1. Tìm Factor phù hợp nhất
-                var factors = await _factorRepository.FindAsync(f =>
-                    f.WorkTypeId == work.WorkTypeId &&
-                    ((work.WorkLevelId == null && f.WorkLevelId == null) || (work.WorkLevelId != null && f.WorkLevelId == work.WorkLevelId)) &&
-                    f.PurposeId == author.PurposeId &&
-                    f.AuthorRoleId == author.AuthorRoleId &&
-                    f.ScoreLevel == author.ScoreLevel);
-
-                var factor = factors.FirstOrDefault();
-
-                if (factor == null)
-                {
-                    // Thử tìm factor không phụ thuộc AuthorRoleId
-                    factors = await _factorRepository.FindAsync(f =>
-                        f.WorkTypeId == work.WorkTypeId &&
-                        ((work.WorkLevelId == null && f.WorkLevelId == null) || (work.WorkLevelId != null && f.WorkLevelId == work.WorkLevelId)) &&
-                        f.PurposeId == author.PurposeId &&
-                        f.AuthorRoleId == null &&
-                        f.ScoreLevel == author.ScoreLevel);
-                    factor = factors.FirstOrDefault();
-                }
+                // 1. Lấy Factor để kiểm tra giới hạn
+                var factor = await FindFactorAsync(
+                    work.WorkTypeId,
+                    work.WorkLevelId,
+                    author.PurposeId,
+                    author.AuthorRoleId,
+                    author.ScoreLevel,
+                    cancellationToken);
 
                 // 2. Đếm số lượng công trình đã được đánh dấu với cùng điều kiện
                 var markedAuthors = await _unitOfWork.Repository<Author>().FindAsync(a =>
                     a.UserId == author.UserId &&
-                    //a.MarkedForScoring &&
+                    a.MarkedForScoring &&
                     a.PurposeId == author.PurposeId &&
                     a.ScoreLevel == author.ScoreLevel);
 
@@ -303,14 +297,38 @@ namespace Application.Works
                             scoreLevelInfo));
                     }
                 }
+
+                // 5. Tạo bản ghi AuthorRegistration nếu chưa có
+                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
+                var existingRegistration = await _unitOfWork.Repository<AuthorRegistration>()
+                    .FirstOrDefaultAsync(ar => ar.AuthorId == authorId && ar.AcademicYearId == currentAcademicYear.Id);
+
+                if (existingRegistration == null)
+                {
+                    var authorRegistration = new AuthorRegistration
+                    {
+                        AuthorId = authorId,
+                        AcademicYearId = currentAcademicYear.Id,
+                    };
+                    await _unitOfWork.Repository<AuthorRegistration>().CreateAsync(authorRegistration);
+                }
+            }
+            else
+            {
+                // Nếu bỏ đánh dấu, xóa bản ghi AuthorRegistration nếu có
+                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
+                var existingRegistration = await _unitOfWork.Repository<AuthorRegistration>()
+                    .FirstOrDefaultAsync(ar => ar.AuthorId == authorId && ar.AcademicYearId == currentAcademicYear.Id);
+
+                if (existingRegistration != null)
+                {
+                    await _unitOfWork.Repository<AuthorRegistration>().DeleteAsync(existingRegistration.Id);
+                }
             }
 
             // Cập nhật trạng thái đánh dấu
-            //author.MarkedForScoring = marked;
-
-            await _unitOfWork.Repository<Author>().UpdateAsync(author);
+            author.MarkedForScoring = marked;
             await _unitOfWork.SaveChangesAsync(cancellationToken);
-            await SafeInvalidateCacheAsync(author.WorkId);
         }
 
         public async Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken = default)
@@ -825,6 +843,10 @@ namespace Application.Works
             // Lấy thông tin đầy đủ của các công trình
             var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(allWorkIds, cancellationToken);
 
+            // Lấy năm học hiện tại
+            var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
+            var currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
+
             // Lọc và xử lý dữ liệu
             var filteredWorks = works
                 .Where(work => work.Source == WorkSource.NguoiDungKeKhai) // Chỉ lấy công trình do người dùng kê khai
@@ -841,11 +863,45 @@ namespace Application.Works
                         : new List<AuthorDto>();
 
                     return filteredWork;
-                }).Where(w => w != null).ToList();
+                })
+                .Where(w => w != null)
+                .ToList();
 
-            await FillCoAuthorUserIdsForMultipleWorksAsync(filteredWorks, cancellationToken);
+            // Lọc các công trình theo yêu cầu:
+            // 1. Công trình đã kê khai ở đợt hiện tại
+            // 2. Công trình thuộc các đợt trước có markedForScoring = false
+            var filteredWorksByRegistration = new List<WorkDto>();
+            foreach (var work in filteredWorks)
+            {
+                var author = work.Authors?.FirstOrDefault();
+                if (author == null) continue;
 
-            return filteredWorks;
+                // Kiểm tra xem công trình có thuộc đợt hiện tại không
+                var workDate = DateOnly.FromDateTime(work.CreatedDate);
+                var isCurrentPeriod = workDate >= currentAcademicYear.StartDate && workDate <= currentAcademicYear.EndDate;
+
+                if (isCurrentPeriod)
+                {
+                    // Nếu là công trình của đợt hiện tại, thêm vào danh sách
+                    filteredWorksByRegistration.Add(work);
+                }
+                else
+                {
+                    // Nếu là công trình của đợt trước, kiểm tra markedForScoring
+                    var authorEntity = await _unitOfWork.Repository<Author>()
+                        .FirstOrDefaultAsync(a => a.Id == author.Id);
+
+                    if (authorEntity != null && !authorEntity.MarkedForScoring)
+                    {
+                        // Nếu chưa đánh dấu, thêm vào danh sách
+                        filteredWorksByRegistration.Add(work);
+                    }
+                }
+            }
+
+            await FillCoAuthorUserIdsForMultipleWorksAsync(filteredWorksByRegistration, cancellationToken);
+
+            return filteredWorksByRegistration;
         }
 
         /// <summary>
@@ -1513,7 +1569,6 @@ namespace Application.Works
                     FieldId = field?.Id,
                     Position = dto.Position,
                     ScoreLevel = dto.ScoreLevel,
-                    //MarkedForScoring = false,
                     ProofStatus = ProofStatus.ChuaXuLy
                 };
 

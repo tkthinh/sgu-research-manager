@@ -25,7 +25,7 @@ namespace Application.Authors
                 ScoreLevel = entity.ScoreLevel,
                 AuthorHour = entity.AuthorHour,
                 WorkHour = entity.WorkHour,
-                //MarkedForScoring = entity.MarkedForScoring,
+                MarkedForScoring = entity.MarkedForScoring,
                 ProofStatus = entity.ProofStatus,
                 Note = entity.Note,
             };
@@ -46,7 +46,7 @@ namespace Application.Authors
                 ScoreLevel = dto.ScoreLevel,
                 AuthorHour = dto.AuthorHour,
                 WorkHour = dto.WorkHour,
-                //MarkedForScoring = dto.MarkedForScoring,
+                MarkedForScoring = dto.MarkedForScoring,
                 ProofStatus = dto.ProofStatus,
                 Note = dto.Note,
             };
