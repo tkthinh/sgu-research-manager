@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography.X509Certificates;
-using Application.Shared.Services;
+﻿using Application.Shared.Services;
 using Domain.Interfaces;
 using Domain.Enums;
 using Domain.Entities;
@@ -7,47 +6,125 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Application.Works;
+using System.Text.Json;
 
 namespace Application.Users
 {
-   public class UserService : GenericCachedService<UserDto, User>, IUserService
-   {
-      private readonly IUserRepository repository;
+    public class UserService : GenericCachedService<UserDto, User>, IUserService
+    {
+        private readonly IUserRepository repository;
 
-      public UserService(
-          IUnitOfWork unitOfWork,
-          IGenericMapper<UserDto, User> mapper,
-          IUserRepository repository,
-          IDistributedCache cache,
-          ILogger<UserService> logger
-          )
-          : base(unitOfWork, mapper, cache, logger)
-      {
-         this.repository = repository;
-      }
+        public UserService(
+            IUnitOfWork unitOfWork,
+            IGenericMapper<UserDto, User> mapper,
+            IUserRepository repository,
+            IDistributedCache cache,
+            ILogger<UserService> logger
+            )
+            : base(unitOfWork, mapper, cache, logger)
+        {
+            this.repository = repository;
+        }
 
-      public override async Task<UserDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-      {
-         var user = await repository.GetUserByIdWithDetailsAsync(id);
+        public override async Task<UserDto?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            if (isCacheAvailable)
+            {
+                string cacheKey = $"{cacheKeyPrefix}_{id}";
+                string? cachedData = null;
 
-         if(user is not null)
-         {
-            return mapper.MapToDto(user);
-         }
+                try
+                {
+                    cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    HandleCacheException(ex, $"Error reading cache for key {cacheKey}");
+                }
 
-         return null;
-      }
+                if (!string.IsNullOrEmpty(cachedData))
+                {
+                    try
+                    {
+                        return JsonSerializer.Deserialize<UserDto>(cachedData)!;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error deserializing cached data for key {CacheKey}", cacheKey);
+                    }
+                }
+            }
 
-      public override async Task<IEnumerable<UserDto>> GetAllAsync(CancellationToken cancellationToken = default)
-      {
-         var users = await repository.GetUsersWithDetailsAsync();
+            // If cache is unavailable or empty, get from database
+            var user = await repository.GetUserByIdWithDetailsAsync(id);
 
-         return mapper.MapToDtos(users);
-      }
+            if (user is not null)
+            {
+                var dto = mapper.MapToDto(user);
 
-      public async Task<UserDto?> GetUserByIdentityIdAsync(string identityId)
-      {
-         var user = await repository.GetUserByIdentityIdAsync(identityId);
+                // Only try to cache if it was available
+                if (isCacheAvailable)
+                {
+                    await SafeSetCacheAsync(
+                        $"{cacheKeyPrefix}_user_{id}",
+                        JsonSerializer.Serialize(dto),
+                        TimeSpan.FromMinutes(30),
+                        cancellationToken);
+                }
+
+                return dto;
+            }
+
+            return null;
+        }
+
+        public override async Task<IEnumerable<UserDto>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            if (isCacheAvailable)
+            {
+                string cacheKey = $"{cacheKeyPrefix}_all";
+                string? cachedData = null;
+
+                try
+                {
+                    cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    HandleCacheException(ex, $"Error reading cache for key {cacheKey}");
+                }
+
+                if (!string.IsNullOrEmpty(cachedData))
+                {
+                    try
+                    {
+                        return JsonSerializer.Deserialize<IEnumerable<UserDto>>(cachedData)!;
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error deserializing cached data for key {CacheKey}", cacheKey);
+                    }
+                }
+            }
+
+            // If cache is unavailable or empty, get from database
+            var users = await repository.GetUsersWithDetailsAsync();
+            var dtos = mapper.MapToDtos(users);
+
+            if (isCacheAvailable)
+            {
+                await SafeSetCacheAsync(
+                    $"{cacheKeyPrefix}_user_all",
+                    JsonSerializer.Serialize(dtos),
+                    TimeSpan.FromMinutes(30),
+                    cancellationToken);
+            }
+            return dtos;
+        }
+
+        public async Task<UserDto?> GetUserByIdentityIdAsync(string identityId)
+        {
+            var user = await repository.GetUserByIdentityIdAsync(identityId);
 
             if (user is not null)
             {
@@ -110,7 +187,9 @@ namespace Application.Users
             // Lọc các Author theo mục đích
             var dutyAuthors = authors.Where(a => dutyPurposeIds.Contains(a.PurposeId)).ToList();
             var overLimitAuthors = authors.Where(a => overLimitPurposeIds.Contains(a.PurposeId)).ToList();
-            var overLimitMarkedAuthors = overLimitAuthors.Where(a => a.MarkedForScoring).ToList();
+            var overLimitMarkedAuthors = overLimitAuthors
+                .Where(a => a.AuthorRegistration != null && a.AuthorRegistration.AcademicYearId != Guid.Empty)
+                .ToList();
             var researchAuthors = authors.Where(a => researchPurposeIds.Contains(a.PurposeId)).ToList();
 
             // Tính số lượng công trình (Work) duy nhất cho từng mục đích
@@ -172,10 +251,10 @@ namespace Application.Users
         public async Task<IEnumerable<UserSearchDto>> SearchUsersAsync(string searchTerm, CancellationToken cancellationToken = default)
         {
             var normalizedSearchTerm = searchTerm.ToLower();
-            
+
             var query = unitOfWork.Repository<User>()
                 .Include(u => u.Department)
-                .Where(u => 
+                .Where(u =>
                     u.FullName.ToLower().Contains(normalizedSearchTerm) ||
                     u.UserName.ToLower().Contains(normalizedSearchTerm));
 
