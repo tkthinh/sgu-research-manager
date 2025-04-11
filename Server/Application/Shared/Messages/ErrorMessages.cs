@@ -1,6 +1,4 @@
-using System;
-
-namespace Application.Works
+namespace Application.Shared.Messages
 {
     /// <summary>
     /// Lớp chứa các thông báo lỗi sử dụng trong WorkService

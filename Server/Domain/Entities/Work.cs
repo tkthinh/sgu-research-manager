@@ -19,8 +19,6 @@ namespace Domain.Entities
         public virtual ICollection<Author>? Authors { get; set; } = new List<Author>();
         public virtual ICollection<WorkAuthor>? WorkAuthors { get; set; } = new List<WorkAuthor>();
 
-        public DateOnly? ExchangeDeadline => TimePublished.HasValue
-                       ? TimePublished.Value.AddMonths(18)
-                       : null;
+        public DateOnly? ExchangeDeadline { get; set; }
     }
 }
