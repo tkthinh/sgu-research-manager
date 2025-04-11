@@ -1,5 +1,7 @@
 ﻿using Application.Departments;
 using Application.Shared.Response;
+using Application.Shared.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 
@@ -11,11 +13,16 @@ namespace WebApi.Controllers
    {
       private readonly IDepartmentService departmentService;
       private readonly ILogger<DepartmentsController> logger;
+      private readonly ICurrentUserService currentUserService;
 
-      public DepartmentsController(IDepartmentService departmentService, ILogger<DepartmentsController> logger)
+      public DepartmentsController(
+         IDepartmentService departmentService, 
+         ILogger<DepartmentsController> logger,
+         ICurrentUserService currentUserService)
       {
          this.departmentService = departmentService;
          this.logger = logger;
+         this.currentUserService = currentUserService;
       }
 
       [HttpGet]
@@ -27,6 +34,39 @@ namespace WebApi.Controllers
             "Lấy dữ liệu đơn vị công tác thành công",
             departments
          ));
+      }
+
+      [HttpGet("by-manager/{managerId}")]
+      [Authorize(Roles = "Manager")]
+      public async Task<ActionResult<ApiResponse<IEnumerable<DepartmentDto>>>> GetDepartmentsByManager([FromRoute] Guid managerId)
+      {
+         try
+         {
+            // Kiểm tra người dùng hiện tại
+            var (isSuccess, currentUserId, _) = currentUserService.GetCurrentUser();
+            if (!isSuccess)
+            {
+               return Unauthorized(new ApiResponse<object>(false, "Người dùng chưa đăng nhập"));
+            }
+
+            // Kiểm tra xem managerId có phải là người dùng hiện tại không
+            if (currentUserId != managerId)
+            {
+               return Forbid();
+            }
+
+            var departments = await departmentService.GetDepartmentsByManagerIdAsync(managerId);
+            return Ok(new ApiResponse<IEnumerable<DepartmentDto>>(
+               true,
+               "Lấy dữ liệu đơn vị công tác theo manager thành công",
+               departments
+            ));
+         }
+         catch (Exception ex)
+         {
+            logger.LogError(ex, "Error fetching departments by manager");
+            return BadRequest(new ApiResponse<object>(false, "Có lỗi đã xảy ra trong quá trình thực hiện"));
+         }
       }
 
       [HttpGet("{id}")]

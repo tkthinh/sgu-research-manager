@@ -33,5 +33,18 @@ namespace Application.Departments
             return mapper.MapToDto(department);
         }
 
+        public async Task<IEnumerable<DepartmentDto>> GetDepartmentsByManagerIdAsync(Guid managerId, CancellationToken cancellationToken = default)
+        {
+            var assignments = await unitOfWork.Repository<Assignment>().FindAsync(
+                predicate: a => a.UserId == managerId
+            );
+
+            var departmentIds = assignments.Select(a => a.DepartmentId).Distinct();
+            var departments = await unitOfWork.Repository<Department>().FindAsync(
+                predicate: d => departmentIds.Contains(d.Id)
+            );
+
+            return mapper.MapToDtos(departments);
+        }
     }
 }
