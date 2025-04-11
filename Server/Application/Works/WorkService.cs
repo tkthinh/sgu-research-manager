@@ -27,6 +27,7 @@ namespace Application.Works
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserRepository _userRepository;
         private readonly ILogger<WorkService> _logger;
+        private readonly ICurrentUserService _currentUserService;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -37,7 +38,8 @@ namespace Application.Works
             IWorkRepository workRepository,
             ISystemConfigService systemConfigService,
             IHttpContextAccessor httpContextAccessor,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            ICurrentUserService currentUserService)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
@@ -50,6 +52,7 @@ namespace Application.Works
             _httpContextAccessor = httpContextAccessor;
             _userRepository = userRepository;
             _logger = logger;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
@@ -114,10 +117,9 @@ namespace Application.Works
 
             await _unitOfWork.Repository<Work>().CreateAsync(work);
 
-            // Lấy UserId
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id")?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            // Lấy UserId từ service
+            var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+            if (!isSuccess)
             {
                 throw new Exception(ErrorMessages.UserIdNotDetermined);
             }
@@ -992,13 +994,9 @@ namespace Application.Works
             if (workDto is null)
                 return;
 
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id")?.Value;
-            Guid currentUserId = Guid.Empty;
-            if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
-            {
-                currentUserId = userId;
-            }
-
+            // Lấy userId từ service
+            var (isSuccess, currentUserId, _) = _currentUserService.GetCurrentUser();
+            
             _logger.LogInformation("FillCoAuthorUserIdsAsync - WorkDto {WorkId}: Start", workDto.Id);
 
             try {
@@ -1017,13 +1015,13 @@ namespace Application.Works
                 _logger.LogInformation("Authors UserIds: {AuthorIds}", string.Join(", ", authorUserIds));
                 _logger.LogInformation("WorkAuthors UserIds: {WorkAuthors}", string.Join(", ", coAuthorUserIds));
 
-                // Kết hợp tất cả UserId, loại bỏ currentUserId, và đảm bảo không có trùng lặp
-                var combinedUserIds = authorUserIds.Union(coAuthorUserIds)
-                    .Where(uid => uid != currentUserId)
-                    .Distinct()
-                    .ToList();
-                    
-                workDto.CoAuthorUserIds = combinedUserIds;
+                // Kết hợp tất cả UserId, loại bỏ currentUserId (nếu có), và đảm bảo không có trùng lặp
+                var combinedUserIds = authorUserIds.Union(coAuthorUserIds);
+                if (isSuccess)
+                {
+                    combinedUserIds = combinedUserIds.Where(uid => uid != currentUserId);
+                }
+                workDto.CoAuthorUserIds = combinedUserIds.Distinct().ToList();
                 
                 _logger.LogInformation("Final CoAuthorUserIds: {Count} users - {FinalIds}", 
                     workDto.CoAuthorUserIds.Count,
@@ -1041,13 +1039,8 @@ namespace Application.Works
             if (workDtos is null || !workDtos.Any())
                 return;
 
-            // Lấy userId của người đang đăng nhập
-            var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst("id")?.Value;
-            Guid currentUserId = Guid.Empty;
-            if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var userId))
-            {
-                currentUserId = userId;
-            }
+            // Lấy userId từ service
+            var (isSuccess, currentUserId, _) = _currentUserService.GetCurrentUser();
 
             // Lấy tất cả workIds
             var workIds = workDtos.Select(w => w.Id).Distinct().ToList();
@@ -1080,14 +1073,16 @@ namespace Application.Works
                     : new List<Guid>();
 
                 // Kết hợp, loại bỏ trùng lặp và loại bỏ userId của người dùng đang đăng nhập
-                workDto.CoAuthorUserIds = authorUserIds.Union(coAuthorUserIds)
-                    .Where(uid => uid != currentUserId)
-                    .Distinct()
-                    .ToList();
+                var combinedUserIds = authorUserIds.Union(coAuthorUserIds);
+                if (isSuccess)
+                {
+                    combinedUserIds = combinedUserIds.Where(uid => uid != currentUserId);
+                }
+                workDto.CoAuthorUserIds = combinedUserIds.Distinct().ToList();
             }
         }
 
-        public async Task<byte[]> ExportToExcelAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
+        public async Task<byte[]> ExportWorksByUserAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
         {
             // Thử tìm file template ở các vị trí khác nhau
             string[] possiblePaths = new[]

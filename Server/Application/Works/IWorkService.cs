@@ -23,7 +23,7 @@ namespace Application.Works
 
 
         Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default);
-        Task<byte[]> ExportToExcelAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default);
+        Task<byte[]> ExportWorksByUserAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default);
         Task ImportAsync(IFormFile file);
     }
 }
