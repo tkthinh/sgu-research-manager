@@ -40,6 +40,31 @@ namespace WebApi.Controllers
             }
         }
 
+        [HttpGet("check")]
+        public async Task<ActionResult<ApiResponse<SystemConfigDto>>> CheckSystemConfig()
+        {
+            try
+            {
+                var systemState = await systemConfigService.GetSystemState();
+
+                if (systemState == null)
+                {
+                    return Ok(new ApiResponse<object>(false, "Hệ thống đang đóng", null));
+                }
+
+                return Ok(new ApiResponse<SystemConfigDto>(
+                    true,
+                    "Hệ thống đang mở",
+                    systemState
+                ));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking system configuration");
+                return BadRequest(new ApiResponse<bool>(false, "Có lỗi xảy ra khi lấy trạng thái cấu hình hệ thống: " + ex.Message));
+            }
+        }
+
         [HttpGet("year/{academicYearId}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<SystemConfigDto>>>> GetSystemConfigsOfYear([FromRoute] Guid academicYearId)
         {

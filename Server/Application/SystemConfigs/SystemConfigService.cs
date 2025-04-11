@@ -79,6 +79,27 @@ namespace Application.SystemConfigs
             return mapper.MapToDtos(configs);
         }
 
+        public async Task<SystemConfigDto?> GetSystemState()
+        {
+            DateTime currentTime = DateTime.UtcNow;
+            var isOpen = await IsSystemOpenAsync(currentTime);
+
+            if (!isOpen)
+            {
+                return null;
+            }
+            else
+            {
+                var config = await unitOfWork.Repository<SystemConfig>()
+                    .Include(sc => sc.AcademicYear)
+                    .Where(sc => sc.OpenTime <= currentTime && sc.CloseTime >= currentTime
+                        && !sc.IsDeleted)
+                    .FirstOrDefaultAsync();
+
+                return mapper.MapToDto(config);
+            }
+        }
+
         public async Task<bool> IsSystemOpenAsync(DateTime time, CancellationToken cancellationToken = default)
         {
             var config = await unitOfWork.Repository<SystemConfig>()

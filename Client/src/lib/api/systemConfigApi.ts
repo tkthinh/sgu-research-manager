@@ -10,6 +10,13 @@ export const getSystemConfigs = async (): Promise<
   return response.data;
 };
 
+export const getSystemConfig = async (): Promise<ApiResponse<SystemConfig>> => {
+  const response = await apiClient.get<ApiResponse<SystemConfig>>(
+    "/systemConfigs/check",
+  );
+  return response.data;
+};
+
 export const getSystemConfigById = async (
   id: string,
 ): Promise<ApiResponse<SystemConfig>> => {

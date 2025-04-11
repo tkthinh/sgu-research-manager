@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getSystemConfig } from '../lib/api/systemConfigApi';
 import { SystemConfig } from '../lib/types/models/SystemConfig';
 import { ApiResponse } from '../lib/types/common/ApiResponse';
+import { DateTime } from "luxon";
 
 export function useSystemStatus() {
   const { data, isLoading } = useQuery<ApiResponse<SystemConfig>>({
@@ -9,40 +10,43 @@ export function useSystemStatus() {
     queryFn: getSystemConfig,
   });
 
+  const systemConfig = data?.data;
+
   const isSystemOpen = () => {
-    if (!data?.data) return false;
+    if (!systemConfig) return false;
+
+    // Use Luxon to create DateTime objects in the Asia/Saigon timezone
+    const now = DateTime.now().setZone("Asia/Saigon");
+    const openDateTime = DateTime.fromISO(systemConfig.openTime, { zone: "utc" }).setZone("Asia/Saigon");
+    const closeDateTime = DateTime.fromISO(systemConfig.closeTime, { zone: "utc" }).setZone("Asia/Saigon");
     
-    const now = new Date();
-    const start = new Date(data.data.startDate);
-    const end = new Date(data.data.endDate);
-    
-    return now >= start && now <= end && !data.data.isClosed;
+    return now >= openDateTime && now <= closeDateTime;
   };
 
   const canEditWork = (proofStatus?: number) => {
-    if (!data?.data) return false;
+    if (!systemConfig) return false;
     
-    const now = new Date();
-    const start = new Date(data.data.startDate);
-    const end = new Date(data.data.endDate);
-    
-    // Nếu tác giả đã được xác nhận hợp lệ (ProofStatus = 0), không cho phép sửa
+    const now = DateTime.now().setZone("Asia/Saigon");
+    const startDateTime = DateTime.fromISO(systemConfig.openTime, { zone: "utc" }).setZone("Asia/Saigon");
+    const endDateTime = DateTime.fromISO(systemConfig.closeTime, { zone: "utc" }).setZone("Asia/Saigon");
+
+    // If proofStatus is 0, editing is a no-go
     if (proofStatus === 0) {
       return false;
     }
     
-    // Nếu hệ thống đóng, chỉ cho phép sửa các công trình có trạng thái KhongHopLe
-    if (data.data.isClosed || now < start || now > end) {
-      return proofStatus === 1; // 1 là KhongHopLe
+    // If the system's closed or we're outside the allowed time, only allow editing if proofStatus is 1 (KhongHopLe)
+    if (now < startDateTime || now > endDateTime) {
+      return proofStatus === 1;
     }
     
     return true;
   };
 
   return {
-    systemConfig: data?.data,
+    systemConfig,
     isLoading,
     isSystemOpen: isSystemOpen(),
     canEditWork,
   };
-} 
+}
