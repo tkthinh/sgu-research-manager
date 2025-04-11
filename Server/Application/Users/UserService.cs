@@ -187,9 +187,10 @@ namespace Application.Users
             // Lọc các Author theo mục đích
             var dutyAuthors = authors.Where(a => dutyPurposeIds.Contains(a.PurposeId)).ToList();
             var overLimitAuthors = authors.Where(a => overLimitPurposeIds.Contains(a.PurposeId)).ToList();
-            var overLimitMarkedAuthors = overLimitAuthors
-                .Where(a => a.AuthorRegistration != null && a.AuthorRegistration.AcademicYearId != Guid.Empty)
-                .ToList();
+            //var overLimitMarkedAuthors = overLimitAuthors
+            //    .Where(a => a.AuthorRegistration != null && a.AuthorRegistration.AcademicYearId != Guid.Empty)
+            //    .ToList();
+            var overLimitMarkedAuthors = overLimitAuthors.Where(a => a.MarkedForScoring).ToList();
             var researchAuthors = authors.Where(a => researchPurposeIds.Contains(a.PurposeId)).ToList();
 
             // Tính số lượng công trình (Work) duy nhất cho từng mục đích

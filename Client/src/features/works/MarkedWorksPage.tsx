@@ -92,15 +92,56 @@ export default function MarkedWorksPage() {
 
   const columns: GridColDef[] = [
     {
-      field: "stt",
-      headerName: "STT",
-      width: 50,
+      field: "markedForScoring",
+      headerName: "Đánh dấu",
+      width: 100,
       renderCell: (params: any) => {
-        if (!params || !params.row) return null;
-        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex((id: any) => id === params.row.id);
-        return <div>{rowIndex + 1}</div>;
+        if (!params || !params.row) return <div>-</div>;
+        const author = params.row.authors && params.row.authors[0];
+        if (!author) return <div>-</div>;
+        
+        const isMarked = author.markedForScoring === true;
+        const authorId = author.id;
+        const isLoading = markingAuthorId === authorId;
+        
+        return (
+          <Tooltip 
+            title={isMarked 
+                ? "Bỏ đánh dấu công trình này" 
+                : "Đánh dấu công trình này để tính điểm"
+            }
+          >
+            <span>
+              {isLoading ? (
+                <CircularProgress size={24} />
+              ) : (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={isMarked}
+                      onChange={() => handleMarkForScoring(authorId, isMarked)}
+                      disabled={markForScoringMutation.isPending}
+                      color="primary"
+                    />
+                  }
+                  label=""
+                />
+              )}
+            </span>
+          </Tooltip>
+        );
       },
     },
+    // {
+    //   field: "stt",
+    //   headerName: "STT",
+    //   width: 50,
+    //   renderCell: (params: any) => {
+    //     if (!params || !params.row) return null;
+    //     const rowIndex = Array.from(params.api.getAllRowIds()).findIndex((id: any) => id === params.row.id);
+    //     return <div>{rowIndex + 1}</div>;
+    //   },
+    // },
     {
       field: "title",
       headerName: "Tên công trình",
@@ -174,47 +215,7 @@ export default function MarkedWorksPage() {
         return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
       },
     },
-    {
-      field: "markedForScoring",
-      headerName: "Đánh dấu",
-      width: 120,
-      renderCell: (params: any) => {
-        if (!params || !params.row) return <div>-</div>;
-        const author = params.row.authors && params.row.authors[0];
-        if (!author) return <div>-</div>;
-        
-        const isMarked = author.markedForScoring === true;
-        const authorId = author.id;
-        const isLoading = markingAuthorId === authorId;
-        
-        return (
-          <Tooltip 
-            title={isMarked 
-                ? "Bỏ đánh dấu công trình này" 
-                : "Đánh dấu công trình này để tính điểm"
-            }
-          >
-            <span>
-              {isLoading ? (
-                <CircularProgress size={24} />
-              ) : (
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={isMarked}
-                      onChange={() => handleMarkForScoring(authorId, isMarked)}
-                      disabled={markForScoringMutation.isPending}
-                      color="primary"
-                    />
-                  }
-                  label=""
-                />
-              )}
-            </span>
-          </Tooltip>
-        );
-      },
-    },
+    
   ];
 
   // Chỉ lấy các công trình mà người dùng là tác giả (có thông tin author)

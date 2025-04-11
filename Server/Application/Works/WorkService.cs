@@ -148,7 +148,7 @@ namespace Application.Works
             var authorHour = await CalculateAuthorHour(workHour, request.TotalAuthors ?? 0,
                 request.TotalMainAuthors ?? 0, request.Author.AuthorRoleId);
             author.AuthorHour = authorHour;
-            //author.MarkedForScoring = false;
+            author.MarkedForScoring = false;
 
             // Loại bỏ userId của tác giả chính khỏi request.CoAuthorUserIds để tránh trùng lặp
             var coAuthorUserIds = request.CoAuthorUserIds
@@ -1144,13 +1144,13 @@ namespace Application.Works
             string[] possiblePaths = new[]
             {
                 // Đường dẫn từ thư mục bin của WebApi
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "KeKhaiTemplate.xlsx"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "ExportByUserTemplate.xlsx"),
                 
                 // Đường dẫn từ thư mục gốc của Server project
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "KeKhaiTemplate.xlsx")),
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "ExportByUserTemplate.xlsx")),
                 
                 // Đường dẫn từ thư mục gốc của solution
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "KeKhaiTemplate.xlsx"))
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "ExportByUserTemplate.xlsx"))
             };
 
             string? templatePath = null;
