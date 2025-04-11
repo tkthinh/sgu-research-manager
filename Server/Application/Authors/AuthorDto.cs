@@ -6,6 +6,7 @@ namespace Application.Authors
     {
         public Guid Id { get; set; }
         public Guid WorkId { get; set; }
+        public string? WorkTitle { get; set; }
         public Guid UserId { get; set; }
         public Guid? AuthorRoleId { get; set; }
         public string? AuthorRoleName { get; set; }
@@ -20,11 +21,8 @@ namespace Application.Authors
         public ScoreLevel? ScoreLevel { get; set; }
         public decimal AuthorHour { get; set; }
         public int WorkHour { get; set; }
-        public bool MarkedForScoring { get; set; }
+        //public bool MarkedForScoring { get; set; }
         public ProofStatus ProofStatus { get; set; }
         public string? Note { get; set; }
-
-        public DateTime CreatedDate { get; set; }
-        public DateTime? ModifiedDate { get; set; }
     }
 }

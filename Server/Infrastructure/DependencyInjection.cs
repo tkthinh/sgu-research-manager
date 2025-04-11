@@ -30,6 +30,7 @@ using Application.ScoreLevels;
 using Infrastructure.Identity.Services;
 using Application.Auth;
 using Application.AcademicYears;
+using Application.AuthorRegistrations;
 
 namespace Infrastructure
 {
@@ -111,6 +112,7 @@ namespace Infrastructure
             services.AddScoped<IScoreLevelService, ScoreLevelService>();
             services.AddScoped<IAcademicYearService, AcademicYearService>();
             services.AddScoped<ISystemConfigService, SystemConfigService>();
+            services.AddScoped<IAuthorRegistrationService, AuthorRegistrationService>();
 
             services.AddScoped<ICacheManagementService, CacheManagementService>();
             services.AddSingleton(ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
@@ -133,7 +135,7 @@ namespace Infrastructure
             services.AddScoped<IGenericMapper<SCImagoFieldDto, SCImagoField>, SCImagoFieldMapper>();
             services.AddScoped<IGenericMapper<SystemConfigDto, SystemConfig>, SystemConfigMapper>();
             services.AddScoped<IGenericMapper<AcademicYearDto, AcademicYear>, AcademicYearMapper>();
-
+            services.AddScoped<IGenericMapper<AuthorRegistrationDto, AuthorRegistration>, AuthorRegistrationMapper>();
 
 
             // Đăng ký custom repository (nếu có)
