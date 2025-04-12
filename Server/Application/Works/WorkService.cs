@@ -88,7 +88,9 @@ namespace Application.Works
                 throw new Exception(ErrorMessages.SystemClosedNewWork);
 
             var existingWork = await _unitOfWork.Repository<Work>()
-                .FirstOrDefaultAsync(w => w.Title == request.Title, cancellationToken);
+                .FirstOrDefaultAsync(w => w.Title == request.Title && 
+                    w.WorkTypeId == request.WorkTypeId && 
+                    w.WorkLevelId == request.WorkLevelId, cancellationToken);
             if (existingWork != null)
                 throw new Exception(ErrorMessages.WorkAlreadyExists);
 
