@@ -876,44 +876,58 @@ namespace Application.Works
                 .Where(w => w != null)
                 .ToList();
 
-            // Lọc các công trình theo yêu cầu:
-            // 1. Công trình đã kê khai ở đợt hiện tại
-            // 2. Công trình thuộc các đợt trước có markedForScoring = false
             var filteredWorksByRegistration = new List<WorkDto>();
             foreach (var work in filteredWorks)
             {
                 var author = work.Authors?.FirstOrDefault();
-                if (author == null) 
+
+                // 2. Nếu user là đồng tác giả (không phải tác giả chính), thêm vào danh sách
+                if (author == null && workAuthorWorkIds.Contains(work.Id))
                 {
-                    // Nếu user là đồng tác giả (không phải tác giả chính), thêm vào danh sách
-                    if (workAuthorWorkIds.Contains(work.Id))
-                    {
-                        filteredWorksByRegistration.Add(work);
-                    }
+                    filteredWorksByRegistration.Add(work);
                     continue;
                 }
+
+                // Bỏ qua nếu không phải tác giả chính
+                if (author == null) continue;
 
                 // Kiểm tra xem công trình có thuộc đợt hiện tại không
                 var workDate = DateOnly.FromDateTime(work.CreatedDate);
                 var isCurrentPeriod = workDate >= currentAcademicYear.StartDate && workDate <= currentAcademicYear.EndDate;
 
+                // 1. Nếu là công trình của đợt hiện tại, thêm vào danh sách
                 if (isCurrentPeriod)
                 {
-                    // Nếu là công trình của đợt hiện tại, thêm vào danh sách
                     filteredWorksByRegistration.Add(work);
+                    continue;
                 }
-                else
-                {
-                    // Nếu là công trình của đợt trước, kiểm tra markedForScoring
-                    var authorEntity = await _unitOfWork.Repository<Author>()
-                        .FirstOrDefaultAsync(a => a.Id == author.Id);
 
-                    if (authorEntity != null && !authorEntity.MarkedForScoring)
+                // 3. Xử lý công trình của các đợt trước
+                var authorEntity = await _unitOfWork.Repository<Author>()
+                    .FirstOrDefaultAsync(a => a.Id == author.Id);
+
+                if (authorEntity == null) continue;
+
+                // Nếu đã đánh dấu quy đổi thì bỏ qua
+                if (authorEntity.MarkedForScoring) continue;
+
+                // Kiểm tra thời hạn quy đổi
+                if (work.TimePublished.HasValue)
+                {
+                    var exchangeDeadline = work.TimePublished.Value.AddMonths(18);
+                    
+                    // Nếu quá hạn, cập nhật WorkHour = 0
+                    if (currentDate > exchangeDeadline)
                     {
-                        // Nếu chưa đánh dấu, thêm vào danh sách
-                        filteredWorksByRegistration.Add(work);
+                        authorEntity.WorkHour = 0;
+                        authorEntity.AuthorHour = 0;
+                        await _unitOfWork.Repository<Author>().UpdateAsync(authorEntity);
+                        await _unitOfWork.SaveChangesAsync(cancellationToken);
                     }
                 }
+
+                // Thêm vào danh sách vì chưa đánh dấu quy đổi
+                filteredWorksByRegistration.Add(work);
             }
 
             await FillCoAuthorUserIdsForMultipleWorksAsync(filteredWorksByRegistration, cancellationToken);
