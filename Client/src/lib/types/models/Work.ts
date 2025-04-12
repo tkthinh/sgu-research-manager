@@ -9,6 +9,7 @@ export interface Work {
   totalMainAuthors?: number;
   details?: Record<string, string>;
   source: WorkSource;
+  isLocked: boolean;
   workTypeId: string;
   workLevelId?: string;
   workTypeName?: string;

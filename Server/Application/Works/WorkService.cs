@@ -104,7 +104,8 @@ namespace Application.Works
                 WorkTypeId = request.WorkTypeId,
                 WorkLevelId = request.WorkLevelId,
                 ExchangeDeadline = request.TimePublished.HasValue ? request.TimePublished.Value.AddMonths(18) : null,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.UtcNow,
+                IsLocked = false // Công trình mới luôn có IsLocked = false
             };
 
             var factor = await FindFactorAsync(
@@ -345,7 +346,7 @@ namespace Application.Works
             // Cập nhật thông tin công trình (Work) nếu có WorkRequest
             if (request.WorkRequest is not null)
             {
-                UpdateWorkDetailsByAdmin(work, request.WorkRequest);
+                await UpdateWorkDetailsByAdmin(work, request.WorkRequest);
             }
 
             // Cập nhật thông tin tác giả (Author) nếu có AuthorRequest
@@ -365,8 +366,12 @@ namespace Application.Works
             return _mapper.MapToDto(work);
         }
 
-        private void UpdateWorkDetailsByAdmin(Work work, UpdateWorkRequestDto workRequest)
+        private async Task UpdateWorkDetailsByAdmin(Work work, UpdateWorkRequestDto workRequest)
         {
+            // Cập nhật isLocked dựa trên trạng thái của các tác giả
+            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == work.Id);
+            work.IsLocked = authors.Any(a => a.ProofStatus == ProofStatus.HopLe);
+
             work.Title = workRequest.Title ?? work.Title;
             work.TimePublished = workRequest.TimePublished ?? work.TimePublished;
             work.TotalAuthors = workRequest.TotalAuthors ?? work.TotalAuthors;
@@ -492,7 +497,7 @@ namespace Application.Works
 
             if (request.WorkRequest is not null)
             {
-                UpdateWorkDetailsByAuthor(work, request.WorkRequest);
+                await UpdateWorkDetailsByAuthor(work, request.WorkRequest);
 
                 // Luôn gọi UpdateCoAuthorsAsync để cập nhật đúng danh sách đồng tác giả
                 // Ngay cả khi danh sách rỗng, việc này cũng đảm bảo xóa các đồng tác giả cũ nếu người dùng muốn
@@ -602,8 +607,12 @@ namespace Application.Works
             }
         }
 
-        private void UpdateWorkDetailsByAuthor(Work work, UpdateWorkRequestDto workRequest)
+        private async Task UpdateWorkDetailsByAuthor(Work work, UpdateWorkRequestDto workRequest)
         {
+            // Cập nhật isLocked dựa trên trạng thái của các tác giả
+            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == work.Id);
+            work.IsLocked = authors.Any(a => a.ProofStatus == ProofStatus.HopLe);
+
             work.Title = workRequest.Title ?? work.Title;
             work.TimePublished = workRequest.TimePublished ?? work.TimePublished;
             work.TotalAuthors = workRequest.TotalAuthors ?? work.TotalAuthors;
@@ -874,7 +883,15 @@ namespace Application.Works
             foreach (var work in filteredWorks)
             {
                 var author = work.Authors?.FirstOrDefault();
-                if (author == null) continue;
+                if (author == null) 
+                {
+                    // Nếu user là đồng tác giả (không phải tác giả chính), thêm vào danh sách
+                    if (workAuthorWorkIds.Contains(work.Id))
+                    {
+                        filteredWorksByRegistration.Add(work);
+                    }
+                    continue;
+                }
 
                 // Kiểm tra xem công trình có thuộc đợt hiện tại không
                 var workDate = DateOnly.FromDateTime(work.CreatedDate);

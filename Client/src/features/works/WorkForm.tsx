@@ -541,101 +541,105 @@ export default function WorkForm({
                     fullWidth
                     error={!!errors.title}
                     helperText={errors.title?.message?.toString()}
+                    disabled={initialData?.isLocked}
                   />
                 )}
               />
             </Grid>
 
             <Grid item xs={6}>
-                <Controller
-                  name="timePublished"
-                  control={control}
-                  render={({ field }) => (
-                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={vi}>
-                    <DatePicker
-                      label="Thời gian xuất bản"
-                      value={field.value ? new Date(field.value) : null}
-                      onChange={(date) => field.onChange(date)}
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          error: !!errors.timePublished,
-                          helperText: errors.timePublished?.message?.toString(),
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                  )}
-                />
-            </Grid>
-
-            <Grid item xs={6}>
-                <Controller
-                  name="workTypeId"
-                  control={control}
-                  render={({ field }) => (
-                  <TextField
-                    {...field}
-                    select
-                      label="Loại công trình"
-                    fullWidth
-                    error={!!errors.workTypeId}
-                    helperText={errors.workTypeId?.message?.toString()}
-                    >
-                    {workTypes.map((type) => (
-                        <MenuItem key={type.id} value={type.id}>
-                          {type.name}
-                        </MenuItem>
-                      ))}
-                  </TextField>
-                  )}
-                />
-            </Grid>
-
-            <Grid item xs={6}>
-                <Controller
-                  name="workLevelId"
-                  control={control}
-                  render={({ field }) => (
-                  <TextField
-                    {...field}
-                    select
-                    label="Cấp công trình"
-                    fullWidth
-                    error={!!errors.workLevelId}
-                    helperText={errors.workLevelId?.message?.toString()}
-                    disabled={!workTypeId || !hasWorkLevels}
-                  >
-                    {workLevelsData?.data?.map((level) => (
-                      <MenuItem key={level.id} value={level.id}>
-                        {level.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              />
-            </Grid>
-
-            <Grid item xs={6}>
-                <Controller
-                name="totalAuthors"
-                  control={control}
-                  render={({ field: { value, onChange, onBlur, ...field } }) => (
-                  <TextField
-                    {...field}
-                    label="Tổng số tác giả"
-                    type="number"
-                    inputProps={{ min: 1, step: 1 }}
-                    fullWidth
-                    error={!!errors.totalAuthors}
-                    helperText={errors.totalAuthors?.message?.toString()}
-                    value={value === null ? "" : value}
-                    onChange={(e) => {
-                      const inputValue = e.target.value;
-                      onChange(inputValue === "" ? null : Number(inputValue));
+              <Controller
+                name="timePublished"
+                control={control}
+                render={({ field }) => (
+                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={vi}>
+                  <DatePicker
+                    label="Thời gian xuất bản"
+                    value={field.value ? new Date(field.value) : null}
+                    onChange={(date) => field.onChange(date)}
+                    disabled={initialData?.isLocked}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        error: !!errors.timePublished,
+                        helperText: errors.timePublished?.message?.toString(),
+                      },
                     }}
-                    onBlur={onBlur}
                   />
+                </LocalizationProvider>
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={6}>
+              <Controller
+                name="workTypeId"
+                control={control}
+                render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Loại công trình"
+                  fullWidth
+                  error={!!errors.workTypeId}
+                  helperText={errors.workTypeId?.message?.toString()}
+                  disabled={initialData?.isLocked}
+                >
+                  {workTypes.map((type) => (
+                    <MenuItem key={type.id} value={type.id}>
+                      {type.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={6}>
+              <Controller
+                name="workLevelId"
+                control={control}
+                render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Cấp công trình"
+                  fullWidth
+                  error={!!errors.workLevelId}
+                  helperText={errors.workLevelId?.message?.toString()}
+                  disabled={!workTypeId || !hasWorkLevels || initialData?.isLocked}
+                >
+                  {workLevelsData?.data?.map((level) => (
+                    <MenuItem key={level.id} value={level.id}>
+                      {level.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={6}>
+              <Controller
+                name="totalAuthors"
+                control={control}
+                render={({ field: { value, onChange, onBlur, ...field } }) => (
+                <TextField
+                  {...field}
+                  label="Tổng số tác giả"
+                  type="number"
+                  inputProps={{ min: 1, step: 1 }}
+                  fullWidth
+                  error={!!errors.totalAuthors}
+                  helperText={errors.totalAuthors?.message?.toString()}
+                  value={value === null ? "" : value}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    onChange(inputValue === "" ? null : Number(inputValue));
+                  }}
+                  onBlur={onBlur}
+                  disabled={initialData?.isLocked}
+                />
                 )}
               />
             </Grid>
@@ -645,75 +649,77 @@ export default function WorkForm({
                 name="totalMainAuthors"
                 control={control}
                 render={({ field: { value, onChange, onBlur, ...field } }) => (
-                  <TextField
-                    {...field}
-                    label="Số tác giả chính"
-                    type="number"
-                    inputProps={{ min: 1, step: 1 }}
-                    fullWidth
-                    error={!!errors.totalMainAuthors}
-                    helperText={errors.totalMainAuthors?.message?.toString()}
-                    value={value === null ? "" : value}
-                    onChange={(e) => {
-                      const inputValue = e.target.value;
-                      onChange(inputValue === "" ? null : Number(inputValue));
-                    }}
-                    onBlur={onBlur}
-                  />
+                <TextField
+                  {...field}
+                  label="Số tác giả chính"
+                  type="number"
+                  inputProps={{ min: 1, step: 1 }}
+                  fullWidth
+                  error={!!errors.totalMainAuthors}
+                  helperText={errors.totalMainAuthors?.message?.toString()}
+                  value={value === null ? "" : value}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    onChange(inputValue === "" ? null : Number(inputValue));
+                  }}
+                  onBlur={onBlur}
+                  disabled={initialData?.isLocked}
+                />
                 )}
               />
             </Grid>
-            
+
             <Grid item xs={12}>
               <Controller
                 name="coAuthorUserIds"
                 control={control}
                 render={({ field }) => (
-                  <Autocomplete
-                    multiple
-                    id="coAuthorUserIds"
-                    options={filteredUsers}
-                    getOptionLabel={(option) => {
-                      if (typeof option === 'string') return option;
-                      return `${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ''}`;
-                    }}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    value={selectedCoAuthors}
-                    onChange={handleCoAuthorChange}
-                    loading={isLoadingUsers || isLoadingCoAuthors}
-                    renderTags={(value, getTagProps) =>
-                      value.map((option, index) => {
-                        const props = getTagProps({ index });
-                        return (
-                          <Chip
-                            {...props}
-                            label={`${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ''}`}
-                            size="medium"
-                          />
-                        );
-                      })
-                    }
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Đồng tác giả"
-                        variant="outlined"
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Tìm kiếm đồng tác giả"
-                        error={!!errors.coAuthorUserIds}
-                        helperText={errors.coAuthorUserIds?.message || "Thêm các đồng tác giả (không bao gồm bạn)"}
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {(isLoadingUsers || isLoadingCoAuthors) ? <CircularProgress color="inherit" size={20} /> : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                  />
+                <Autocomplete
+                  multiple
+                  id="coAuthorUserIds"
+                  options={filteredUsers}
+                  getOptionLabel={(option) => {
+                    if (typeof option === 'string') return option;
+                    return `${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ''}`;
+                  }}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  value={selectedCoAuthors}
+                  onChange={handleCoAuthorChange}
+                  loading={isLoadingUsers || isLoadingCoAuthors}
+                  disabled={initialData?.isLocked}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => {
+                      const props = getTagProps({ index });
+                      return (
+                        <Chip
+                          {...props}
+                          label={`${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ''}`}
+                          size="medium"
+                        />
+                      );
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Đồng tác giả"
+                      variant="outlined"
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Tìm kiếm đồng tác giả"
+                      error={!!errors.coAuthorUserIds}
+                      helperText={errors.coAuthorUserIds?.message || "Thêm các đồng tác giả (không bao gồm bạn)"}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {(isLoadingUsers || isLoadingCoAuthors) ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
                 )}
               />
             </Grid>
@@ -734,6 +740,7 @@ export default function WorkForm({
                         helperText={field.required && (!detailsFields[field.key] || detailsFields[field.key].trim() === "") 
                           ? "Trường này là bắt buộc" 
                           : ""}
+                        disabled={initialData?.isLocked}
                       />
                     </Grid>
                   ))}
@@ -747,12 +754,12 @@ export default function WorkForm({
           // Tab thông tin tác giả
           <>
             <Grid item xs={6}>
-                <Controller
+              <Controller
                 name="author.authorRoleId"
-                  control={control}
-                  render={({ field: { value, onChange, ...restField } }) => (
+                control={control}
+                render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...restField}
+                    {...restField}
                     select
                     label="Vai trò tác giả"
                     fullWidth
@@ -777,12 +784,12 @@ export default function WorkForm({
             </Grid>
 
             <Grid item xs={6}>
-                <Controller
+              <Controller
                 name="author.purposeId"
-                  control={control}
-                  render={({ field }) => (
+                control={control}
+                render={({ field }) => (
                   <TextField
-                      {...field}
+                    {...field}
                     select
                     label="Mục đích quy đổi"
                     fullWidth
@@ -793,20 +800,20 @@ export default function WorkForm({
                     {purposesData?.data?.map((purpose) => (
                       <MenuItem key={purpose.id} value={purpose.id}>
                         {purpose.name}
-                        </MenuItem>
-                      ))}
+                      </MenuItem>
+                    ))}
                   </TextField>
-                  )}
-                />
+                )}
+              />
             </Grid>
 
             <Grid item xs={6}>
-                <Controller
+              <Controller
                 name="author.position"
-                  control={control}
-                  render={({ field: { value, onChange, ...restField } }) => (
+                control={control}
+                render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...restField}
+                    {...restField}
                     label="Vị trí tác giả"
                     type="number"
                     fullWidth
@@ -823,12 +830,12 @@ export default function WorkForm({
             </Grid>
 
             <Grid item xs={6}>
-                <Controller
+              <Controller
                 name="author.scoreLevel"
-                  control={control}
-                  render={({ field: { value, onChange, ...restField } }) => (
+                control={control}
+                render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...restField}
+                    {...restField}
                     select
                     label="Mức điểm"
                     fullWidth
@@ -858,7 +865,7 @@ export default function WorkForm({
                 control={control}
                 render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...restField}
+                    {...restField}
                     select
                     label="Ngành SCImago"
                     fullWidth
@@ -883,12 +890,12 @@ export default function WorkForm({
             </Grid>
 
             <Grid item xs={6}>
-                <Controller
+              <Controller
                 name="author.fieldId"
-                  control={control}
-                  render={({ field: { value, onChange, ...restField } }) => (
+                control={control}
+                render={({ field: { value, onChange, ...restField } }) => (
                   <TextField
-                      {...restField}
+                    {...restField}
                     select
                     label="Ngành tính điểm"
                     fullWidth

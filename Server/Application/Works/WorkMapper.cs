@@ -24,6 +24,7 @@ namespace Application.Works
                 TotalMainAuthors = entity.TotalMainAuthors,
                 Details = entity.Details,
                 Source = entity.Source,
+                IsLocked = entity.IsLocked,
                 WorkTypeId = entity.WorkTypeId,
                 WorkTypeName = entity.WorkType?.Name,
                 WorkLevelId = entity.WorkLevelId,

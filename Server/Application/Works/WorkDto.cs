@@ -12,6 +12,7 @@ namespace Application.Works
         public int? TotalMainAuthors { get; set; }
         public Dictionary<string, string>? Details { get; set; }
         public WorkSource Source { get; set; }
+        public bool IsLocked { get; set; }
 
         public Guid WorkTypeId { get; set; }
         public string? WorkTypeName { get; set; }
