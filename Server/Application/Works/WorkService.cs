@@ -1025,7 +1025,7 @@ namespace Application.Works
             const double REGULAR_RATIO = 2.0 / 3;
             
             // Kiểm tra các điều kiện không hợp lệ
-            if (workHour <= 0 || totalAuthors <= 0 || totalMainAuthors <= 0 || totalMainAuthors > totalAuthors || authorRoleId == null)
+            if (workHour <= 0 || authorRoleId == null)
             {
                 return 0;
             }
@@ -1035,6 +1035,22 @@ namespace Application.Works
             if (authorRole is null)
             {
                 throw new Exception(ErrorMessages.AuthorRoleNotFound);
+            }
+
+            // Lấy thông tin công trình để kiểm tra loại
+            var work = await _unitOfWork.Repository<Work>()
+                .FirstOrDefaultAsync(w => w.Authors.Any(a => a.AuthorRoleId == authorRoleId));
+            
+            // Nếu là công trình hội thảo, hội nghị thì trả về workHour
+            if (work?.WorkTypeId == Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa"))
+            {
+                return workHour;
+            }
+
+            // Kiểm tra các điều kiện không hợp lệ cho các loại công trình khác
+            if (totalAuthors <= 0 || totalMainAuthors <= 0 || totalMainAuthors > totalAuthors)
+            {
+                return 0;
             }
 
             decimal authorHour;
