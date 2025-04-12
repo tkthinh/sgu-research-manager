@@ -156,9 +156,11 @@ namespace Application.Users
                 .Select(p => p.Id)
                 .ToList();
 
-            // Lấy danh sách Author của user với ProofStatus = HopLe
+            // Lấy danh sách Author của user với ProofStatus = HopLe và MarkedForScoring = true
             var authors = await unitOfWork.Repository<Author>()
-                .FindAsync(a => a.UserId == userId && a.ProofStatus == ProofStatus.HopLe);
+                .FindAsync(a => a.UserId == userId && 
+                    a.ProofStatus == ProofStatus.HopLe && 
+                    a.MarkedForScoring == true);
 
             if (authors == null || !authors.Any())
             {
