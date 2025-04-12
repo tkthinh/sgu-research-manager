@@ -1353,11 +1353,37 @@ namespace Application.Works
                 // Bắt đầu điền dữ liệu tổng hợp từ dòng tiếp theo
                 summaryStartRow++;
 
+                // Danh sách các loại công trình
+                var workTypes = new[] { 
+                    "Bài báo khoa học", 
+                    "Báo cáo khoa học", 
+                    "Đề tài", 
+                    "Giáo trình", 
+                    "Sách", 
+                    "Hội thảo, hội nghị", 
+                    "Hướng dẫn SV NCKH", 
+                    "Khác" 
+                };
+
+                // Danh sách các loại công trình thuộc nhóm "Sách"
+                var bookWorkTypeNames = new[] {
+                    "Chương sách",
+                    "Chuyên khảo",
+                    "Tham khảo",
+                    "Giáo trình - Sách",
+                    "Tài liệu hướng dẫn"
+                };
+
+                // Tính số lượng công trình theo loại
                 var workTypeCounts = exportData
-                    .GroupBy(w => w.WorkTypeName ?? "Khác")
+                    .GroupBy(w => {
+                        // Nếu là một trong các loại sách, gộp chung vào "Sách"
+                        if (bookWorkTypeNames.Contains(w.WorkTypeName))
+                            return "Sách";
+                        return w.WorkTypeName;
+                    })
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                var workTypes = new[] { "Bài báo khoa học", "Báo cáo khoa học", "Đề tài", "Giáo trình", "Sách", "Hội thảo, hội nghị", "Hướng dẫn SV NCKH", "Khác" };
                 for (int i = 0; i < workTypes.Length; i++)
                 {
                     worksheet.Cells[summaryStartRow + i, 1].Value = i + 1;
