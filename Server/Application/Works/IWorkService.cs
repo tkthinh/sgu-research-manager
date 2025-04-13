@@ -18,6 +18,12 @@ namespace Application.Works
         Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> GetAllWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
 
+        // Thêm các phương thức mới để lọc công trình
+        Task<IEnumerable<WorkDto>> GetWorksBySystemConfigIdAsync(Guid systemConfigId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<WorkDto>> GetWorksByAcademicYearIdAsync(Guid academicYearId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<WorkDto>> GetCurrentUserWorksBySystemConfigIdAsync(Guid userId, Guid systemConfigId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<WorkDto>> GetCurrentUserWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default);
+
 
         Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default);
 

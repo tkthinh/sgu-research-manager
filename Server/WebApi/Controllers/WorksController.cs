@@ -460,5 +460,95 @@ namespace WebApi.Controllers
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
+
+        [HttpGet("system-config/{systemConfigId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorksBySystemConfigId([FromRoute] Guid systemConfigId)
+        {
+            try
+            {
+                var works = await _workService.GetWorksBySystemConfigIdAsync(systemConfigId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình theo đợt kê khai thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo đợt kê khai");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("academic-year/{academicYearId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorksByAcademicYearId([FromRoute] Guid academicYearId)
+        {
+            try
+            {
+                var works = await _workService.GetWorksByAcademicYearIdAsync(academicYearId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình theo năm học thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo năm học");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("my-works/system-config/{systemConfigId}")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetCurrentUserWorksBySystemConfigId([FromRoute] Guid systemConfigId)
+        {
+            try
+            {
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+                if (!isSuccess)
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                var works = await _workService.GetCurrentUserWorksBySystemConfigIdAsync(userId, systemConfigId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình của người dùng theo đợt kê khai thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình của người dùng theo đợt kê khai");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("my-works/academic-year/{academicYearId}")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetCurrentUserWorksByAcademicYearId([FromRoute] Guid academicYearId)
+        {
+            try
+            {
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+                if (!isSuccess)
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                var works = await _workService.GetCurrentUserWorksByAcademicYearIdAsync(userId, academicYearId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình của người dùng theo năm học thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình của người dùng theo năm học");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
     }
 }
