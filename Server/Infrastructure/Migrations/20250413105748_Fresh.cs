@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class FreshMigration : Migration
+    public partial class Fresh : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -300,6 +300,7 @@ namespace Infrastructure.Migrations
                     IsLocked = table.Column<bool>(type: "bit", nullable: false),
                     WorkTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     WorkLevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    SystemConfigId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ExchangeDeadline = table.Column<DateOnly>(type: "date", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -307,6 +308,12 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Works", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Works_SystemConfigs_SystemConfigId",
+                        column: x => x.SystemConfigId,
+                        principalTable: "SystemConfigs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Works_WorkLevels_WorkLevelId",
                         column: x => x.WorkLevelId,
@@ -1052,6 +1059,11 @@ namespace Infrastructure.Migrations
                 column: "WorkTypeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Works_SystemConfigId",
+                table: "Works",
+                column: "SystemConfigId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Works_WorkLevelId",
                 table: "Works",
                 column: "WorkLevelId");
@@ -1075,13 +1087,7 @@ namespace Infrastructure.Migrations
                 name: "Factors");
 
             migrationBuilder.DropTable(
-                name: "SystemConfigs");
-
-            migrationBuilder.DropTable(
                 name: "WorkAuthors");
-
-            migrationBuilder.DropTable(
-                name: "AcademicYears");
 
             migrationBuilder.DropTable(
                 name: "Authors");
@@ -1108,7 +1114,13 @@ namespace Infrastructure.Migrations
                 name: "Fields");
 
             migrationBuilder.DropTable(
+                name: "SystemConfigs");
+
+            migrationBuilder.DropTable(
                 name: "WorkLevels");
+
+            migrationBuilder.DropTable(
+                name: "AcademicYears");
 
             migrationBuilder.DropTable(
                 name: "WorkTypes");

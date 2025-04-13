@@ -222,6 +222,27 @@ namespace Infrastructure.Data
             builder.Entity<SystemConfig>()
                 .HasQueryFilter(sc => !sc.IsDeleted);
 
+            builder.Entity<Work>()
+                .HasOne(w => w.SystemConfig)
+                .WithMany()
+                .HasForeignKey(w => w.SystemConfigId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Work>()
+                .HasQueryFilter(w => !w.SystemConfig.IsDeleted);
+
+            // Thêm filter cho Author khớp với filter của Work
+            builder.Entity<Author>()
+                .HasQueryFilter(a => !a.Work.SystemConfig.IsDeleted);
+                
+            // Thêm filter cho WorkAuthor khớp với filter của Work
+            builder.Entity<WorkAuthor>()
+                .HasQueryFilter(wa => !wa.Work.SystemConfig.IsDeleted);
+
+            // Thêm filter cho AuthorRegistration khớp với filter của Author
+            builder.Entity<AuthorRegistration>()
+                .HasQueryFilter(ar => !ar.Author.Work.SystemConfig.IsDeleted);
+
             // AuthorRegistration
             builder.Entity<AuthorRegistration>()
                .HasIndex(er => new { er.AcademicYearId, er.AuthorId })

@@ -9,6 +9,7 @@ using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Enums;
 using Application.Shared.Services;
+using Application.SystemConfigs;
 
 namespace WebApi.Controllers
 {
@@ -21,19 +22,22 @@ namespace WebApi.Controllers
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ISystemConfigService _systemConfigService;
 
         public WorksController(
             IWorkService workService, 
             ILogger<WorksController> logger, 
             IHubContext<NotificationHub> hubContext, 
             IUnitOfWork unitOfWork,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            ISystemConfigService systemConfigService)
         {
             _workService = workService;
             _logger = logger;
             _hubContext = hubContext;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
+            _systemConfigService = systemConfigService;
         }
 
         [HttpGet]
@@ -79,6 +83,16 @@ namespace WebApi.Controllers
         {
             try
             {
+                // Lấy thông tin SystemConfig hiện tại
+                var currentSystemConfig = await _systemConfigService.GetCurrentActiveSystemConfig();
+                if (currentSystemConfig == null)
+                {
+                    return BadRequest(new ApiResponse<object>(false, "Không có đợt kê khai nào đang mở. Vui lòng thử lại sau."));
+                }
+
+                // Gán SystemConfigId cho công trình
+                request.SystemConfigId = currentSystemConfig.Id;
+
                 var work = await _workService.CreateWorkWithAuthorAsync(request);
                 return CreatedAtAction(nameof(GetWork), new { id = work.Id },
                     new ApiResponse<WorkDto>(true, "Tạo công trình và tác giả thành công", work));
@@ -235,6 +249,17 @@ namespace WebApi.Controllers
                 if (work == null)
                     return NotFound(new ApiResponse<WorkDto>(false, "Công trình không tồn tại"));
 
+                // Admin có thể thay đổi đợt kê khai của công trình nếu cần
+                if (request.WorkRequest?.SystemConfigId.HasValue == true)
+                {
+                    // Kiểm tra xem SystemConfig có tồn tại không
+                    var systemConfig = await _systemConfigService.GetByIdAsync(request.WorkRequest.SystemConfigId.Value);
+                    if (systemConfig == null)
+                    {
+                        return BadRequest(new ApiResponse<object>(false, "Đợt kê khai không tồn tại"));
+                    }
+                }
+
                 var updatedWork = await _workService.UpdateWorkByAdminAsync(workId, userId, request);
 
                 if (updatedWork.Authors != null && updatedWork.Authors.Any())
@@ -323,6 +348,12 @@ namespace WebApi.Controllers
                     
                     // Log thông báo
                     _logger.LogInformation("Công trình {WorkId} đã có tác giả được xác nhận hợp lệ. Tác giả {UserId} chỉ có thể cập nhật thông tin tác giả", workId, userId);
+                }
+
+                // Đảm bảo người dùng không thể thay đổi SystemConfigId
+                if (updatedRequest.WorkRequest != null)
+                {
+                    updatedRequest.WorkRequest.SystemConfigId = null; // Không cho phép người dùng thay đổi đợt kê khai
                 }
 
                 // Tiến hành cập nhật công trình với request đã được điều chỉnh

@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 using System.Globalization;
 using System.Data;
-using System.Linq.Expressions;
 using Application.Shared.Messages;
 using Application.AcademicYears;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +25,6 @@ namespace Application.Works
         private readonly IGenericRepository<Factor> _factorRepository;
         private readonly IWorkRepository _workRepository;
         private readonly ISystemConfigService _systemConfigService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserRepository _userRepository;
         private readonly ILogger<WorkService> _logger;
         private readonly ICurrentUserService _currentUserService;
@@ -40,7 +38,6 @@ namespace Application.Works
             ILogger<WorkService> logger,
             IWorkRepository workRepository,
             ISystemConfigService systemConfigService,
-            IHttpContextAccessor httpContextAccessor,
             IUserRepository userRepository,
             ICurrentUserService currentUserService,
             IAcademicYearService academicYearService)
@@ -53,7 +50,6 @@ namespace Application.Works
             _factorRepository = unitOfWork.Repository<Factor>();
             _workRepository = workRepository;
             _systemConfigService = systemConfigService;
-            _httpContextAccessor = httpContextAccessor;
             _userRepository = userRepository;
             _logger = logger;
             _currentUserService = currentUserService;
@@ -105,6 +101,7 @@ namespace Application.Works
                 Source = WorkSource.NguoiDungKeKhai,
                 WorkTypeId = request.WorkTypeId,
                 WorkLevelId = request.WorkLevelId,
+                SystemConfigId = request.SystemConfigId,
                 ExchangeDeadline = request.TimePublished.HasValue ? request.TimePublished.Value.AddMonths(18) : null,
                 CreatedDate = DateTime.UtcNow,
                 IsLocked = false // Công trình mới luôn có IsLocked = false
@@ -382,6 +379,8 @@ namespace Application.Works
             work.Source = workRequest.Source;
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
+            if (workRequest.SystemConfigId.HasValue)
+                work.SystemConfigId = workRequest.SystemConfigId.Value;
             work.ExchangeDeadline = work.TimePublished.HasValue ? work.TimePublished.Value.AddMonths(18) : null;
             work.ModifiedDate = DateTime.UtcNow;
         }
@@ -623,6 +622,7 @@ namespace Application.Works
             work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
+            // Không cập nhật SystemConfigId khi tác giả cập nhật công trình
             work.ExchangeDeadline = work.TimePublished.HasValue ? work.TimePublished.Value.AddMonths(18) : null;
             work.ModifiedDate = DateTime.UtcNow;
         }

@@ -29,6 +29,8 @@ namespace Application.Works
                 WorkTypeName = entity.WorkType?.Name,
                 WorkLevelId = entity.WorkLevelId,
                 WorkLevelName = entity.WorkLevel?.Name,
+                SystemConfigId = entity.SystemConfigId,
+                SystemConfigName = entity.SystemConfig?.Name,
                 ExchangeDeadline = entity.ExchangeDeadline,
                 Authors = entity.Authors != null ? _authorMapper.MapToDtos(entity.Authors) : null,
                 CreatedDate = entity.CreatedDate,
@@ -49,6 +51,7 @@ namespace Application.Works
                 Source = dto.Source,
                 WorkTypeId = dto.WorkTypeId,
                 WorkLevelId = dto.WorkLevelId,
+                SystemConfigId = dto.SystemConfigId,
                 Authors = dto.Authors != null ? _authorMapper.MapToEntities(dto.Authors).ToList() : null,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate

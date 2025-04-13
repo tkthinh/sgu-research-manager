@@ -19,6 +19,9 @@ namespace Application.Works
         public Guid? WorkLevelId { get; set; }
         public string? WorkLevelName { get; set; }
 
+        public Guid SystemConfigId { get; set; }
+        public string? SystemConfigName { get; set; }
+
         public DateOnly? ExchangeDeadline { get; set; }
 
         public IEnumerable<AuthorDto>? Authors { get; set; }

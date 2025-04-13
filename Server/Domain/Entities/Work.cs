@@ -14,9 +14,11 @@ namespace Domain.Entities
 
         public Guid WorkTypeId { get; set; }
         public Guid? WorkLevelId { get; set; }
+        public Guid SystemConfigId { get; set; }
 
         public virtual WorkType? WorkType { get; set; }
         public virtual WorkLevel? WorkLevel { get; set; }
+        public virtual SystemConfig? SystemConfig { get; set; }
         public virtual ICollection<Author>? Authors { get; set; } = new List<Author>();
         public virtual ICollection<WorkAuthor>? WorkAuthors { get; set; } = new List<WorkAuthor>();
 

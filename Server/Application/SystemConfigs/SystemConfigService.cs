@@ -112,6 +112,20 @@ namespace Application.SystemConfigs
             return config != null;
         }
 
+        public async Task<SystemConfigDto?> GetCurrentActiveSystemConfig(CancellationToken cancellationToken = default)
+        {
+            DateTime currentTime = DateTime.UtcNow;
+            var config = await unitOfWork.Repository<SystemConfig>()
+                .Include(sc => sc.AcademicYear)
+                .FirstOrDefaultAsync(
+                    c => c.OpenTime <= currentTime && c.CloseTime >= currentTime
+                        && !c.IsDeleted,
+                    cancellationToken
+                );
+
+            return config != null ? mapper.MapToDto(config) : null;
+        }
+
         public override async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var systemConfig = await unitOfWork.Repository<SystemConfig>().GetByIdAsync(id);

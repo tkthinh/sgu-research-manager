@@ -16,6 +16,7 @@ public class WorkRepository : GenericRepository<Work>, IWorkRepository
       var query = context.Works
           .Include(w => w.WorkType)
           .Include(w => w.WorkLevel)
+          .Include(w => w.SystemConfig)
           .Include(w => w.Authors!)
               .ThenInclude(a => a.AuthorRole)
           .Include(w => w.Authors!)

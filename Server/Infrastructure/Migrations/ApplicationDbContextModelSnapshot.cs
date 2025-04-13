@@ -4000,6 +4000,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("SystemConfigId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateOnly?>("TimePublished")
                         .HasColumnType("date");
 
@@ -4020,6 +4023,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SystemConfigId");
 
                     b.HasIndex("WorkLevelId");
 
@@ -4599,6 +4604,12 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
+                    b.HasOne("Domain.Entities.SystemConfig", "SystemConfig")
+                        .WithMany()
+                        .HasForeignKey("SystemConfigId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
                         .WithMany()
                         .HasForeignKey("WorkLevelId")
@@ -4609,6 +4620,8 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("WorkTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("SystemConfig");
 
                     b.Navigation("WorkLevel");
 
