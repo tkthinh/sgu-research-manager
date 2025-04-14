@@ -1,6 +1,7 @@
 ﻿using Infrastructure;
 using Serilog;
 using OfficeOpenXml;
+using WebApi.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseCors("AllowDev");
 
