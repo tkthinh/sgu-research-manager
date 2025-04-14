@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { User } from "../../../lib/types/models/User";
-import { getMyInfo } from "../../../lib/api/usersApi";
 import { jwtDecode } from "jwt-decode";
+import { createContext, useContext, useEffect, useState } from "react";
+import { getMyInfo } from "../../../lib/api/usersApi";
+import { User } from "../../../lib/types/models/User";
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const refreshUserInfo = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
+      setUser(null);
       setLoading(false);
       return;
     }
@@ -29,11 +30,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (response.success) {
         const userData = response.data;
         // Add role from token
-        userData.role = jwtDecode(token)["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+        userData.role =
+          jwtDecode(token)[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ];
         setUser(userData);
       }
     } catch (error) {
       console.error("Failed to fetch user info:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("expiration");
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -52,7 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, signOut, loading, refreshUserInfo }}>
+    <AuthContext.Provider
+      value={{ user, setUser, signOut, loading, refreshUserInfo }}
+    >
       {children}
     </AuthContext.Provider>
   );
