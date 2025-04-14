@@ -148,7 +148,6 @@ namespace Application.Works
             var authorHour = await CalculateAuthorHour(workHour, request.TotalAuthors ?? 0,
                 request.TotalMainAuthors ?? 0, request.Author.AuthorRoleId);
             author.AuthorHour = authorHour;
-            author.MarkedForScoring = false;
 
             // Loại bỏ userId của tác giả chính khỏi request.CoAuthorUserIds để tránh trùng lặp
             var coAuthorUserIds = request.CoAuthorUserIds
@@ -254,7 +253,9 @@ namespace Application.Works
             if (work == null)
                 throw new Exception(ErrorMessages.WorkNotFound);
 
-            // Kiểm tra giới hạn nếu có
+            // Lấy năm học hiện tại
+            var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
+
             if (marked)
             {
                 // 1. Lấy Factor để kiểm tra giới hạn
@@ -267,11 +268,14 @@ namespace Application.Works
                     cancellationToken);
 
                 // 2. Đếm số lượng công trình đã được đánh dấu với cùng điều kiện
-                var markedAuthors = await _unitOfWork.Repository<Author>().FindAsync(a =>
-                    a.UserId == author.UserId &&
-                    a.MarkedForScoring &&
-                    a.PurposeId == author.PurposeId &&
-                    a.ScoreLevel == author.ScoreLevel);
+                var authorRegistrations = await _unitOfWork.Repository<AuthorRegistration>()
+                    .Include(ar => ar.Author)
+                    .Where(ar => 
+                        ar.Author.UserId == author.UserId &&
+                        ar.AcademicYearId == currentAcademicYear.Id &&
+                        ar.Author.PurposeId == author.PurposeId && 
+                        ar.Author.ScoreLevel == author.ScoreLevel)
+                    .ToListAsync(cancellationToken);
 
                 // 3. Lấy thông tin WorkType và WorkLevel để hiển thị thông báo lỗi
                 var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
@@ -284,7 +288,7 @@ namespace Application.Works
                 // 4. Kiểm tra giới hạn nếu có MaxAllowed
                 if (factor?.MaxAllowed != null)
                 {
-                    if (markedAuthors.Count() >= factor.MaxAllowed)
+                    if (authorRegistrations.Count() >= factor.MaxAllowed)
                     {
                         var workTypeInfo = workType?.Name ?? "Không xác định";
                         var workLevelInfo = workLevel?.Name ?? "Không xác định";
@@ -299,7 +303,6 @@ namespace Application.Works
                 }
 
                 // 5. Tạo bản ghi AuthorRegistration nếu chưa có
-                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
                 var existingRegistration = await _unitOfWork.Repository<AuthorRegistration>()
                     .FirstOrDefaultAsync(ar => ar.AuthorId == authorId && ar.AcademicYearId == currentAcademicYear.Id);
 
@@ -316,7 +319,6 @@ namespace Application.Works
             else
             {
                 // Nếu bỏ đánh dấu, xóa bản ghi AuthorRegistration nếu có
-                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
                 var existingRegistration = await _unitOfWork.Repository<AuthorRegistration>()
                     .FirstOrDefaultAsync(ar => ar.AuthorId == authorId && ar.AcademicYearId == currentAcademicYear.Id);
 
@@ -326,8 +328,6 @@ namespace Application.Works
                 }
             }
 
-            // Cập nhật trạng thái đánh dấu
-            author.MarkedForScoring = marked;
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
@@ -840,7 +840,6 @@ namespace Application.Works
                 
                 // Lấy tất cả công trình chưa đánh dấu từ các đợt trước
                 var unmarkedWorks = await _workRepository.GetUnmarkedPreviousWorksAsync(userId, Guid.Empty, cancellationToken);
-                _logger.LogInformation($"GetWorksByCurrentUserAsync: Found {unmarkedWorks.Count()} unmarked works from previous periods");
                 
                 var unmarkedWorkDtos = _mapper.MapToDtos(unmarkedWorks);
                 await FillCoAuthorUserIdsForMultipleWorksAsync(unmarkedWorkDtos, cancellationToken);
@@ -848,32 +847,24 @@ namespace Application.Works
                 return unmarkedWorkDtos;
             }
             
-            // Ghi log thông tin đợt kê khai hiện tại
-            _logger.LogInformation($"GetWorksByCurrentUserAsync: currentSystemConfig.Id={currentSystemConfig.Id}, Name={currentSystemConfig.Name}");
-            
-            // 1. Lấy các công trình mà người dùng đã kê khai ở đợt hiện tại (bất kể markedForScoring)
+            // 1. Lấy các công trình mà người dùng đã kê khai ở đợt hiện tại (bất kể đã đăng ký hay chưa)
             var declaredWorks = await _workRepository.GetDeclaredWorksBySystemConfigIdAsync(userId, currentSystemConfig.Id, cancellationToken);
-            _logger.LogInformation($"GetWorksByCurrentUserAsync: Found {declaredWorks.Count()} declaredWorks");
             
             // 2. Lấy các công trình mà người dùng được người khác thêm vào danh sách đồng tác giả ở đợt hiện tại
             var coAuthorWorks = await _workRepository.GetCoAuthorWorksBySystemConfigIdAsync(userId, currentSystemConfig.Id, cancellationToken);
-            _logger.LogInformation($"GetWorksByCurrentUserAsync: Found {coAuthorWorks.Count()} coAuthorWorks");
             
-            // 3. Lấy các công trình của các đợt trước đó nếu MarkedForScoring = false
+            // 3. Lấy các công trình của các đợt trước đó mà chưa đăng ký
             var previousWorks = await _workRepository.GetUnmarkedPreviousWorksAsync(userId, currentSystemConfig.Id, cancellationToken);
-            _logger.LogInformation($"GetWorksByCurrentUserAsync: Found {previousWorks.Count()} previousWorks");
             
             // Ghi log ID của các công trình từ đợt trước
             if (previousWorks.Any())
             {
                 var previousWorkIds = previousWorks.Select(w => w.Id.ToString()).ToList();
-                _logger.LogInformation($"GetWorksByCurrentUserAsync: Previous work IDs: {string.Join(", ", previousWorkIds)}");
                 
-                // Ghi log thông tin chi tiết về đợt kê khai và markedForScoring của các công trình này
+                // Ghi log thông tin chi tiết về đợt kê khai của các công trình này
                 foreach (var work in previousWorks)
                 {
                     var author = work.Authors?.FirstOrDefault(a => a.UserId == userId);
-                    _logger.LogInformation($"Previous work ID: {work.Id}, Title: {work.Title}, SystemConfigId: {work.SystemConfigId}, Author.MarkedForScoring: {author?.MarkedForScoring}");
                 }
             }
             
@@ -882,8 +873,6 @@ namespace Application.Works
                 .GroupBy(w => w.Id)
                 .Select(g => g.First())
                 .ToList();
-
-            _logger.LogInformation($"GetWorksByCurrentUserAsync: Total combined work count: {allWorks.Count}");
             
             var workDtos = _mapper.MapToDtos(allWorks);
             
@@ -1778,36 +1767,45 @@ namespace Application.Works
         // Triển khai phương thức lọc công trình của người dùng hiện tại theo đợt kê khai
         public async Task<IEnumerable<WorkDto>> GetCurrentUserWorksBySystemConfigIdAsync(Guid userId, Guid systemConfigId, CancellationToken cancellationToken = default)
         {
-            // Lấy thông tin đợt kê khai được chọn
-            var selectedConfig = await _unitOfWork.Repository<SystemConfig>()
-                .FirstOrDefaultAsync(sc => sc.Id == systemConfigId && !sc.IsDeleted, cancellationToken);
+            _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: userId={userId}, systemConfigId={systemConfigId}");
             
-            if (selectedConfig == null)
-            {
-                throw new Exception("Không tìm thấy đợt kê khai");
-            }
-
-            // 1. Lấy các công trình mà người dùng đã kê khai trong đợt hiện tại
+            // Lấy config hiện tại để biết đây có phải là đợt hiện tại hay không
+            var currentSystemConfig = await _systemConfigService.GetCurrentActiveSystemConfig(cancellationToken);
+            var isCurrentPeriod = currentSystemConfig != null && currentSystemConfig.Id == systemConfigId;
+            
+            _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: isCurrentPeriod={isCurrentPeriod}");
+            
+            // 1. Lấy các công trình mà người dùng đã kê khai ở đợt này
             var declaredWorks = await _workRepository.GetDeclaredWorksBySystemConfigIdAsync(userId, systemConfigId, cancellationToken);
             _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Found {declaredWorks.Count()} declared works");
-
-            // 2. Lấy các công trình mà người dùng là đồng tác giả trong đợt hiện tại
+            
+            // 2. Lấy các công trình mà người dùng được người khác thêm vào danh sách đồng tác giả ở đợt này
             var coAuthorWorks = await _workRepository.GetCoAuthorWorksBySystemConfigIdAsync(userId, systemConfigId, cancellationToken);
-            _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Found {coAuthorWorks.Count()} coAuthor works");
-
-            // 3. Lấy các công trình chưa đánh dấu từ các đợt TRƯỚC đợt được chọn
-            var previousConfigs = await _unitOfWork.Repository<SystemConfig>()
-                .FindAsync(sc => sc.OpenTime < selectedConfig.OpenTime && !sc.IsDeleted);
-            var previousConfigIds = previousConfigs.Select(pc => pc.Id).ToList();
-
+            _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Found {coAuthorWorks.Count()} coauthor works");
+            
+            // 3. Nếu đây là đợt hiện tại, thêm cả các công trình từ các đợt trước mà chưa được đăng ký
             var previousWorks = new List<Work>();
-            if (previousConfigIds.Any())
+            
+            if (isCurrentPeriod)
             {
-                // Lấy các công trình từ các đợt trước mà chưa được đánh dấu
-                previousWorks = (await _workRepository.GetWorksBySystemConfigIdsAsync(previousConfigIds, cancellationToken))
-                    .Where(w => w.Authors != null && 
-                               w.Authors.Any(a => a.UserId == userId && !a.MarkedForScoring))
-                    .ToList();
+                // Lấy ID của tất cả các đợt kê khai trước đợt hiện tại
+                var previousConfigs = await _unitOfWork.Repository<SystemConfig>()
+                    .FindAsync(sc => sc.OpenTime < currentSystemConfig!.OpenTime && !sc.IsDeleted);
+                var previousConfigIds = previousConfigs.Select(c => c.Id).ToList();
+                _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Found {previousConfigIds.Count} previous system configs");
+                
+                if (previousConfigIds.Any())
+                {
+                    // Lấy các công trình từ các đợt trước mà chưa được đăng ký
+                    // Kiểm tra trong bảng AuthorRegistration
+                    var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
+                    
+                    previousWorks = (await _workRepository.GetWorksBySystemConfigIdsAsync(previousConfigIds, cancellationToken))
+                        .Where(w => w.Authors != null && w.Authors.Any(a => 
+                            a.UserId == userId && 
+                            (a.AuthorRegistration == null || a.AuthorRegistration.AcademicYearId != currentAcademicYear.Id)))
+                        .ToList();
+                }
             }
             
             _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Found {previousWorks.Count()} unmarked works from previous periods");
@@ -1818,11 +1816,12 @@ namespace Application.Works
                 var previousWorkIds = previousWorks.Select(w => w.Id.ToString()).ToList();
                 _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Previous work IDs: {string.Join(", ", previousWorkIds)}");
                 
-                // Ghi log thông tin chi tiết về đợt kê khai và markedForScoring của các công trình này
+                // Ghi log thông tin chi tiết
                 foreach (var work in previousWorks)
                 {
                     var author = work.Authors?.FirstOrDefault(a => a.UserId == userId);
-                    _logger.LogInformation($"Previous work ID: {work.Id}, Title: {work.Title}, SystemConfigId: {work.SystemConfigId}, Author.MarkedForScoring: {author?.MarkedForScoring}");
+                    var hasRegistration = author?.AuthorRegistration != null;
+                    _logger.LogInformation($"Previous work ID: {work.Id}, Title: {work.Title}, SystemConfigId: {work.SystemConfigId}, Has Registration: {hasRegistration}");
                 }
             }
 

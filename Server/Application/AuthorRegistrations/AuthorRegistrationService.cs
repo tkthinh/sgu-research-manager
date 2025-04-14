@@ -34,14 +34,16 @@ namespace Application.AuthorRegistrations
         {
             var currentAcademicYear = await academicYearService.GetCurrentAcademicYear(cancellationToken);
             var authors = await unitOfWork.Repository<Author>()
-                .FindAsync(a => authorIds.Contains(a.Id) && a.AuthorRegistration.AcademicYearId == Guid.Empty);
+                .FindAsync(a => authorIds.Contains(a.Id));
 
             var authorRegistrations = new List<AuthorRegistration>();
             foreach (var author in authors)
             {
                 bool isRegistable = await IsAuthorRegistrable(author.Id, currentAcademicYear.Id);
-
-                await workService.SetMarkedForScoringAsync(author.Id, true, cancellationToken);
+                if (!isRegistable)
+                {
+                    continue;
+                }
 
                 var authorRegistration = new AuthorRegistration
                 {
@@ -61,7 +63,7 @@ namespace Application.AuthorRegistrations
             var authorRegistration = await unitOfWork.Repository<AuthorRegistration>()
                 .FirstOrDefaultAsync(a => a.AuthorId == authorId && a.AcademicYearId == academicYearId);
 
-            // If there's already a registration record for this academic year, they’re NOT registrable.
+            // If there's already a registration record for this academic year, they're NOT registrable.
             if (authorRegistration != null)
             {
                 return false;

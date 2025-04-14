@@ -343,7 +343,6 @@ namespace Infrastructure.Migrations
                     ScoreLevel = table.Column<int>(type: "int", nullable: true),
                     AuthorHour = table.Column<decimal>(type: "decimal(10,1)", precision: 10, scale: 1, nullable: false),
                     WorkHour = table.Column<int>(type: "int", nullable: false),
-                    MarkedForScoring = table.Column<bool>(type: "bit", nullable: false),
                     ProofStatus = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Note = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),

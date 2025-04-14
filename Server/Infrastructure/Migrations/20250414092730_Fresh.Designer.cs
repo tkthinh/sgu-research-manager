@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250413105748_Fresh")]
+    [Migration("20250414092730_Fresh")]
     partial class Fresh
     {
         /// <inheritdoc />
@@ -123,9 +123,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid?>("FieldId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("MarkedForScoring")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");

@@ -121,9 +121,6 @@ namespace Infrastructure.Migrations
                     b.Property<Guid?>("FieldId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("MarkedForScoring")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 

@@ -156,11 +156,24 @@ namespace Application.Users
                 .Select(p => p.Id)
                 .ToList();
 
-            // Lấy danh sách Author của user với ProofStatus = HopLe và MarkedForScoring = true
+            // Lấy năm học hiện tại để kiểm tra đăng ký
+            var currentAcademicYear = await unitOfWork.Repository<AcademicYear>()
+                .FirstOrDefaultAsync(ay => ay.StartDate <= DateOnly.FromDateTime(DateTime.UtcNow) && 
+                                          ay.EndDate >= DateOnly.FromDateTime(DateTime.UtcNow));
+
+            if (currentAcademicYear == null)
+            {
+                throw new Exception("Không tìm thấy năm học hiện tại");
+            }
+
+            // Lấy danh sách Author của user với ProofStatus = HopLe và có đăng ký với năm học hiện tại
             var authors = await unitOfWork.Repository<Author>()
-                .FindAsync(a => a.UserId == userId && 
+                .Include(a => a.AuthorRegistration)
+                .Where(a => a.UserId == userId && 
                     a.ProofStatus == ProofStatus.HopLe && 
-                    a.MarkedForScoring == true);
+                    a.AuthorRegistration != null && 
+                    a.AuthorRegistration.AcademicYearId == currentAcademicYear.Id)
+                .ToListAsync();
 
             if (authors == null || !authors.Any())
             {
@@ -189,10 +202,10 @@ namespace Application.Users
             // Lọc các Author theo mục đích
             var dutyAuthors = authors.Where(a => dutyPurposeIds.Contains(a.PurposeId)).ToList();
             var overLimitAuthors = authors.Where(a => overLimitPurposeIds.Contains(a.PurposeId)).ToList();
-            //var overLimitMarkedAuthors = overLimitAuthors
-            //    .Where(a => a.AuthorRegistration != null && a.AuthorRegistration.AcademicYearId != Guid.Empty)
-            //    .ToList();
-            var overLimitMarkedAuthors = overLimitAuthors.Where(a => a.MarkedForScoring).ToList();
+            
+            // Tất cả tác giả đã được lấy đều đã đăng ký (đã kiểm tra ở truy vấn ban đầu)
+            var overLimitMarkedAuthors = overLimitAuthors.ToList();
+            
             var researchAuthors = authors.Where(a => researchPurposeIds.Contains(a.PurposeId)).ToList();
 
             // Tính số lượng công trình (Work) duy nhất cho từng mục đích
