@@ -1778,6 +1778,15 @@ namespace Application.Works
         // Triển khai phương thức lọc công trình của người dùng hiện tại theo đợt kê khai
         public async Task<IEnumerable<WorkDto>> GetCurrentUserWorksBySystemConfigIdAsync(Guid userId, Guid systemConfigId, CancellationToken cancellationToken = default)
         {
+            // Lấy thông tin đợt kê khai được chọn
+            var selectedConfig = await _unitOfWork.Repository<SystemConfig>()
+                .FirstOrDefaultAsync(sc => sc.Id == systemConfigId && !sc.IsDeleted, cancellationToken);
+            
+            if (selectedConfig == null)
+            {
+                throw new Exception("Không tìm thấy đợt kê khai");
+            }
+
             // 1. Lấy các công trình mà người dùng đã kê khai trong đợt hiện tại
             var declaredWorks = await _workRepository.GetDeclaredWorksBySystemConfigIdAsync(userId, systemConfigId, cancellationToken);
             _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Found {declaredWorks.Count()} declared works");
@@ -1786,8 +1795,21 @@ namespace Application.Works
             var coAuthorWorks = await _workRepository.GetCoAuthorWorksBySystemConfigIdAsync(userId, systemConfigId, cancellationToken);
             _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Found {coAuthorWorks.Count()} coAuthor works");
 
-            // 3. Lấy các công trình chưa đánh dấu từ TẤT CẢ các đợt trước đó
-            var previousWorks = await _workRepository.GetUnmarkedPreviousWorksAsync(userId, systemConfigId, cancellationToken);
+            // 3. Lấy các công trình chưa đánh dấu từ các đợt TRƯỚC đợt được chọn
+            var previousConfigs = await _unitOfWork.Repository<SystemConfig>()
+                .FindAsync(sc => sc.OpenTime < selectedConfig.OpenTime && !sc.IsDeleted);
+            var previousConfigIds = previousConfigs.Select(pc => pc.Id).ToList();
+
+            var previousWorks = new List<Work>();
+            if (previousConfigIds.Any())
+            {
+                // Lấy các công trình từ các đợt trước mà chưa được đánh dấu
+                previousWorks = (await _workRepository.GetWorksBySystemConfigIdsAsync(previousConfigIds, cancellationToken))
+                    .Where(w => w.Authors != null && 
+                               w.Authors.Any(a => a.UserId == userId && !a.MarkedForScoring))
+                    .ToList();
+            }
+            
             _logger.LogInformation($"GetCurrentUserWorksBySystemConfigIdAsync: Found {previousWorks.Count()} unmarked works from previous periods");
 
             // Ghi log ID của các công trình từ đợt trước
