@@ -19,8 +19,8 @@ namespace Application.Works
         public Guid? WorkLevelId { get; set; }
         public string? WorkLevelName { get; set; }
 
-        public Guid SystemConfigId { get; set; }
-        public string? SystemConfigName { get; set; }
+        public Guid AcademicYearId { get; set; }
+        public string? AcademicYearName { get; set; }
 
         public DateOnly? ExchangeDeadline { get; set; }
 

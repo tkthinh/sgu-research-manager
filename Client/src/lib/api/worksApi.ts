@@ -74,7 +74,15 @@ export const getCurrentUserWorksByAcademicYearId = async (academicYearId: string
 export const setMarkedForScoring = async (authorId: string, marked: boolean): Promise<ApiResponse<object>> => {
   try {
     console.log(`WorksApi:setMarkedForScoring - Đánh dấu authorId ${authorId} với trạng thái ${marked}`);
-    const response = await apiClient.patch<ApiResponse<object>>(`/works/authors/${authorId}/mark`, marked);
+    
+    // In ra kiểu dữ liệu để kiểm tra
+    console.log("WorksApi:setMarkedForScoring - Kiểu dữ liệu gửi đi:", typeof marked, marked);
+    
+    // Gửi giá trị boolean trực tiếp làm body request thay vì stringify nó
+    const response = await apiClient.patch<ApiResponse<object>>(
+      `/works/authors/${authorId}/mark`,
+      marked
+    );
     console.log("WorksApi:setMarkedForScoring - Phản hồi:", JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error: any) {

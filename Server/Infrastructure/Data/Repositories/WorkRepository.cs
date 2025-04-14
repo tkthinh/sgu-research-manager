@@ -16,7 +16,7 @@ namespace Infrastructure.Data.Repositories
          var query = context.Works
              .Include(w => w.WorkType)
              .Include(w => w.WorkLevel)
-             .Include(w => w.SystemConfig)
+             .Include(w => w.AcademicYear)
              .Include(w => w.Authors!)
                  .ThenInclude(a => a.AuthorRole)
              .Include(w => w.Authors!)
@@ -67,75 +67,74 @@ namespace Infrastructure.Data.Repositories
              .ToListAsync(cancellationToken);
       }
 
-      // Lọc công trình theo đợt kê khai
-      public async Task<IEnumerable<Work>> GetWorksBySystemConfigIdAsync(Guid systemConfigId, CancellationToken cancellationToken = default)
+      // Lọc công trình theo năm học
+      public async Task<IEnumerable<Work>> GetWorksByAcademicYearIdAsync(Guid academicYearId, CancellationToken cancellationToken = default)
       {
          return await GetWorksWithAuthorsQuery(true)
-             .Where(w => w.SystemConfigId == systemConfigId)
+             .Where(w => w.AcademicYearId == academicYearId)
              .ToListAsync(cancellationToken);
       }
 
-      // Lọc công trình theo nhiều đợt kê khai (dùng cho năm học)
-      public async Task<IEnumerable<Work>> GetWorksBySystemConfigIdsAsync(List<Guid> systemConfigIds, CancellationToken cancellationToken = default)
+      // Lọc công trình theo nhiều năm học
+      public async Task<IEnumerable<Work>> GetWorksByAcademicYearIdsAsync(List<Guid> academicYearIds, CancellationToken cancellationToken = default)
       {
          return await GetWorksWithAuthorsQuery(true)
-             .Where(w => systemConfigIds.Contains(w.SystemConfigId))
+             .Where(w => academicYearIds.Contains(w.AcademicYearId))
              .ToListAsync(cancellationToken);
       }
 
-      // Lấy công trình mà user đã kê khai ở một đợt cụ thể
-      public async Task<IEnumerable<Work>> GetDeclaredWorksBySystemConfigIdAsync(Guid userId, Guid systemConfigId, CancellationToken cancellationToken = default)
+      // Lấy công trình mà user đã kê khai ở một năm học cụ thể
+      public async Task<IEnumerable<Work>> GetDeclaredWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default)
       {
          return await GetWorksWithAuthorsQuery(true)
-             .Where(w => w.SystemConfigId == systemConfigId &&
+             .Where(w => w.AcademicYearId == academicYearId &&
                          w.Source == Domain.Enums.WorkSource.NguoiDungKeKhai &&
                          w.Authors!.Any(a => a.UserId == userId))
              .ToListAsync(cancellationToken);
       }
 
-      // Lấy công trình mà user là tác giả ở một đợt cụ thể (bao gồm cả import)
-      public async Task<IEnumerable<Work>> GetAuthorWorksBySystemConfigIdAsync(Guid userId, Guid systemConfigId, CancellationToken cancellationToken = default)
+      // Lấy công trình mà user là tác giả ở một năm học cụ thể (bao gồm cả import)
+      public async Task<IEnumerable<Work>> GetAuthorWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default)
       {
          return await GetWorksWithAuthorsQuery(true)
-             .Where(w => w.SystemConfigId == systemConfigId &&
+             .Where(w => w.AcademicYearId == academicYearId &&
                          w.Authors!.Any(a => a.UserId == userId))
              .ToListAsync(cancellationToken);
       }
 
-      // Lấy công trình mà user là tác giả ở nhiều đợt (dùng cho năm học)
-      public async Task<IEnumerable<Work>> GetAuthorWorksBySystemConfigIdsAsync(Guid userId, List<Guid> systemConfigIds, CancellationToken cancellationToken = default)
+      // Lấy công trình mà user là tác giả ở nhiều năm học
+      public async Task<IEnumerable<Work>> GetAuthorWorksByAcademicYearIdsAsync(Guid userId, List<Guid> academicYearIds, CancellationToken cancellationToken = default)
       {
          return await GetWorksWithAuthorsQuery(true)
-             .Where(w => systemConfigIds.Contains(w.SystemConfigId) &&
+             .Where(w => academicYearIds.Contains(w.AcademicYearId) &&
                          w.Authors!.Any(a => a.UserId == userId))
              .ToListAsync(cancellationToken);
       }
 
-      // Lấy công trình mà user là đồng tác giả ở một đợt cụ thể
-      public async Task<IEnumerable<Work>> GetCoAuthorWorksBySystemConfigIdAsync(Guid userId, Guid systemConfigId, CancellationToken cancellationToken = default)
+      // Lấy công trình mà user là đồng tác giả ở một năm học cụ thể
+      public async Task<IEnumerable<Work>> GetCoAuthorWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default)
       {
          return await GetWorksWithAuthorsQuery(true)
-             .Where(w => w.SystemConfigId == systemConfigId &&
+             .Where(w => w.AcademicYearId == academicYearId &&
                          w.WorkAuthors!.Any(wa => wa.UserId == userId))
              .ToListAsync(cancellationToken);
       }
 
-      // Lấy công trình mà user là đồng tác giả ở nhiều đợt (dùng cho năm học)
-      public async Task<IEnumerable<Work>> GetCoAuthorWorksBySystemConfigIdsAsync(Guid userId, List<Guid> systemConfigIds, CancellationToken cancellationToken = default)
+      // Lấy công trình mà user là đồng tác giả ở nhiều năm học
+      public async Task<IEnumerable<Work>> GetCoAuthorWorksByAcademicYearIdsAsync(Guid userId, List<Guid> academicYearIds, CancellationToken cancellationToken = default)
       {
          return await GetWorksWithAuthorsQuery(true)
-             .Where(w => systemConfigIds.Contains(w.SystemConfigId) &&
+             .Where(w => academicYearIds.Contains(w.AcademicYearId) &&
                          w.WorkAuthors!.Any(wa => wa.UserId == userId))
              .ToListAsync(cancellationToken);
       }
 
       // Lấy các công trình chưa đánh dấu quy đổi từ các đợt trước
-      public async Task<IEnumerable<Work>> GetUnmarkedPreviousWorksAsync(Guid userId, Guid currentSystemConfigId, CancellationToken cancellationToken = default)
+      public async Task<IEnumerable<Work>> GetUnmarkedPreviousWorksAsync(Guid userId, Guid currentAcademicYearId, CancellationToken cancellationToken = default)
       {
          // Lấy năm học hiện tại
          var currentAcademicYear = await context.AcademicYears
-             .FirstOrDefaultAsync(ay => ay.StartDate <= DateOnly.FromDateTime(DateTime.UtcNow) && 
-                                       ay.EndDate >= DateOnly.FromDateTime(DateTime.UtcNow), 
+             .FirstOrDefaultAsync(ay => ay.Id == currentAcademicYearId, 
                                  cancellationToken);
 
          if (currentAcademicYear == null)
@@ -144,10 +143,10 @@ namespace Infrastructure.Data.Repositories
          }
          
          var query = GetWorksWithAuthorsQuery(true)
-             .Where(w => w.SystemConfigId != currentSystemConfigId &&
+             .Where(w => w.AcademicYearId != currentAcademicYearId &&
                          w.Authors!.Any(a => a.UserId == userId && 
                                           (a.AuthorRegistration == null || 
-                                           a.AuthorRegistration.AcademicYearId != currentAcademicYear.Id)));
+                                           a.AuthorRegistration.AcademicYearId != currentAcademicYearId)));
                                          
          // Ghi log để debug số lượng công trình tìm thấy
          var result = await query.ToListAsync(cancellationToken);

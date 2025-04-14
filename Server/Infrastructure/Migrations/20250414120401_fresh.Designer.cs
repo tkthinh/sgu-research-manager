@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250414092730_Fresh")]
-    partial class Fresh
+    [Migration("20250414120401_fresh")]
+    partial class fresh
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -3981,6 +3981,9 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("AcademicYearId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -3999,9 +4002,6 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("SystemConfigId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateOnly?>("TimePublished")
                         .HasColumnType("date");
@@ -4024,7 +4024,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SystemConfigId");
+                    b.HasIndex("AcademicYearId");
 
                     b.HasIndex("WorkLevelId");
 
@@ -4604,10 +4604,10 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
-                    b.HasOne("Domain.Entities.SystemConfig", "SystemConfig")
+                    b.HasOne("Domain.Entities.AcademicYear", "AcademicYear")
                         .WithMany()
-                        .HasForeignKey("SystemConfigId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
@@ -4621,7 +4621,7 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("SystemConfig");
+                    b.Navigation("AcademicYear");
 
                     b.Navigation("WorkLevel");
 

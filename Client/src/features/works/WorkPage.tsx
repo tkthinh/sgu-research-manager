@@ -55,36 +55,16 @@ export default function WorksPage() {
 
   // State cho bộ lọc
   const [academicYearId, setAcademicYearId] = useState<string>("");
-  const [systemConfigId, setSystemConfigId] = useState<string>("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   
-  // Thêm state mới để theo dõi tùy chọn đã chọn trước khi áp dụng
+  // State tạm thời cho dialog
   const [tempAcademicYearId, setTempAcademicYearId] = useState<string>("");
-  const [tempSystemConfigId, setTempSystemConfigId] = useState<string>("");
 
-  // Fetch danh sách năm học và đợt kê khai cho bộ lọc
+  // Fetch danh sách năm học cho bộ lọc
   const { data: academicYearsData } = useQuery({
     queryKey: ["academic-years"],
     queryFn: getAcademicYears,
   });
-
-  const { data: systemConfigsData } = useQuery({
-    queryKey: ["system-configs-all"],
-    queryFn: getSystemConfigs,
-  });
-
-  // Fetch đợt kê khai theo năm học
-  const { data: systemConfigsByYearData, refetch: refetchSystemConfigsByYear } = useQuery({
-    queryKey: ["system-configs-by-year", tempAcademicYearId],
-    queryFn: () => getSystemConfigByAcademicYearId(tempAcademicYearId),
-    enabled: tempAcademicYearId !== "",
-  });
-
-  // Sử dụng hook để lấy dữ liệu form
-  const formData = useWorkFormData();
-
-  // State để theo dõi loại filter đang áp dụng
-  const [filterType, setFilterType] = useState<'none' | 'academicYear' | 'systemConfig'>('none');
 
   // Fetch works dựa vào filter
   const { 
@@ -93,41 +73,21 @@ export default function WorksPage() {
     isPending: isLoadingWorks, 
     refetch 
   } = useQuery({
-    queryKey: ["works", "my-works", filterType, academicYearId, systemConfigId],
+    queryKey: ["works", "my-works", academicYearId],
     queryFn: async () => {
-      if (filterType === 'none') {
+      if (!academicYearId) {
         // Mặc định: Lấy tất cả công trình của user hiện tại
         return getMyWorks();
-      } else if (filterType === 'academicYear' && academicYearId) {
+      } else {
         // Lọc theo năm học
         return getCurrentUserWorksByAcademicYearId(academicYearId);
-      } else if (filterType === 'systemConfig' && systemConfigId) {
-        // Lọc theo đợt kê khai
-        return getCurrentUserWorksBySystemConfigId(systemConfigId);
       }
-      // Fallback
-      return getMyWorks();
     },
     staleTime: 0, // Luôn refetch khi cần
   });
 
-  // Sử dụng hook để quản lý các dialog và logic cập nhật công trình
-  const {
-    selectedWork,
-    openUpdateDialog,
-    activeTab,
-    createWorkMutation,
-    updateWorkMutation,
-    handleOpenUpdateDialog,
-    handleCloseUpdateDialog,
-    handleUpdateSubmit,
-    setActiveTab,
-  } = useWorkDialogs({
-    userId: user?.id ?? "",
-    worksData,
-    refetchWorks: refetch,
-    isAuthorPage: true, // Đặt là true vì đây là trang của tác giả
-  });
+  // Sử dụng hook để lấy dữ liệu form
+  const formData = useWorkFormData();
 
   // Lấy thông tin đồng tác giả khi có dữ liệu công trình
   useEffect(() => {
@@ -276,64 +236,34 @@ export default function WorksPage() {
 
   // Mở dialog bộ lọc
   const handleOpenFilterDialog = () => {
-    // Khi mở dialog, gán giá trị hiện tại vào state tạm
     setTempAcademicYearId(academicYearId);
-    setTempSystemConfigId(systemConfigId);
     setFilterDialogOpen(true);
   };
 
   // Đóng dialog bộ lọc
   const handleCloseFilterDialog = () => {
-    // Khi đóng dialog mà không áp dụng, hủy các thay đổi tạm
     setTempAcademicYearId(academicYearId);
-    setTempSystemConfigId(systemConfigId);
     setFilterDialogOpen(false);
   };
 
-  // Xử lý thay đổi năm học (chỉ thay đổi trong state tạm)
+  // Xử lý thay đổi năm học
   const handleAcademicYearChange = (event) => {
-    const value = event.target.value;
-    setTempAcademicYearId(value);
-    setTempSystemConfigId(""); // Reset tạm khi thay đổi năm học
-    
-    if (value) {
-      refetchSystemConfigsByYear(); // Vẫn cần lấy danh sách đợt kê khai
-    }
-  };
-
-  // Xử lý thay đổi đợt kê khai (chỉ thay đổi trong state tạm)
-  const handleSystemConfigChange = (event) => {
-    setTempSystemConfigId(event.target.value);
+    setTempAcademicYearId(event.target.value);
   };
 
   // Áp dụng bộ lọc
   const handleApplyFilter = () => {
-    // Khi nhấn nút Áp dụng, cập nhật state chính từ state tạm
     setAcademicYearId(tempAcademicYearId);
-    setSystemConfigId(tempSystemConfigId);
-    
-    if (tempAcademicYearId && tempSystemConfigId) {
-      setFilterType('systemConfig');
-    } else if (tempAcademicYearId) {
-      setFilterType('academicYear');
-    } else {
-      setFilterType('none');
-    }
-    
     handleCloseFilterDialog();
-    refetch(); // Fetch dữ liệu với bộ lọc mới
+    refetch();
   };
 
   // Reset bộ lọc
   const handleResetFilter = () => {
-    // Reset cả state chính và state tạm
     setAcademicYearId("");
-    setSystemConfigId("");
     setTempAcademicYearId("");
-    setTempSystemConfigId("");
-    setFilterType('none');
     handleCloseFilterDialog();
-    refetch(); // Fetch dữ liệu không có bộ lọc
+    refetch();
   };
 
   const columns: GridColDef[] = [
@@ -666,6 +596,25 @@ export default function WorksPage() {
         );
       },
     },
+    {
+      field: "academicYearName",
+      headerName: "Năm học",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        return <div>{params.value || "-"}</div>;
+      },
+    },
+    {
+      field: "exchangeDeadline",
+      headerName: "Hạn quy đổi",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        if (!params.value) return <div>-</div>;
+        return <div>{formatMonthYear(params.value)}</div>;
+      },
+    },
   ];
 
   if (isLoadingWorks) return <CircularProgress />;
@@ -673,25 +622,16 @@ export default function WorksPage() {
 
   // Tạo thông tin bộ lọc hiện tại để hiển thị
   const getFilterInfo = () => {
-    if (filterType === 'none') {
+    if (!academicYearId) {
       return null;
     }
     
-    let filterInfo = '';
-    
-    if (filterType === 'academicYear' && academicYearId) {
-      const selectedYear = academicYearsData?.data?.find(year => year.id === academicYearId);
-      filterInfo = `Năm học: ${selectedYear?.name || academicYearId}`;
-    } else if (filterType === 'systemConfig' && systemConfigId) {
-      const selectedConfig = systemConfigsData?.data?.find(config => config.id === systemConfigId);
-      const selectedYear = academicYearsData?.data?.find(year => year.id === academicYearId);
-      filterInfo = `Đợt kê khai: ${selectedConfig?.name || systemConfigId} - Năm học: ${selectedYear?.name || academicYearId}`;
-    }
+    const selectedYear = academicYearsData?.data?.find(year => year.id === academicYearId);
     
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <Typography variant="body1">
-          <strong>Bộ lọc hiện tại:</strong> {filterInfo}
+          <strong>Bộ lọc hiện tại:</strong> Năm học: {selectedYear?.name || academicYearId}
         </Typography>
         <Button 
           size="small" 
@@ -706,6 +646,57 @@ export default function WorksPage() {
     );
   };
 
+  // Dialog bộ lọc
+  const FilterDialog = () => (
+    <Dialog open={filterDialogOpen} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
+      <DialogTitle>Lọc công trình theo năm học</DialogTitle>
+      <DialogContent>
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={12}>
+            <FormControl fullWidth>
+              <InputLabel id="academic-year-label">Năm học</InputLabel>
+              <Select
+                labelId="academic-year-label"
+                value={tempAcademicYearId}
+                onChange={handleAcademicYearChange}
+                label="Năm học"
+              >
+                <MenuItem value="">
+                  <em>-- Chọn năm học --</em>
+                </MenuItem>
+                {academicYearsData?.data?.map((year) => (
+                  <MenuItem key={year.id} value={year.id}>
+                    {year.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleCloseFilterDialog} color="inherit">
+          Hủy
+        </Button>
+        <Button 
+          onClick={handleResetFilter} 
+          color="error"
+          startIcon={<RestartAltIcon />}
+        >
+          Xóa bộ lọc
+        </Button>
+        <Button 
+          onClick={handleApplyFilter} 
+          color="primary" 
+          variant="contained"
+          startIcon={<FilterListIcon />}
+        >
+          Áp dụng
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
@@ -717,7 +708,7 @@ export default function WorksPage() {
             onClick={handleOpenFilterDialog}
             startIcon={<FilterListIcon />}
           >
-            Lọc
+            Lọc theo năm học
           </Button>
           <Button 
             variant="contained" 
@@ -750,6 +741,8 @@ export default function WorksPage() {
         <GenericTable columns={columns} data={worksData.data || []} />
       )}
 
+      <FilterDialog />
+
       {/* Sử dụng component dialog tái sử dụng */}
       <WorkUpdateDialog
         open={openUpdateDialog}
@@ -766,75 +759,6 @@ export default function WorksPage() {
         scimagoFields={formData.scimagoFields}
         fields={formData.fields}
       />
-
-      {/* Dialog bộ lọc */}
-      <Dialog open={filterDialogOpen} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Lọc công trình</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel id="academic-year-label">Năm học</InputLabel>
-                <Select
-                  labelId="academic-year-label"
-                  value={tempAcademicYearId}
-                  onChange={handleAcademicYearChange}
-                  label="Năm học"
-                >
-                  <MenuItem value="">
-                    <em>-- Chọn năm học --</em>
-                  </MenuItem>
-                  {academicYearsData?.data?.map((year) => (
-                    <MenuItem key={year.id} value={year.id}>
-                      {year.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth disabled={!tempAcademicYearId}>
-                <InputLabel id="system-config-label">Đợt kê khai</InputLabel>
-                <Select
-                  labelId="system-config-label"
-                  value={tempSystemConfigId}
-                  onChange={handleSystemConfigChange}
-                  label="Đợt kê khai"
-                >
-                  <MenuItem value="">
-                    <em>-- Chọn đợt kê khai --</em>
-                  </MenuItem>
-                  {systemConfigsByYearData?.data?.map((config) => (
-                    <MenuItem key={config.id} value={config.id}>
-                      {config.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseFilterDialog} color="inherit">
-            Hủy
-          </Button>
-          <Button 
-            onClick={handleResetFilter} 
-            color="error"
-            startIcon={<RestartAltIcon />}
-          >
-            Xóa bộ lọc
-          </Button>
-          <Button 
-            onClick={handleApplyFilter} 
-            color="primary" 
-            variant="contained"
-            startIcon={<FilterListIcon />}
-          >
-            Áp dụng
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>

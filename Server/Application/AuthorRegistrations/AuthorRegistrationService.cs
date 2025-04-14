@@ -81,7 +81,7 @@ namespace Application.AuthorRegistrations
 
             // Compare directly as DateOnly to avoid conversion issues.
             var currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
-            return author.Work.ExchangeDeadline.Value <= currentDate;
+            return author.Work.ExchangeDeadline.Value >= currentDate;
         }
     }
 }

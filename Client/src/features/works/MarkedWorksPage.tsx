@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
 import { getMyWorks, setMarkedForScoring } from "../../lib/api/worksApi";
@@ -24,11 +24,14 @@ import { getUserConversionResult } from "../../lib/api/usersApi";
 import { Work } from "../../lib/types/models/Work";
 import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 import { useAuth } from "../../app/shared/contexts/AuthContext";
+import { debounce } from 'lodash';
 
 export default function MarkedWorksPage() {
   const queryClient = useQueryClient();
   const [markingAuthorId, setMarkingAuthorId] = useState<string | null>(null);
+  const [processingAuthorIds, setProcessingAuthorIds] = useState<Set<string>>(new Set());
   const { user } = useAuth();
+  const [localWorks, setLocalWorks] = useState<Work[]>([]);
 
   // Fetch my works
   const { data, error, isPending, refetch } = useQuery({
@@ -36,6 +39,13 @@ export default function MarkedWorksPage() {
     queryFn: getMyWorks,
     staleTime: 0, // Luôn refetch khi cần
   });
+
+  // Cập nhật localWorks khi data thay đổi
+  useEffect(() => {
+    if (data?.data) {
+      setLocalWorks(data.data);
+    }
+  }, [data]);
 
   // Fetch conversion result
   const { data: conversionData, isPending: isConversionPending, refetch: refetchConversion } = useQuery({
@@ -52,21 +62,51 @@ export default function MarkedWorksPage() {
       console.log(`Đánh dấu authorId ${params.authorId} với trạng thái ${params.marked}`);
       return setMarkedForScoring(params.authorId, params.marked);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("Cập nhật trạng thái đánh dấu thành công");
+      
+      // Cập nhật UI ngay lập tức
+      setLocalWorks(prevWorks => {
+        return prevWorks.map(work => {
+          if (work.authors && work.authors.length > 0) {
+            const authorIndex = work.authors.findIndex(a => a.id === variables.authorId);
+            if (authorIndex >= 0) {
+              // Tạo bản sao của mảng authors
+              const updatedAuthors = [...work.authors];
+              // Cập nhật thuộc tính authorRegistration của author
+              updatedAuthors[authorIndex] = {
+                ...updatedAuthors[authorIndex],
+                authorRegistration: variables.marked ? {
+                  authorId: variables.authorId,
+                  academicYearId: '', // ID năm học sẽ được backend xử lý
+                } : null
+              };
+              // Trả về work đã cập nhật với authors mới
+              return { ...work, authors: updatedAuthors };
+            }
+          }
+          return work;
+        });
+      });
       
       // Xóa cache và refetch dữ liệu mới
       queryClient.removeQueries({ queryKey: ["myWorks"] });
       queryClient.removeQueries({ queryKey: ["userConversionResult", user?.id] });
       
-      // Bắt buộc refetch dữ liệu ngay lập tức
+      // Bắt buộc refetch dữ liệu sau một khoảng thời gian ngắn
       setTimeout(() => {
         refetch();
         refetchConversion();
         setMarkingAuthorId(null);
-      }, 100);
+        // Xóa authorId khỏi danh sách đang xử lý
+        setProcessingAuthorIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(variables.authorId);
+          return newSet;
+        });
+      }, 500);
     },
-    onError: (error: any) => {
+    onError: (error: any, variables) => {
       console.error("Lỗi khi cập nhật trạng thái đánh dấu:", error);
       // Kiểm tra nếu lỗi chứa thông báo về vượt quá giới hạn
       const errorMessage = error.response?.data?.message || error.message || 'Đã có lỗi xảy ra';
@@ -76,18 +116,49 @@ export default function MarkedWorksPage() {
         toast.error(`Lỗi khi cập nhật trạng thái đánh dấu: ${errorMessage}`);
       }
       setMarkingAuthorId(null);
+      
+      // Xóa authorId khỏi danh sách đang xử lý
+      setProcessingAuthorIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(variables.authorId);
+        return newSet;
+      });
+      
+      // Refetch để đảm bảo hiển thị dữ liệu chính xác
+      refetch();
     },
   });
 
-  const handleMarkForScoring = async (authorId: string, currentMarked: boolean) => {
-    try {
-      await markForScoringMutation.mutateAsync({
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedMarkForScoring = useCallback(
+    debounce((authorId: string, currentMarked: boolean) => {
+      // Thêm authorId vào danh sách đang xử lý
+      setProcessingAuthorIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(authorId);
+        return newSet;
+      });
+      
+      // Gọi mutation với trạng thái ngược lại của currentMarked
+      markForScoringMutation.mutateAsync({
         authorId,
         marked: !currentMarked
+      }).catch(() => {
+        // Lỗi đã được xử lý trong onError của mutation
       });
-    } catch (error) {
-      // Lỗi đã được xử lý trong onError của mutation
+    }, 300),
+    [markForScoringMutation] // Phụ thuộc vào mutation
+  );
+
+  const handleMarkForScoring = async (authorId: string, currentMarked: boolean) => {
+    // Kiểm tra xem authorId đã đang được xử lý chưa
+    if (processingAuthorIds.has(authorId)) {
+      console.log(`Author ${authorId} đang được xử lý, bỏ qua lệnh gọi trùng lặp`);
+      return;
     }
+    
+    // Gọi hàm debounced để tránh gọi nhiều lần
+    debouncedMarkForScoring(authorId, currentMarked);
   };
 
   const columns: GridColDef[] = [
@@ -100,9 +171,10 @@ export default function MarkedWorksPage() {
         const author = params.row.authors && params.row.authors[0];
         if (!author) return <div>-</div>;
         
-        const isMarked = author.markedForScoring === true;
+        // Kiểm tra xem tác giả có được đăng ký (có AuthorRegistration) hay không
+        const isMarked = author.authorRegistration != null;
         const authorId = author.id;
-        const isLoading = markingAuthorId === authorId;
+        const isLoading = markingAuthorId === authorId || processingAuthorIds.has(authorId);
         
         return (
           <Tooltip 
@@ -120,7 +192,7 @@ export default function MarkedWorksPage() {
                     <Switch
                       checked={isMarked}
                       onChange={() => handleMarkForScoring(authorId, isMarked)}
-                      disabled={markForScoringMutation.isPending}
+                      disabled={markForScoringMutation.isPending || processingAuthorIds.size > 0}
                       color="primary"
                     />
                   }
@@ -219,7 +291,7 @@ export default function MarkedWorksPage() {
   ];
 
   // Chỉ lấy các công trình mà người dùng là tác giả (có thông tin author)
-  const filteredWorks = data?.data?.filter((work: Work) => work.authors && work.authors.length > 0) || [];
+  const filteredWorks = localWorks?.filter((work: Work) => work.authors && work.authors.length > 0) || [];
 
   if (isPending) return <CircularProgress />;
   if (error) return <p>Lỗi: {(error as Error).message}</p>;

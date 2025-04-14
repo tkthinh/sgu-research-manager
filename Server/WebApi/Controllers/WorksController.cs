@@ -10,6 +10,7 @@ using Domain.Interfaces;
 using Domain.Enums;
 using Application.Shared.Services;
 using Application.SystemConfigs;
+using Application.AcademicYears;
 
 namespace WebApi.Controllers
 {
@@ -22,7 +23,7 @@ namespace WebApi.Controllers
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
-        private readonly ISystemConfigService _systemConfigService;
+        private readonly IAcademicYearService _academicYearService;
 
         public WorksController(
             IWorkService workService, 
@@ -30,14 +31,14 @@ namespace WebApi.Controllers
             IHubContext<NotificationHub> hubContext, 
             IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService,
-            ISystemConfigService systemConfigService)
+            IAcademicYearService academicYearService)
         {
             _workService = workService;
             _logger = logger;
             _hubContext = hubContext;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
-            _systemConfigService = systemConfigService;
+            _academicYearService = academicYearService;
         }
 
         [HttpGet]
@@ -83,15 +84,15 @@ namespace WebApi.Controllers
         {
             try
             {
-                // Lấy thông tin SystemConfig hiện tại
-                var currentSystemConfig = await _systemConfigService.GetCurrentActiveSystemConfig();
-                if (currentSystemConfig == null)
+                // Lấy năm học hiện tại
+                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear();
+                if (currentAcademicYear == null)
                 {
-                    return BadRequest(new ApiResponse<object>(false, "Không có đợt kê khai nào đang mở. Vui lòng thử lại sau."));
+                    return BadRequest(new ApiResponse<object>(false, "Không có năm học nào đang mở. Vui lòng thử lại sau."));
                 }
 
-                // Gán SystemConfigId cho công trình
-                request.SystemConfigId = currentSystemConfig.Id;
+                // Gán AcademicYearId cho công trình
+                request.AcademicYearId = currentAcademicYear.Id;
 
                 var work = await _workService.CreateWorkWithAuthorAsync(request);
                 return CreatedAtAction(nameof(GetWork), new { id = work.Id },
@@ -249,14 +250,14 @@ namespace WebApi.Controllers
                 if (work == null)
                     return NotFound(new ApiResponse<WorkDto>(false, "Công trình không tồn tại"));
 
-                // Admin có thể thay đổi đợt kê khai của công trình nếu cần
-                if (request.WorkRequest?.SystemConfigId.HasValue == true)
+                // Admin có thể thay đổi năm học của công trình nếu cần
+                if (request.WorkRequest?.AcademicYearId.HasValue == true)
                 {
-                    // Kiểm tra xem SystemConfig có tồn tại không
-                    var systemConfig = await _systemConfigService.GetByIdAsync(request.WorkRequest.SystemConfigId.Value);
-                    if (systemConfig == null)
+                    // Kiểm tra xem AcademicYear có tồn tại không
+                    var academicYear = await _academicYearService.GetByIdAsync(request.WorkRequest.AcademicYearId.Value);
+                    if (academicYear == null)
                     {
-                        return BadRequest(new ApiResponse<object>(false, "Đợt kê khai không tồn tại"));
+                        return BadRequest(new ApiResponse<object>(false, "Năm học không tồn tại"));
                     }
                 }
 
@@ -350,10 +351,10 @@ namespace WebApi.Controllers
                     _logger.LogInformation("Công trình {WorkId} đã có tác giả được xác nhận hợp lệ. Tác giả {UserId} chỉ có thể cập nhật thông tin tác giả", workId, userId);
                 }
 
-                // Đảm bảo người dùng không thể thay đổi SystemConfigId
+                // Đảm bảo người dùng không thể thay đổi AcademicYearId
                 if (updatedRequest.WorkRequest != null)
                 {
-                    updatedRequest.WorkRequest.SystemConfigId = null; // Không cho phép người dùng thay đổi đợt kê khai
+                    updatedRequest.WorkRequest.AcademicYearId = null; // Không cho phép người dùng thay đổi năm học
                 }
 
                 // Tiến hành cập nhật công trình với request đã được điều chỉnh
@@ -461,25 +462,6 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpGet("system-config/{systemConfigId}")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorksBySystemConfigId([FromRoute] Guid systemConfigId)
-        {
-            try
-            {
-                var works = await _workService.GetWorksBySystemConfigIdAsync(systemConfigId);
-                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
-                    true,
-                    "Lấy danh sách công trình theo đợt kê khai thành công",
-                    works
-                ));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo đợt kê khai");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
-        }
-
         [HttpGet("academic-year/{academicYearId}")]
         public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorksByAcademicYearId([FromRoute] Guid academicYearId)
         {
@@ -495,32 +477,6 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo năm học");
-                return BadRequest(new ApiResponse<object>(false, ex.Message));
-            }
-        }
-
-        [HttpGet("my-works/system-config/{systemConfigId}")]
-        [Authorize(Roles = "User")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetCurrentUserWorksBySystemConfigId([FromRoute] Guid systemConfigId)
-        {
-            try
-            {
-                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
-                if (!isSuccess)
-                {
-                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
-                }
-
-                var works = await _workService.GetCurrentUserWorksBySystemConfigIdAsync(userId, systemConfigId);
-                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
-                    true,
-                    "Lấy danh sách công trình của người dùng theo đợt kê khai thành công",
-                    works
-                ));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình của người dùng theo đợt kê khai");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
