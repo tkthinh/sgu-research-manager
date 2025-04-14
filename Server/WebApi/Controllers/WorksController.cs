@@ -74,7 +74,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "User")]
+        [Authorize(Roles = "User, Manager")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> CreateWork([FromBody] CreateWorkRequestDto request)
         {
             try
