@@ -30,7 +30,7 @@ export default function App() {
   const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
   const [showProfileUpdateDialog, setShowProfileUpdateDialog] = useState(false);
 
-  const { user, loading } = useAuth();
+  const { user, loading, refreshUserInfo } = useAuth();
 
   const userRole = user?.role;
 
@@ -72,15 +72,20 @@ export default function App() {
   // Update session when user changes
   useEffect(() => {
     if (user) {
-      if (isUserProfileIncomplete(user)) {
+      const profileIncomplete = isUserProfileIncomplete(user);
+    
+      // Only show the dialog if we're not already on the update info page
+      if (profileIncomplete && location.pathname !== "/cap-nhat-thong-tin") {
         setShowProfileUpdateDialog(true);
+      } else {
+        setShowProfileUpdateDialog(false);
       }
       
       setCustomSession({ user });
     } else if (!loading) {
       setCustomSession(null);
     }
-  }, [user, loading]);
+  }, [user, loading, location.pathname]);
 
   // Automatically sign out user when token expires
   useEffect(() => {

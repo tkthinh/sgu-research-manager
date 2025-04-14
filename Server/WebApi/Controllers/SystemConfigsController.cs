@@ -36,8 +36,9 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error getting system configuration");
-                return BadRequest(new ApiResponse<SystemConfigDto>(false, "Có lỗi xảy ra khi lấy cấu hình hệ thống: " + ex.Message));
+                return BadRequest(new ApiResponse<IEnumerable<SystemConfigDto>>(false, "Có lỗi xảy ra khi lấy cấu hình hệ thống: " + ex.Message));
             }
+                
         }
 
         [HttpGet("check")]
@@ -73,7 +74,7 @@ namespace WebApi.Controllers
                 var configs = await systemConfigService.GetSystemConfigsOfYear(academicYearId);
                 if(configs == null || !configs.Any())
                 {
-                    return NotFound(new ApiResponse<IEnumerable<SystemConfigDto>>(false, "Không tìm thấy cấu hình hệ thống cho năm học này"));
+                    return Ok(new ApiResponse<IEnumerable<SystemConfigDto>>(true, "Không tìm thấy cấu hình hệ thống cho năm học này", null));
                 }
 
                 return Ok(new ApiResponse<IEnumerable<SystemConfigDto>>(

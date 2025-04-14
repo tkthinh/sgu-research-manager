@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Box,
@@ -9,13 +8,16 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import * as z from "zod";
+import { useAuth } from "../../app/shared/contexts/AuthContext";
+import { changePassword } from "../../lib/api/authApi";
 import { getDepartments } from "../../lib/api/departmentsApi";
 import { getFields } from "../../lib/api/fieldsApi";
-import { getUserById, updateUser } from "../../lib/api/usersApi";
-import { changePassword } from "../../lib/api/authApi";
+import { getMyInfo, getUserById, updateUser } from "../../lib/api/usersApi";
 import { AcademicTitle } from "../../lib/types/enums/AcademicTitle";
 import { OfficerRank } from "../../lib/types/enums/OfficerRank";
 import { Department } from "../../lib/types/models/Department";
@@ -42,7 +44,9 @@ const passwordSchema = z
   .object({
     currentPassword: z.string().min(1, "Mật khẩu hiện tại không được để trống"),
     newPassword: z.string().min(1, "Mật khẩu mới không được để trống"),
-    confirmNewPassword: z.string().min(1, "Xác nhận mật khẩu mới không được để trống"),
+    confirmNewPassword: z
+      .string()
+      .min(1, "Xác nhận mật khẩu mới không được để trống"),
   })
   .refine((data) => data.newPassword === data.confirmNewPassword, {
     message: "Mật khẩu mới không khớp",
@@ -50,7 +54,8 @@ const passwordSchema = z
   });
 
 export default function UpdateInfoPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [userInfo, setUserInfo] = useState<User | null>(null);
+  const { setUser, refreshUserInfo } = useAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(false);
@@ -74,36 +79,45 @@ export default function UpdateInfoPage() {
     resolver: zodResolver(passwordSchema),
   });
 
-  // Load user from localStorage
+  // Moved useQuery hook to top-level of the component
+  const { data: userData, isLoading: isUserLoading } = useQuery({
+    queryKey: ["user"],
+    queryFn: getMyInfo,
+  });
+
+  // Use useEffect to update state when userData changes
   useEffect(() => {
-    const localUser = localStorage.getItem("user");
-    if (localUser) {
-      const parsedUser = JSON.parse(localUser);
-      setUser(parsedUser);
+    if (userData?.success && userData.data) {
+      setUserInfo(userData.data);
       reset({
         departmentId:
-          parsedUser.departmentId === "00000000-0000-0000-0000-000000000000"
+          userData.data.departmentId === "00000000-0000-0000-0000-000000000000"
             ? ""
-            : parsedUser.departmentId,
+            : userData.data.departmentId,
         fieldId:
-          parsedUser.fieldId === "00000000-0000-0000-0000-000000000000"
+          userData.data.fieldId === "00000000-0000-0000-0000-000000000000"
             ? ""
-            : parsedUser.fieldId,
+            : userData.data.fieldId,
         academicTitle:
-          parsedUser.academicTitle === "Unknown"
+          userData.data.academicTitle === "Unknown"
             ? ""
-            : parsedUser.academicTitle,
+            : userData.data.academicTitle,
         officerRank:
-          parsedUser.officerRank === "Unknown" ? "" : parsedUser.officerRank,
-        fullName: parsedUser.fullName,
-        email: parsedUser.email === "-" ? "" : parsedUser.email,
+          userData.data.officerRank === "Unknown"
+            ? ""
+            : userData.data.officerRank,
+        fullName: userData.data.fullName,
+        email: userData.data.email === "-" ? "" : userData.data.email,
         phoneNumber:
-          parsedUser.phoneNumber === "-" ? "" : parsedUser.phoneNumber,
+          userData.data.phoneNumber === "-" ? "" : userData.data.phoneNumber,
         specialization:
-          parsedUser.specialization === "-" ? "" : parsedUser.specialization,
+          userData.data.specialization === "-"
+            ? ""
+            : userData.data.specialization,
       });
     }
-  }, [reset]);
+    console.log("userData", userData);
+  }, [userData, reset]);
 
   // Load departments and fields
   useEffect(() => {
@@ -119,25 +133,26 @@ export default function UpdateInfoPage() {
 
   const onSubmit = async (formData: Partial<User>) => {
     try {
-      if (!user) return;
-      const res = await updateUser(user.id, formData);
+      if (!userInfo) return;
+      const res = await updateUser(userInfo.id, formData);
       if (res.success) {
         // Fetch updated user
-        const updatedRes = await getUserById(user.id);
+        const updatedRes = await getUserById(userInfo.id);
         const updatedUser = updatedRes.data;
 
-        // Update localStorage
-        localStorage.setItem("user", JSON.stringify(updatedUser));
         setUser(updatedUser);
       }
-
+      
+      await refreshUserInfo();
       toast.success("Cập nhật hồ sơ thành công");
     } catch (err) {
       toast.error("Lỗi khi cập nhật hồ sơ");
     }
   };
 
-  const onChangePasswordSubmit = async (data: z.infer<typeof passwordSchema>) => {
+  const onChangePasswordSubmit = async (
+    data: z.infer<typeof passwordSchema>,
+  ) => {
     try {
       await changePassword(data.currentPassword, data.newPassword);
       toast.success("Đổi mật khẩu thành công");
@@ -147,7 +162,7 @@ export default function UpdateInfoPage() {
     }
   };
 
-  if (!user || loading) return <CircularProgress />;
+  if (!userInfo || isUserLoading || loading) return <CircularProgress />;
 
   return (
     <>
@@ -303,7 +318,10 @@ export default function UpdateInfoPage() {
         <Typography variant="h4" fontWeight={500} sx={{ mb: 2 }}>
           Đổi mật khẩu
         </Typography>
-        <form onSubmit={handlePasswordSubmit(onChangePasswordSubmit)} noValidate>
+        <form
+          onSubmit={handlePasswordSubmit(onChangePasswordSubmit)}
+          noValidate
+        >
           <TextField
             label="Mật khẩu hiện tại"
             fullWidth

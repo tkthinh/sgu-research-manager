@@ -87,7 +87,7 @@ export const router = createBrowserRouter([
               {
                 path: "/cap-nhat-thong-tin",
                 element: (
-                  <ProtectedRoute allowedRoles={["User", "Manager", "Admin"]}>
+                  <ProtectedRoute>
                     <UpdateInfoPage />
                   </ProtectedRoute>
                 ),
