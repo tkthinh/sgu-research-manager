@@ -375,7 +375,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("my-works")]
-        [Authorize(Roles = "User")]
+        [Authorize(Roles = "User, Manager")]
         public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyWorks()
         {
             try
