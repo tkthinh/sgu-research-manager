@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using System.Transactions;
 using Application.Departments;
-using Application.Shared.Response;
 using Application.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -34,9 +33,6 @@ namespace Infrastructure.Identity.Services
             using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
-                // EPPlus requires setting a license context
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
                 using var package = new ExcelPackage(excelStream);
                 var worksheet = package.Workbook.Worksheets.FirstOrDefault();
                 if (worksheet == null)

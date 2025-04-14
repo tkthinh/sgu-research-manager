@@ -1425,8 +1425,6 @@ namespace Application.Works
                 await file.CopyToAsync(stream);
                 stream.Position = 0;
 
-                // Cấp phép dùng EPPlus trong môi trường non-commercial
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
                 using (var package = new ExcelPackage(stream))
                 {
                     var worksheet = package.Workbook.Worksheets.First();
