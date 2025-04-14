@@ -1,20 +1,24 @@
 import {
-    Box,
-    Button,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Paper,
-    Typography,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Paper,
+  Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { deleteUser, getUsers, importUserFromExcelFile } from "../../../lib/api/usersApi";
+import {
+  deleteUser,
+  getUsers,
+  importUserFromExcelFile,
+} from "../../../lib/api/usersApi";
 import { User } from "../../../lib/types/models/User";
 import { getAcademicTitle } from "../../../lib/utils/academicTitleMap";
 import { getOfficerRank } from "../../../lib/utils/officerRankMap";
@@ -26,10 +30,11 @@ export default function UserPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch users
-  const { data, error, isPending, isSuccess, dataUpdatedAt, refetch } = useQuery({
-    queryKey: ["users"],
-    queryFn: getUsers,
-  });
+  const { data, error, isPending, isSuccess, dataUpdatedAt, refetch } =
+    useQuery({
+      queryKey: ["users"],
+      queryFn: getUsers,
+    });
 
   // Toast notifications on success and error
   useEffect(() => {
@@ -54,7 +59,10 @@ export default function UserPage() {
     setOpen(true);
   };
 
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    refetch();
+  };
 
   // Delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -76,6 +84,7 @@ export default function UserPage() {
     onSuccess: () => {
       toast.success("Xóa người dùng thành công!");
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      refetch();
       setDeleteDialogOpen(false);
     },
     onError: (error) => {
@@ -193,7 +202,9 @@ export default function UserPage() {
   return (
     <>
       {/* Admin Import Button */}
-      <Box sx={{ marginBottom: 2, display: "flex", justifyContent: "flex-end" }}>
+      <Box
+        sx={{ marginBottom: 2, display: "flex", justifyContent: "flex-end" }}
+      >
         <Button variant="contained" color="primary" onClick={handleImportClick}>
           Nhập người dùng từ Excel
         </Button>
@@ -220,7 +231,10 @@ export default function UserPage() {
           <Typography>Bạn có chắc chắn muốn xóa người dùng này?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleDeleteCancel} disabled={deleteMutation.isPending}>
+          <Button
+            onClick={handleDeleteCancel}
+            disabled={deleteMutation.isPending}
+          >
             Hủy
           </Button>
           <Button

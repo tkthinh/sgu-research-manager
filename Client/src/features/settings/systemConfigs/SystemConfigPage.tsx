@@ -73,7 +73,10 @@ export default function SystemConfigPage() {
     setOpen(true);
   };
 
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    refetch();
+  }
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -93,8 +96,8 @@ export default function SystemConfigPage() {
     onSuccess: () => {
       toast.success("Xóa cấu hình thành công!");
       queryClient.invalidateQueries({ queryKey: ["system-configs"] });
-      setDeleteDialogOpen(false);
       refetch();
+      setDeleteDialogOpen(false);
     },
     onError: (error) => {
       toast.error("Lỗi khi xóa: " + (error as Error).message);
