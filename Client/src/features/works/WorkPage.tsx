@@ -9,7 +9,6 @@ import {
   Typography,
   Tooltip,
   Container,
-  IconButton,
   FormControl,
   InputLabel,
   Select,
@@ -21,7 +20,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
-import { deleteWork, getMyWorks, getCurrentUserWorksBySystemConfigId, getCurrentUserWorksByAcademicYearId } from "../../lib/api/worksApi";
+import { deleteWork, getMyWorks, getCurrentUserWorksByAcademicYearId } from "../../lib/api/worksApi";
 import { formatMonthYear } from "../../lib/utils/dateUtils";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -38,12 +37,7 @@ import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 import { exportWorks } from "../../lib/api/excelApi";
 import { useAuth } from "../../app/shared/contexts/AuthContext";
 import { useSystemStatus } from '../../hooks/useSystemStatus';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import { getAcademicYears } from "../../lib/api/academicYearApi";
-import { getSystemConfigs, getSystemConfigByAcademicYearId } from "../../lib/api/systemConfigApi";
-import { SystemConfig } from "../../lib/types/models/SystemConfig";
-import { AcademicYear } from "../../lib/types/models/AcademicYear";
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
@@ -51,13 +45,13 @@ export default function WorksPage() {
   const queryClient = useQueryClient();
   const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
   const { user } = useAuth();
-  const { isSystemOpen, canEditWork, systemConfig } = useSystemStatus();
+  const { isSystemOpen, canEditWork } = useSystemStatus();
 
   // State cho bộ lọc
   const [academicYearId, setAcademicYearId] = useState<string>("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   
-  // State tạm thời cho dialog
+  // Thêm state mới để theo dõi tùy chọn đã chọn trước khi áp dụng
   const [tempAcademicYearId, setTempAcademicYearId] = useState<string>("");
 
   // Fetch danh sách năm học cho bộ lọc
@@ -88,6 +82,24 @@ export default function WorksPage() {
 
   // Sử dụng hook để lấy dữ liệu form
   const formData = useWorkFormData();
+
+  // Sử dụng hook để quản lý các dialog và logic cập nhật công trình
+  const {
+    selectedWork,
+    openUpdateDialog,
+    activeTab,
+    createWorkMutation,
+    updateWorkMutation,
+    handleOpenUpdateDialog,
+    handleCloseUpdateDialog,
+    handleUpdateSubmit,
+    setActiveTab,
+  } = useWorkDialogs({
+    userId: user?.id ?? "",
+    worksData,
+    refetchWorks: refetch,
+    isAuthorPage: true, // Đặt là true vì đây là trang của tác giả
+  });
 
   // Lấy thông tin đồng tác giả khi có dữ liệu công trình
   useEffect(() => {
@@ -247,8 +259,8 @@ export default function WorksPage() {
   };
 
   // Xử lý thay đổi năm học
-  const handleAcademicYearChange = (event) => {
-    setTempAcademicYearId(event.target.value);
+  const handleAcademicYearChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setTempAcademicYearId(event.target.value as string);
   };
 
   // Áp dụng bộ lọc
@@ -627,11 +639,12 @@ export default function WorksPage() {
     }
     
     const selectedYear = academicYearsData?.data?.find(year => year.id === academicYearId);
+    const filterInfo = `Năm học: ${selectedYear?.name || academicYearId}`;
     
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <Typography variant="body1">
-          <strong>Bộ lọc hiện tại:</strong> Năm học: {selectedYear?.name || academicYearId}
+          <strong>Bộ lọc hiện tại:</strong> {filterInfo}
         </Typography>
         <Button 
           size="small" 
@@ -646,57 +659,6 @@ export default function WorksPage() {
     );
   };
 
-  // Dialog bộ lọc
-  const FilterDialog = () => (
-    <Dialog open={filterDialogOpen} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
-      <DialogTitle>Lọc công trình theo năm học</DialogTitle>
-      <DialogContent>
-        <Grid container spacing={2} sx={{ mt: 1 }}>
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel id="academic-year-label">Năm học</InputLabel>
-              <Select
-                labelId="academic-year-label"
-                value={tempAcademicYearId}
-                onChange={handleAcademicYearChange}
-                label="Năm học"
-              >
-                <MenuItem value="">
-                  <em>-- Chọn năm học --</em>
-                </MenuItem>
-                {academicYearsData?.data?.map((year) => (
-                  <MenuItem key={year.id} value={year.id}>
-                    {year.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleCloseFilterDialog} color="inherit">
-          Hủy
-        </Button>
-        <Button 
-          onClick={handleResetFilter} 
-          color="error"
-          startIcon={<RestartAltIcon />}
-        >
-          Xóa bộ lọc
-        </Button>
-        <Button 
-          onClick={handleApplyFilter} 
-          color="primary" 
-          variant="contained"
-          startIcon={<FilterListIcon />}
-        >
-          Áp dụng
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-
   return (
     <Container maxWidth="xl">
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
@@ -708,7 +670,7 @@ export default function WorksPage() {
             onClick={handleOpenFilterDialog}
             startIcon={<FilterListIcon />}
           >
-            Lọc theo năm học
+            Lọc
           </Button>
           <Button 
             variant="contained" 
@@ -741,8 +703,6 @@ export default function WorksPage() {
         <GenericTable columns={columns} data={worksData.data || []} />
       )}
 
-      <FilterDialog />
-
       {/* Sử dụng component dialog tái sử dụng */}
       <WorkUpdateDialog
         open={openUpdateDialog}
@@ -759,6 +719,55 @@ export default function WorksPage() {
         scimagoFields={formData.scimagoFields}
         fields={formData.fields}
       />
+
+      {/* Dialog bộ lọc */}
+      <Dialog open={filterDialogOpen} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Lọc công trình</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id="academic-year-label">Năm học</InputLabel>
+                <Select
+                  labelId="academic-year-label"
+                  value={tempAcademicYearId}
+                  onChange={handleAcademicYearChange}
+                  label="Năm học"
+                >
+                  <MenuItem value="">
+                    <em>-- Chọn năm học --</em>
+                  </MenuItem>
+                  {academicYearsData?.data?.map((year) => (
+                    <MenuItem key={year.id} value={year.id}>
+                      {year.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseFilterDialog} color="inherit">
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleResetFilter} 
+            color="error"
+            startIcon={<RestartAltIcon />}
+          >
+            Xóa bộ lọc
+          </Button>
+          <Button 
+            onClick={handleApplyFilter} 
+            color="primary" 
+            variant="contained"
+            startIcon={<FilterListIcon />}
+          >
+            Áp dụng
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
