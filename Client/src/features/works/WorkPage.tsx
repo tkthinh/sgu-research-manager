@@ -608,25 +608,6 @@ export default function WorksPage() {
         );
       },
     },
-    {
-      field: "academicYearName",
-      headerName: "Năm học",
-      type: "string",
-      width: 150,
-      renderCell: (params: any) => {
-        return <div>{params.value || "-"}</div>;
-      },
-    },
-    {
-      field: "exchangeDeadline",
-      headerName: "Hạn quy đổi",
-      type: "string",
-      width: 150,
-      renderCell: (params: any) => {
-        if (!params.value) return <div>-</div>;
-        return <div>{formatMonthYear(params.value)}</div>;
-      },
-    },
   ];
 
   if (isLoadingWorks) return <CircularProgress />;

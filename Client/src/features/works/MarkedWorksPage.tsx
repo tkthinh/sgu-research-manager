@@ -2,10 +2,9 @@ import {
   Box,
   CircularProgress,
   Paper,
-  Switch,
+  Checkbox,
   Tooltip,
   Alert,
-  FormControlLabel,
   Typography,
   Table,
   TableBody,
@@ -16,7 +15,7 @@ import {
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
 import { getMyWorks, setMarkedForScoring } from "../../lib/api/worksApi";
@@ -24,90 +23,88 @@ import { getUserConversionResult } from "../../lib/api/usersApi";
 import { Work } from "../../lib/types/models/Work";
 import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 import { useAuth } from "../../app/shared/contexts/AuthContext";
-import { debounce } from 'lodash';
 
 export default function MarkedWorksPage() {
   const queryClient = useQueryClient();
   const [markingAuthorId, setMarkingAuthorId] = useState<string | null>(null);
-  const [processingAuthorIds, setProcessingAuthorIds] = useState<Set<string>>(new Set());
+  const [optimisticUpdates, setOptimisticUpdates] = useState<Map<string, boolean>>(new Map());
   const { user } = useAuth();
-  const [localWorks, setLocalWorks] = useState<Work[]>([]);
-
-  // Fetch my works
+  
+  // Fetch my works với caching cải tiến
   const { data, error, isPending, refetch } = useQuery({
     queryKey: ["myWorks"],
     queryFn: getMyWorks,
-    staleTime: 0, // Luôn refetch khi cần
+    staleTime: 30000, // Cache trong 30 giây để tránh refetch không cần thiết
+    refetchOnWindowFocus: false, // Không refetch khi focus lại cửa sổ
   });
 
-  // Cập nhật localWorks khi data thay đổi
-  useEffect(() => {
-    if (data?.data) {
-      setLocalWorks(data.data);
-    }
-  }, [data]);
-
-  // Fetch conversion result
+  // Fetch conversion result với caching tương tự
   const { data: conversionData, isPending: isConversionPending, refetch: refetchConversion } = useQuery({
     queryKey: ["userConversionResult", user?.id],
     queryFn: () => getUserConversionResult(user?.id || ""),
-    staleTime: 0,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
     enabled: !!user?.id,
   });
 
-  // Mutation để cập nhật trạng thái đánh dấu
+  // Kiểm tra xem tác giả có được đánh dấu không, ưu tiên trạng thái optimistic
+  const isAuthorMarked = useCallback((author: any): boolean => {
+    if (!author) return false;
+    
+    // Kiểm tra optimistic update trước
+    if (optimisticUpdates.has(author.id)) {
+      return optimisticUpdates.get(author.id) as boolean;
+    }
+    
+    // Nếu không có optimistic update, kiểm tra dữ liệu từ API
+    return author.authorRegistration !== null && author.authorRegistration !== undefined;
+  }, [optimisticUpdates]);
+
+  // Mutation để cập nhật trạng thái đánh dấu với optimistic updates
   const markForScoringMutation = useMutation({
     mutationFn: (params: { authorId: string; marked: boolean }) => {
       setMarkingAuthorId(params.authorId);
-      console.log(`Đánh dấu authorId ${params.authorId} với trạng thái ${params.marked}`);
+      
+      // Cập nhật optimistic ngay lập tức
+      setOptimisticUpdates(prev => {
+        const newMap = new Map(prev);
+        newMap.set(params.authorId, params.marked);
+        return newMap;
+      });
+      
       return setMarkedForScoring(params.authorId, params.marked);
     },
     onSuccess: (_, variables) => {
+      const { authorId } = variables;
       toast.success("Cập nhật trạng thái đánh dấu thành công");
       
-      // Cập nhật UI ngay lập tức
-      setLocalWorks(prevWorks => {
-        return prevWorks.map(work => {
-          if (work.authors && work.authors.length > 0) {
-            const authorIndex = work.authors.findIndex(a => a.id === variables.authorId);
-            if (authorIndex >= 0) {
-              // Tạo bản sao của mảng authors
-              const updatedAuthors = [...work.authors];
-              // Cập nhật thuộc tính authorRegistration của author
-              updatedAuthors[authorIndex] = {
-                ...updatedAuthors[authorIndex],
-                authorRegistration: variables.marked ? {
-                  authorId: variables.authorId,
-                  academicYearId: '', // ID năm học sẽ được backend xử lý
-                } : null
-              };
-              // Trả về work đã cập nhật với authors mới
-              return { ...work, authors: updatedAuthors };
-            }
-          }
-          return work;
-        });
-      });
+      // Xóa cache cũ
+      queryClient.invalidateQueries({ queryKey: ["myWorks"] });
+      queryClient.invalidateQueries({ queryKey: ["userConversionResult", user?.id] });
       
-      // Xóa cache và refetch dữ liệu mới
-      queryClient.removeQueries({ queryKey: ["myWorks"] });
-      queryClient.removeQueries({ queryKey: ["userConversionResult", user?.id] });
-      
-      // Bắt buộc refetch dữ liệu sau một khoảng thời gian ngắn
+      // Đặt thời gian ngắn hơn để cải thiện trải nghiệm người dùng
       setTimeout(() => {
-        refetch();
-        refetchConversion();
-        setMarkingAuthorId(null);
-        // Xóa authorId khỏi danh sách đang xử lý
-        setProcessingAuthorIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(variables.authorId);
-          return newSet;
+        Promise.all([refetch(), refetchConversion()]).then(() => {
+          // Xóa optimistic update sau khi dữ liệu được refetch thành công
+          setOptimisticUpdates(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(authorId);
+            return newMap;
+          });
+          setMarkingAuthorId(null);
         });
-      }, 500);
+      }, 300); // Giảm thời gian chờ xuống còn 300ms
     },
     onError: (error: any, variables) => {
-      console.error("Lỗi khi cập nhật trạng thái đánh dấu:", error);
+      const { authorId } = variables;
+      
+      // Hủy bỏ optimistic update khi có lỗi
+      setOptimisticUpdates(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(authorId);
+        return newMap;
+      });
+      
       // Kiểm tra nếu lỗi chứa thông báo về vượt quá giới hạn
       const errorMessage = error.response?.data?.message || error.message || 'Đã có lỗi xảy ra';
       if (errorMessage.includes("vượt quá giới hạn") || errorMessage.includes("quá giới hạn")) {
@@ -117,64 +114,36 @@ export default function MarkedWorksPage() {
       }
       setMarkingAuthorId(null);
       
-      // Xóa authorId khỏi danh sách đang xử lý
-      setProcessingAuthorIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(variables.authorId);
-        return newSet;
-      });
-      
-      // Refetch để đảm bảo hiển thị dữ liệu chính xác
+      // Refetch dữ liệu để đảm bảo UI đồng bộ với server
       refetch();
     },
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedMarkForScoring = useCallback(
-    debounce((authorId: string, currentMarked: boolean) => {
-      // Thêm authorId vào danh sách đang xử lý
-      setProcessingAuthorIds(prev => {
-        const newSet = new Set(prev);
-        newSet.add(authorId);
-        return newSet;
-      });
-      
-      // Gọi mutation với trạng thái ngược lại của currentMarked
-      markForScoringMutation.mutateAsync({
+  const handleMarkForScoring = useCallback(async (authorId: string, isCurrentlyMarked: boolean) => {
+    try {
+      await markForScoringMutation.mutateAsync({
         authorId,
-        marked: !currentMarked
-      }).catch(() => {
-        // Lỗi đã được xử lý trong onError của mutation
+        marked: !isCurrentlyMarked
       });
-    }, 300),
-    [markForScoringMutation] // Phụ thuộc vào mutation
-  );
-
-  const handleMarkForScoring = async (authorId: string, currentMarked: boolean) => {
-    // Kiểm tra xem authorId đã đang được xử lý chưa
-    if (processingAuthorIds.has(authorId)) {
-      console.log(`Author ${authorId} đang được xử lý, bỏ qua lệnh gọi trùng lặp`);
-      return;
+    } catch (error) {
+      // Lỗi đã được xử lý trong onError của mutation
     }
-    
-    // Gọi hàm debounced để tránh gọi nhiều lần
-    debouncedMarkForScoring(authorId, currentMarked);
-  };
+  }, [markForScoringMutation]);
 
-  const columns: GridColDef[] = [
+  // Tạo columns bên ngoài render cycle để tối ưu performance
+  const columns: GridColDef[] = useMemo(() => [
     {
       field: "markedForScoring",
       headerName: "Đánh dấu",
       width: 100,
       renderCell: (params: any) => {
         if (!params || !params.row) return <div>-</div>;
-        const author = params.row.authors && params.row.authors[0];
+        const author = params.row.authors?.find((a: any) => a.userId === user?.id);
         if (!author) return <div>-</div>;
         
-        // Kiểm tra xem tác giả có được đăng ký (có AuthorRegistration) hay không
-        const isMarked = author.authorRegistration != null;
+        const isMarked = isAuthorMarked(author);
         const authorId = author.id;
-        const isLoading = markingAuthorId === authorId || processingAuthorIds.has(authorId);
+        const isLoading = markingAuthorId === authorId;
         
         return (
           <Tooltip 
@@ -183,37 +152,22 @@ export default function MarkedWorksPage() {
                 : "Đánh dấu công trình này để tính điểm"
             }
           >
-            <span>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               {isLoading ? (
-                <CircularProgress size={24} />
+                <CircularProgress size={20} />
               ) : (
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={isMarked}
-                      onChange={() => handleMarkForScoring(authorId, isMarked)}
-                      disabled={markForScoringMutation.isPending || processingAuthorIds.size > 0}
-                      color="primary"
-                    />
-                  }
-                  label=""
+                <Checkbox
+                  checked={isMarked}
+                  onChange={() => handleMarkForScoring(authorId, isMarked)}
+                  disabled={markForScoringMutation.isPending}
+                  color="primary"
                 />
               )}
-            </span>
+            </div>
           </Tooltip>
         );
       },
     },
-    // {
-    //   field: "stt",
-    //   headerName: "STT",
-    //   width: 50,
-    //   renderCell: (params: any) => {
-    //     if (!params || !params.row) return null;
-    //     const rowIndex = Array.from(params.api.getAllRowIds()).findIndex((id: any) => id === params.row.id);
-    //     return <div>{rowIndex + 1}</div>;
-    //   },
-    // },
     {
       field: "title",
       headerName: "Tên công trình",
@@ -248,7 +202,7 @@ export default function MarkedWorksPage() {
       width: 180,
       renderCell: (params: any) => {
         if (!params || !params.row) return <div>-</div>;
-        const author = params.row.authors && params.row.authors[0];
+        const author = params.row.authors?.find((a: any) => a.userId === user?.id);
         return <div>{author ? author.purposeName : "-"}</div>;
       },
     },
@@ -259,7 +213,7 @@ export default function MarkedWorksPage() {
       width: 130,
       renderCell: (params: any) => {
         if (!params || !params.row) return <div>-</div>;
-        const author = params.row.authors && params.row.authors[0];
+        const author = params.row.authors?.find((a: any) => a.userId === user?.id);
         return <div>{author ? author.authorRoleName : "-"}</div>;
       },
     },
@@ -269,13 +223,14 @@ export default function MarkedWorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
+        const author = params.row.authors?.find((a: any) => a.userId === user?.id);
         if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
           return <div>-</div>;
         }
         return <div>{getScoreLevelText(author.scoreLevel)}</div>;
       },
     },
+    
     {
       field: "authorHour",
       headerName: "Giờ tác giả",
@@ -283,15 +238,39 @@ export default function MarkedWorksPage() {
       width: 120,
       renderCell: (params: any) => {
         if (!params || !params.row) return <div>-</div>;
-        const author = params.row.authors && params.row.authors[0];
+        const author = params.row.authors?.find((a: any) => a.userId === user?.id);
         return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
       },
     },
-    
-  ];
+  ], [user?.id, isAuthorMarked, markingAuthorId, markForScoringMutation.isPending, handleMarkForScoring]);
 
-  // Chỉ lấy các công trình mà người dùng là tác giả (có thông tin author)
-  const filteredWorks = localWorks?.filter((work: Work) => work.authors && work.authors.length > 0) || [];
+  // Trước tính toán filteredWorks chỉ khi data thay đổi
+  const filteredWorks = useMemo(() => data?.data?.filter((work: Work) => 
+    work.authors && work.authors.some(author => author.userId === user?.id)
+  ) || [], [data?.data, user?.id]);
+
+  // Preload dữ liệu khi trang vừa tải xong
+  useEffect(() => {
+    const preloadData = async () => {
+      try {
+        // Invalidate và refetch dữ liệu ngay lập tức khi component mount
+        await Promise.all([
+          queryClient.prefetchQuery({
+            queryKey: ["myWorks"],
+            queryFn: getMyWorks
+          }),
+          user?.id ? queryClient.prefetchQuery({
+            queryKey: ["userConversionResult", user?.id],
+            queryFn: () => getUserConversionResult(user?.id || "")
+          }) : Promise.resolve()
+        ]);
+      } catch (error) {
+        console.error("Lỗi khi preload dữ liệu:", error);
+      }
+    };
+    
+    preloadData();
+  }, [queryClient, user?.id]);
 
   if (isPending) return <CircularProgress />;
   if (error) return <p>Lỗi: {(error as Error).message}</p>;
@@ -306,7 +285,7 @@ export default function MarkedWorksPage() {
       >
       </Box>
       <Typography variant="h6" sx={{ mb: 2, mt: 3 }}>
-        Đánh dấu công trình
+        Đăng ký quy đổi giờ nghiên cứu khoa học
       </Typography>
       <Alert severity="info" sx={{ mb: 2 }}>
         Đánh dấu các công trình bạn muốn sử dụng để quy đổi. Lưu ý rằng mỗi loại công trình, cấp và mức điểm có giới hạn số lượng công trình được phép đánh dấu.
@@ -368,4 +347,4 @@ export default function MarkedWorksPage() {
       )}
     </>
   );
-} 
+}

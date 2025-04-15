@@ -1,4 +1,5 @@
 ﻿using Domain.Enums;
+using Application.AuthorRegistrations;
 
 namespace Application.Authors
 {
@@ -23,5 +24,6 @@ namespace Application.Authors
         public int WorkHour { get; set; }
         public ProofStatus ProofStatus { get; set; }
         public string? Note { get; set; }
+        public AuthorRegistrationDto? AuthorRegistration { get; set; }
     }
 }
