@@ -1,5 +1,6 @@
 ﻿using Application.AuthorRoles;
 using Application.Shared.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
@@ -18,6 +19,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AuthorRoleDto>>>> GetAuthorRoles()
         {
             var roles = await authorRoleService.GetAllAsync();
@@ -29,6 +31,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<AuthorRoleDto>>> GetAuthorRole([FromRoute] Guid id)
         {
             var role = await authorRoleService.GetByIdAsync(id);
@@ -44,6 +47,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("work-type/{workTypeId}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AuthorRoleDto>>>> GetAuthorRolesByWorkTypeId(Guid workTypeId)
         {
             var roles = await authorRoleService.GetAuthorRolesByWorkTypeIdAsync(workTypeId);
@@ -64,6 +68,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<AuthorRoleDto>>> CreateAuthorRole([FromBody] CreateAuthorRoleRequestDto requestDto)
         {
             try
@@ -92,6 +97,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateAuthorRole([FromRoute] Guid id, [FromBody] UpdateAuthorRoleRequestDto request)
         {
             try
@@ -117,6 +123,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteAuthorRole([FromRoute] Guid id)
         {
             try

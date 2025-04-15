@@ -2,6 +2,8 @@
 using Serilog;
 using OfficeOpenXml;
 using WebApi.Middlewares;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,8 +17,8 @@ builder.Host.UseSerilog((context, configuration) =>
 
 builder.Services.AddControllers(options =>
 {
-   //var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
-   //options.Filters.Add(new AuthorizeFilter(policy));
+    var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+    options.Filters.Add(new AuthorizeFilter(policy));
 });
 
 builder.Services.AddOpenApi();

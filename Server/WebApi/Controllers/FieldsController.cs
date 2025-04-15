@@ -19,6 +19,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<ApiResponse<IEnumerable<FieldDto>>>> GetFields()
         {
             var fields = await fieldService.GetAllAsync();
@@ -45,6 +46,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<FieldDto>>> CreateField([FromBody] CreateFieldRequestDto requestDto)
         {
             try
@@ -71,6 +73,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateField([FromRoute] Guid id, [FromBody] UpdateFieldRequestDto request)
         {
             try
@@ -94,6 +97,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteField([FromRoute] Guid id)
         {
             try

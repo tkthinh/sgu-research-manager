@@ -1,5 +1,6 @@
 ﻿using Application.Purposes;
 using Application.Shared.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
@@ -69,6 +70,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<PurposeDto>>> CreatePurpose([FromBody] CreatePurposeRequestDto requestDto)
         {
             try
@@ -96,6 +98,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> UpdatePurpose([FromRoute] Guid id, [FromBody] UpdatePurposeRequestDto request)
         {
             try
@@ -120,6 +123,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> DeletePurpose([FromRoute] Guid id)
         {
             try

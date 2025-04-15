@@ -1,5 +1,6 @@
 ﻿using Application.AcademicYears;
 using Application.Shared.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
@@ -18,6 +19,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AcademicYearDto>>>> GetAcademicYears()
         {
             try
@@ -37,6 +39,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<AcademicYearDto>>> GetAcademicYear([FromRoute] Guid id)
         {
             try
@@ -77,6 +80,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<AcademicYearDto>>> CreateAcademicYear([FromBody] CreateAcademicYearRequestDto requestDto)
         {
             try
@@ -104,6 +108,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateAcademicYear([FromRoute] Guid id, [FromBody] UpdateAcademicYearRequestDto requestDto)
         {
             try
@@ -129,6 +134,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteAcademicYear([FromRoute] Guid id)
         {
             try

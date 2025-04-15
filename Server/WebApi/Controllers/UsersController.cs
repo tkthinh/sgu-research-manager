@@ -34,6 +34,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin, Manager")]
         public async Task<ActionResult<ApiResponse<IEnumerable<UserWithRoleDto>>>> GetUsers()
         {
             var users = (await userService.GetAllAsync()).ToList();
@@ -107,7 +108,6 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
         public async Task<ActionResult<ApiResponse<object>>> UpdatePersonalProfile([FromRoute] Guid id, [FromBody] UpdateUserRequestDto requestDto)
         {
             var currentUserId = httpContextAccessor.HttpContext?.User.FindFirst(c => c.Type == "id");
@@ -200,7 +200,6 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize]
         public async Task<ActionResult<ApiResponse<UserDto>>> GetCurrentUser()
         {
             var currentUserId = httpContextAccessor.HttpContext?.User.FindFirst(c => c.Type == "id");
@@ -385,6 +384,7 @@ namespace WebApi.Controllers
 
 
         [HttpPost("import")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> ImportUsers(IFormFile file, [FromServices] IUserImportService importService)
         {
             if (file == null || file.Length == 0)

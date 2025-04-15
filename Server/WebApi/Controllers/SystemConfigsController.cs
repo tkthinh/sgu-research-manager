@@ -7,7 +7,6 @@ namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "Admin")] // Chỉ admin có quyền truy cập
     public class SystemConfigsController : ControllerBase
     {
         private readonly ISystemConfigService systemConfigService;
@@ -22,6 +21,7 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<IEnumerable<SystemConfigDto>>>> GetSystemConfigs()
         {
             try
@@ -38,7 +38,7 @@ namespace WebApi.Controllers
                 logger.LogError(ex, "Error getting system configuration");
                 return BadRequest(new ApiResponse<IEnumerable<SystemConfigDto>>(false, "Có lỗi xảy ra khi lấy cấu hình hệ thống: " + ex.Message));
             }
-                
+
         }
 
         [HttpGet("check")]
@@ -72,7 +72,7 @@ namespace WebApi.Controllers
             try
             {
                 var configs = await systemConfigService.GetSystemConfigsOfYear(academicYearId);
-                if(configs == null || !configs.Any())
+                if (configs == null || !configs.Any())
                 {
                     return Ok(new ApiResponse<IEnumerable<SystemConfigDto>>(true, "Không tìm thấy cấu hình hệ thống cho năm học này", null));
                 }
@@ -91,6 +91,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<SystemConfigDto>>> CreateSystemConfig([FromBody] CreateSystemConfigRequestDto request)
         {
             try
@@ -119,6 +120,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("notify/{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> NotifySystemConfig([FromRoute] Guid id, [FromBody] NotifySystemConfigRequestDto request)
         {
             try
@@ -140,6 +142,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateSystemConfig([FromRoute] Guid id, [FromBody] UpdateSystemConfigRequestDto request)
         {
             try
@@ -167,6 +170,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteSystemConfig([FromRoute] Guid id)
         {
             try

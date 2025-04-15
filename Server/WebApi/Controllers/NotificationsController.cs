@@ -19,7 +19,6 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("global")]
-        [Authorize]
         public async Task<ActionResult<IEnumerable<NotificationDto>>> GetGlobalNotifications()
         {
             var notifications = await notificationService.GetGlobalNotificationsAsync();
@@ -27,7 +26,6 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize]
         public async Task<ActionResult<IEnumerable<NotificationDto>>> GetUserNotifications()
         {
             var userId = GetCurrentUserId();

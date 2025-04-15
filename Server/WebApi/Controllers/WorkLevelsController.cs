@@ -1,6 +1,7 @@
 ﻿using Application.Shared.Response;
 using Application.WorkLevels;
 using Application.WorkTypes;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApi.Controllers
@@ -74,6 +75,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<WorkLevelDto>>> CreateWorkLevel([FromBody] CreateWorkLevelRequestDto requestDto)
         {
             try
@@ -101,6 +103,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateWorkLevel([FromRoute] Guid id, [FromBody] UpdateWorkLevelRequestDto request)
         {
             try
@@ -125,6 +128,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteWorkLevel([FromRoute] Guid id)
         {
             try

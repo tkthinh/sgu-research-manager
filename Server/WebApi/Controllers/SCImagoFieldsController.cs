@@ -1,5 +1,6 @@
 ﻿using Application.SCImagoFields;
 using Application.Shared.Response;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 
@@ -70,6 +71,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<SCImagoFieldDto>>> CreateSCImagoField([FromBody] CreateSCImagoFieldRequestDto request)
         {
             try
@@ -92,6 +94,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateSCImagoField([FromRoute] Guid id, [FromBody] UpdateSCImagoFieldRequestDto request)
         {
             try
@@ -114,6 +117,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteSCImagoField([FromRoute] Guid id)
         {
             try

@@ -120,6 +120,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<FactorDto>>> CreateFactor([FromBody] CreateFactorRequestDto request)
         {
             try
@@ -153,6 +154,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateFactor([FromRoute] Guid id, [FromBody] UpdateFactorRequestDto request)
         {
             try
@@ -183,6 +185,7 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<object>>> DeleteFactor([FromRoute] Guid id)
         {
             try
