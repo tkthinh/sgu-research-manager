@@ -153,7 +153,7 @@ namespace Application.SystemConfigs
         {
             if (dto != null)
             {
-                var notificationContent = $"Hệ thống sẽ mở vào lúc {dto.OpenTime.AddHours(7).ToString(new CultureInfo("vi-VN"))}" +
+                var notificationContent = $"{dto.Name}: Hệ thống sẽ mở vào lúc {dto.OpenTime.AddHours(7).ToString(new CultureInfo("vi-VN"))}" +
                                           $" và sẽ đóng vào lúc {dto.CloseTime.AddHours(7).ToString(new CultureInfo("vi-VN"))}.";
                 await notificationService.CreateGlobalNotificationAsync(notificationContent);
 

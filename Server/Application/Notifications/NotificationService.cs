@@ -72,8 +72,9 @@ namespace Application.Notifications
                 }
             }
 
-            var entities = await unitOfWork.Repository<Notification>().
-                                    FindAsync(e => e.IsGlobal == true);
+            var entities = (await unitOfWork.Repository<Notification>()
+                        .FindAsync(e => e.IsGlobal == true))
+                        .OrderByDescending(e => e.CreatedDate);
 
             var dtos = mapper.MapToDtos(entities);
 
