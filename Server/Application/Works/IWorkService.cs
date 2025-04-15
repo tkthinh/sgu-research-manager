@@ -21,6 +21,7 @@ namespace Application.Works
         // Thêm các phương thức mới để lọc công trình
         Task<IEnumerable<WorkDto>> GetWorksByAcademicYearIdAsync(Guid academicYearId, CancellationToken cancellationToken = default);
         Task<IEnumerable<WorkDto>> GetCurrentUserWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<WorkDto>> GetAllWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default);
 
         Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default);
 

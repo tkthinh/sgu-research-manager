@@ -19,7 +19,6 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AuthorRoleDto>>>> GetAuthorRoles()
         {
             var roles = await authorRoleService.GetAllAsync();
@@ -31,7 +30,6 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<AuthorRoleDto>>> GetAuthorRole([FromRoute] Guid id)
         {
             var role = await authorRoleService.GetByIdAsync(id);
@@ -47,7 +45,6 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("work-type/{workTypeId}")]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AuthorRoleDto>>>> GetAuthorRolesByWorkTypeId(Guid workTypeId)
         {
             var roles = await authorRoleService.GetAuthorRolesByWorkTypeIdAsync(workTypeId);

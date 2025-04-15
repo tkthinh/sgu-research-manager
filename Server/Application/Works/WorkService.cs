@@ -1870,33 +1870,60 @@ namespace Application.Works
             
             if (isCurrentYear)
             {
-                // Lấy các công trình từ các năm học trước
-                var previousYears = await _unitOfWork.Repository<AcademicYear>()
-                    .FindAsync(ay => ay.Id != academicYearId);
-                var previousYearIds = previousYears.Select(y => y.Id).ToList();
-                
-                if (previousYearIds.Any())
-                {
-                    previousWorks = (await _workRepository.GetWorksByAcademicYearIdsAsync(previousYearIds, cancellationToken))
-                        .Where(w => w.Authors != null && w.Authors.Any(a => 
-                            a.UserId == userId && 
-                            (a.AuthorRegistration == null || a.AuthorRegistration.AcademicYearId != academicYearId)))
-                        .ToList();
-                }
+                // Lấy các công trình chưa đánh dấu quy đổi từ các đợt trước
+                previousWorks = (await _workRepository.GetUnmarkedPreviousWorksAsync(userId, academicYearId, cancellationToken)).ToList();
             }
             
-            // Kết hợp tất cả danh sách và loại bỏ trùng lặp
-            var allWorks = declaredWorks.Concat(coAuthorWorks).Concat(previousWorks)
-                .GroupBy(w => w.Id)
-                .Select(g => g.First())
+            // Kết hợp tất cả công trình, loại bỏ trùng lặp
+            var allWorks = declaredWorks
+                .Union(coAuthorWorks)
+                .Union(previousWorks)
+                .DistinctBy(w => w.Id)
                 .ToList();
             
+            // Chuyển đổi sang DTO và cập nhật thông tin CoAuthorUserIds
             var workDtos = _mapper.MapToDtos(allWorks);
-            
-            // Fill coAuthorUserIds cho tất cả các công trình
             await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
             
             return workDtos;
+        }
+
+        /// <summary>
+        /// Lấy tất cả các công trình của người dùng hiện tại (cả do người dùng kê khai và do admin import) theo năm học
+        /// </summary>
+        public async Task<IEnumerable<WorkDto>> GetAllWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogInformation("GetAllWorksByAcademicYearIdAsync - Lấy tất cả công trình của người dùng {UserId} theo năm học {AcademicYearId}", userId, academicYearId);
+                
+                // 1. Lấy các công trình mà user là tác giả trong năm học này (bao gồm cả import và do người dùng kê khai)
+                var authorWorks = await _workRepository.GetAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+                _logger.LogInformation("GetAllWorksByAcademicYearIdAsync - Đã lấy được {Count} công trình mà user là tác giả", authorWorks.Count());
+                
+                // 2. Lấy các công trình mà user là đồng tác giả trong năm học này
+                var coAuthorWorks = await _workRepository.GetCoAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+                _logger.LogInformation("GetAllWorksByAcademicYearIdAsync - Đã lấy được {Count} công trình mà user là đồng tác giả", coAuthorWorks.Count());
+                
+                // 3. Kết hợp tất cả công trình, loại bỏ trùng lặp
+                var allWorks = authorWorks
+                    .Union(coAuthorWorks)
+                    .DistinctBy(w => w.Id)
+                    .ToList();
+                
+                _logger.LogInformation("GetAllWorksByAcademicYearIdAsync - Tổng cộng {Count} công trình", allWorks.Count);
+                
+                // 4. Chuyển đổi sang DTO và cập nhật thông tin CoAuthorUserIds
+                var workDtos = _mapper.MapToDtos(allWorks);
+                await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
+                
+                return workDtos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy tất cả công trình của người dùng {UserId} theo năm học {AcademicYearId}", userId, academicYearId);
+                throw;
+            }
         }
     }
 }

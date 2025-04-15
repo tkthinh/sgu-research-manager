@@ -24,7 +24,10 @@ namespace Infrastructure.Data.Repositories
              .Include(w => w.Authors!)
                  .ThenInclude(a => a.SCImagoField)
              .Include(w => w.Authors!)
-                 .ThenInclude(a => a.Field);
+                 .ThenInclude(a => a.Field)
+             .Include(w => w.Authors!)
+                 .ThenInclude(a => a.AuthorRegistration)
+                 .ThenInclude(ar => ar!.AcademicYear);
                  
          // Chỉ dùng AsNoTracking khi được yêu cầu rõ ràng
          return asNoTracking ? query.AsNoTracking() : query;

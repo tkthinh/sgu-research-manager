@@ -132,8 +132,26 @@ export const getAllMyWorks = async (): Promise<ApiResponse<Work[]>> => {
   return response.data;
 };
 
+// Get all works of current user by academic year ID (including imported works)
+export const getAllMyWorksByAcademicYearId = async (academicYearId: string): Promise<ApiResponse<Work[]>> => {
+  const response = await apiClient.get<ApiResponse<Work[]>>(`/works/all-my-works/academic-year/${academicYearId}`);
+  return response.data;
+};
+
 export const getMarkedWorks = async (): Promise<ApiResponse<Work[]>> => {
   const response = await apiClient.get<ApiResponse<Work[]>>("/works/marked");
+  return response.data;
+};
+
+// API mới: Lấy danh sách công trình đã đăng ký quy đổi của người dùng hiện tại
+export const getRegisteredWorks = async (): Promise<ApiResponse<Work[]>> => {
+  const response = await apiClient.get<ApiResponse<Work[]>>("/works/registered");
+  return response.data;
+};
+
+// API mới: Lấy các công trình đã đăng ký quy đổi theo năm học
+export const getRegisteredWorksByAcademicYear = async (academicYearId: string): Promise<ApiResponse<Work[]>> => {
+  const response = await apiClient.get<ApiResponse<Work[]>>(`/works/registered/academic-year/${academicYearId}`);
   return response.data;
 };
 

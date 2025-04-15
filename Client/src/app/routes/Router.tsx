@@ -31,6 +31,7 @@ import WorkScoreDetailPage from "../../features/work-scores/WorkScoreDetailPage"
 import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
 import WorkScorePage from "../../features/work-scores/WorkScorePage";
 import CachePage from "../../features/settings/caches/CachePage";
+import ReportPage from "../../features/report/ReportPage";
 
 export const router = createBrowserRouter([
   {
@@ -94,7 +95,14 @@ export const router = createBrowserRouter([
                 ),
               },
               // ============== BÁO CÁO ==============
-              { path: "/bao-cao", element: <></> },
+              {
+                path: "/bao-cao",
+                element: (
+                  <ProtectedRoute allowedRoles={["User", "Manager"]}>
+                    <ReportPage />
+                  </ProtectedRoute>
+                ),
+              },
               // ============== HỆ THỐNG ==============
               {
                 path: "/quan-ly-tai-khoan",
