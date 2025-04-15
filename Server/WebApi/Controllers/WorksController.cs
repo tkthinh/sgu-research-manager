@@ -9,6 +9,8 @@ using Domain.Entities;
 using Domain.Interfaces;
 using Domain.Enums;
 using Application.Shared.Services;
+using Application.SystemConfigs;
+using Application.AcademicYears;
 
 namespace WebApi.Controllers
 {
@@ -21,19 +23,22 @@ namespace WebApi.Controllers
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IAcademicYearService _academicYearService;
 
         public WorksController(
             IWorkService workService, 
             ILogger<WorksController> logger, 
             IHubContext<NotificationHub> hubContext, 
             IUnitOfWork unitOfWork,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IAcademicYearService academicYearService)
         {
             _workService = workService;
             _logger = logger;
             _hubContext = hubContext;
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
+            _academicYearService = academicYearService;
         }
 
         [HttpGet]
@@ -79,6 +84,16 @@ namespace WebApi.Controllers
         {
             try
             {
+                // Lấy năm học hiện tại
+                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear();
+                if (currentAcademicYear == null)
+                {
+                    return BadRequest(new ApiResponse<object>(false, "Không có năm học nào đang mở. Vui lòng thử lại sau."));
+                }
+
+                // Gán AcademicYearId cho công trình
+                request.AcademicYearId = currentAcademicYear.Id;
+
                 var work = await _workService.CreateWorkWithAuthorAsync(request);
                 return CreatedAtAction(nameof(GetWork), new { id = work.Id },
                     new ApiResponse<WorkDto>(true, "Tạo công trình và tác giả thành công", work));
@@ -235,6 +250,17 @@ namespace WebApi.Controllers
                 if (work == null)
                     return NotFound(new ApiResponse<WorkDto>(false, "Công trình không tồn tại"));
 
+                // Admin có thể thay đổi năm học của công trình nếu cần
+                if (request.WorkRequest?.AcademicYearId.HasValue == true)
+                {
+                    // Kiểm tra xem AcademicYear có tồn tại không
+                    var academicYear = await _academicYearService.GetByIdAsync(request.WorkRequest.AcademicYearId.Value);
+                    if (academicYear == null)
+                    {
+                        return BadRequest(new ApiResponse<object>(false, "Năm học không tồn tại"));
+                    }
+                }
+
                 var updatedWork = await _workService.UpdateWorkByAdminAsync(workId, userId, request);
 
                 if (updatedWork.Authors != null && updatedWork.Authors.Any())
@@ -323,6 +349,12 @@ namespace WebApi.Controllers
                     
                     // Log thông báo
                     _logger.LogInformation("Công trình {WorkId} đã có tác giả được xác nhận hợp lệ. Tác giả {UserId} chỉ có thể cập nhật thông tin tác giả", workId, userId);
+                }
+
+                // Đảm bảo người dùng không thể thay đổi AcademicYearId
+                if (updatedRequest.WorkRequest != null)
+                {
+                    updatedRequest.WorkRequest.AcademicYearId = null; // Không cho phép người dùng thay đổi năm học
                 }
 
                 // Tiến hành cập nhật công trình với request đã được điều chỉnh
@@ -426,6 +458,51 @@ namespace WebApi.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi lấy tất cả công trình của người dùng hiện tại");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("academic-year/{academicYearId}")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorksByAcademicYearId([FromRoute] Guid academicYearId)
+        {
+            try
+            {
+                var works = await _workService.GetWorksByAcademicYearIdAsync(academicYearId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình theo năm học thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo năm học");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("my-works/academic-year/{academicYearId}")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetCurrentUserWorksByAcademicYearId([FromRoute] Guid academicYearId)
+        {
+            try
+            {
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+                if (!isSuccess)
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                var works = await _workService.GetCurrentUserWorksByAcademicYearIdAsync(userId, academicYearId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình của người dùng theo năm học thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình của người dùng theo năm học");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }

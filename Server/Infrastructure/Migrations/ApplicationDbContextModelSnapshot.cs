@@ -121,9 +121,6 @@ namespace Infrastructure.Migrations
                     b.Property<Guid?>("FieldId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("MarkedForScoring")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("datetime2");
 
@@ -4014,6 +4011,9 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("AcademicYearId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -4053,6 +4053,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AcademicYearId");
 
                     b.HasIndex("WorkLevelId");
 
@@ -4632,6 +4634,12 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Work", b =>
                 {
+                    b.HasOne("Domain.Entities.AcademicYear", "AcademicYear")
+                        .WithMany()
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.WorkLevel", "WorkLevel")
                         .WithMany()
                         .HasForeignKey("WorkLevelId")
@@ -4642,6 +4650,8 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("WorkTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("AcademicYear");
 
                     b.Navigation("WorkLevel");
 

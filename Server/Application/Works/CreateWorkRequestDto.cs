@@ -14,6 +14,7 @@ namespace Application.Works
 
         public Guid WorkTypeId { get; set; }
         public Guid? WorkLevelId { get; set; }
+        public Guid AcademicYearId { get; set; }
 
         public CreateAuthorRequestDto Author { get; set; } = new();
         public List<Guid> CoAuthorUserIds { get; set; } = new();

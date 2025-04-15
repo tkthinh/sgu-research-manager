@@ -7,6 +7,7 @@ namespace Application.SystemConfigs
         Task<IEnumerable<SystemConfigDto>> GetSystemConfigsOfYear(Guid academicYearId);
         Task<SystemConfigDto?> GetSystemState();
         Task<bool> IsSystemOpenAsync(DateTime date, CancellationToken cancellationToken = default);
+        Task<SystemConfigDto?> GetCurrentActiveSystemConfig(CancellationToken cancellationToken = default);
         Task NotifySystemOpening(SystemConfigDto dto);
     }
 }

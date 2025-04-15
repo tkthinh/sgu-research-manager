@@ -1,4 +1,6 @@
 import { ProofStatus } from "../enums/ProofStatus";
+import { AuthorRegistration } from "./AuthorRegistration";
+
 export interface Author {
   id: string;
   workId: string;
@@ -15,9 +17,9 @@ export interface Author {
   scoreLevel?: number;
   authorHour?: number;
   workHour?: number;
-  markedForScoring: boolean;
   proofStatus: ProofStatus;
   note?: string | null;
+  authorRegistration?: AuthorRegistration | null;
   createdDate: string;
   modifiedDate?: string | null;
 }
