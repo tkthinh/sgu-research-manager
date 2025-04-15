@@ -30,6 +30,7 @@ import MarkedWorksPage from "../../features/works/MarkedWorksPage";
 import WorkScoreDetailPage from "../../features/work-scores/WorkScoreDetailPage";
 import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
 import WorkScorePage from "../../features/work-scores/WorkScorePage";
+import CachePage from "../../features/settings/caches/CachePage";
 
 export const router = createBrowserRouter([
   {
@@ -188,6 +189,14 @@ export const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute allowedRoles={["Admin"]}>
                     <AcademicYearPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: "/cai-dat/quan-ly-cache",
+                element: (
+                  <ProtectedRoute allowedRoles={["Admin"]}>
+                    <CachePage />
                   </ProtectedRoute>
                 ),
               },
