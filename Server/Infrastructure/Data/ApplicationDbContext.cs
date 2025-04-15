@@ -29,6 +29,7 @@ namespace Infrastructure.Data
         public DbSet<WorkAuthor> WorkAuthors { get; set; }
         public DbSet<AcademicYear> AcademicYears { get; set; }
         public DbSet<AuthorRegistration> AuthorRegistrations { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

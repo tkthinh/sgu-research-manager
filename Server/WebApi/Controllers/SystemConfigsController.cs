@@ -118,6 +118,27 @@ namespace WebApi.Controllers
             }
         }
 
+        [HttpPost("notify/{id}")]
+        public async Task<ActionResult<ApiResponse<object>>> NotifySystemConfig([FromRoute] Guid id, [FromBody] NotifySystemConfigRequestDto request)
+        {
+            try
+            {
+                var systemConfig = await systemConfigService.GetByIdAsync(id);
+                if (systemConfig == null)
+                {
+                    return BadRequest(new ApiResponse<object>(false, "Không tìm thấy cấu hình hệ thống", null));
+                }
+
+                await systemConfigService.NotifySystemOpening(systemConfig);
+                return Ok(new ApiResponse<object>(true, "Thông báo cấu hình hệ thống thành công"));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error notifying system configuration");
+                return BadRequest(new ApiResponse<bool>(false, "Có lỗi xảy ra khi thông báo cấu hình hệ thống"));
+            }
+        }
+
         [HttpPut("{id}")]
         public async Task<ActionResult<ApiResponse<object>>> UpdateSystemConfig([FromRoute] Guid id, [FromBody] UpdateSystemConfigRequestDto request)
         {

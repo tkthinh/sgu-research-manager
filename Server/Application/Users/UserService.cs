@@ -66,7 +66,7 @@ namespace Application.Users
                 if (isCacheAvailable)
                 {
                     await SafeSetCacheAsync(
-                        $"{cacheKeyPrefix}_user_{id}",
+                        $"{cacheKeyPrefix}_{id}",
                         JsonSerializer.Serialize(dto),
                         TimeSpan.FromMinutes(30),
                         cancellationToken);
@@ -114,7 +114,7 @@ namespace Application.Users
             if (isCacheAvailable)
             {
                 await SafeSetCacheAsync(
-                    $"{cacheKeyPrefix}_user_all",
+                    $"{cacheKeyPrefix}_all",
                     JsonSerializer.Serialize(dtos),
                     TimeSpan.FromMinutes(30),
                     cancellationToken);

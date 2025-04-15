@@ -14,6 +14,7 @@ namespace Application.SystemConfigs
                 Name = entity.Name,
                 OpenTime = entity.OpenTime,
                 CloseTime = entity.CloseTime,
+                IsNotified = entity.IsNotified,
                 AcademicYearId = entity.AcademicYearId,
                 AcademicYearName = entity.AcademicYear?.Name
             };
@@ -27,6 +28,7 @@ namespace Application.SystemConfigs
                 Name = dto.Name ?? "-",
                 OpenTime = dto.OpenTime,
                 CloseTime = dto.CloseTime,
+                IsNotified = dto.IsNotified,
                 AcademicYearId = dto.AcademicYearId
             };
         }

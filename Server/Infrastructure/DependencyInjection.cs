@@ -32,6 +32,7 @@ using Application.Auth;
 using Application.AcademicYears;
 using Application.AuthorRegistrations;
 using Application.Shared.Services;
+using Application.Notifications;
 
 namespace Infrastructure
 {
@@ -115,6 +116,7 @@ namespace Infrastructure
             services.AddScoped<IAcademicYearService, AcademicYearService>();
             services.AddScoped<ISystemConfigService, SystemConfigService>();
             services.AddScoped<IAuthorRegistrationService, AuthorRegistrationService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             services.AddScoped<ICacheManagementService, CacheManagementService>();
             services.AddSingleton(ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")!));
@@ -138,6 +140,7 @@ namespace Infrastructure
             services.AddScoped<IGenericMapper<SystemConfigDto, SystemConfig>, SystemConfigMapper>();
             services.AddScoped<IGenericMapper<AcademicYearDto, AcademicYear>, AcademicYearMapper>();
             services.AddScoped<IGenericMapper<AuthorRegistrationDto, AuthorRegistration>, AuthorRegistrationMapper>();
+            services.AddScoped<IGenericMapper<NotificationDto, Notification>, NotificationMapper>();
 
 
             // Đăng ký custom repository (nếu có)

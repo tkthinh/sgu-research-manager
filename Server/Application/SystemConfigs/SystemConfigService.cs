@@ -1,4 +1,7 @@
-﻿using System.Text.Json;
+﻿using System.Data;
+using System.Globalization;
+using System.Text.Json;
+using Application.Notifications;
 using Application.Shared.Services;
 using Domain.Entities;
 using Domain.Interfaces;
@@ -10,14 +13,17 @@ namespace Application.SystemConfigs
 {
     public class SystemConfigService : GenericCachedService<SystemConfigDto, SystemConfig>, ISystemConfigService
     {
+        private readonly INotificationService notificationService;
         public SystemConfigService(
             IUnitOfWork unitOfWork,
             IGenericMapper<SystemConfigDto, SystemConfig> mapper,
             IDistributedCache cache,
-            ILogger<SystemConfigService> logger
+            ILogger<SystemConfigService> logger,
+            INotificationService notificationService
         )
         : base(unitOfWork, mapper, cache, logger)
         {
+            this.notificationService = notificationService;
         }
 
         public override async Task<IEnumerable<SystemConfigDto>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -112,11 +118,25 @@ namespace Application.SystemConfigs
             return config != null;
         }
 
+        public override Task UpdateAsync(SystemConfigDto dto, CancellationToken cancellationToken = default)
+        {
+            if(dto.IsNotified == true)
+            {
+                throw new Exception("Không thể cập nhật cấu hình hệ thống đã thông báo");
+            }
+
+            return base.UpdateAsync(dto, cancellationToken);
+        }
+
         public override async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var systemConfig = await unitOfWork.Repository<SystemConfig>().GetByIdAsync(id);
             if (systemConfig != null)
             {
+                if(systemConfig.IsNotified == true)
+                {
+                    throw new Exception("Không thể xóa cấu hình hệ thống đã thông báo");
+                }
                 systemConfig.IsDeleted = true;
                 await unitOfWork.Repository<SystemConfig>().UpdateAsync(systemConfig);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -125,8 +145,23 @@ namespace Application.SystemConfigs
             }
             else
             {
-                throw new Exception("System config not found");
+                throw new Exception("Không tìm thấy cấu hình hệ thống");
             }
+        }
+
+        public async Task NotifySystemOpening(SystemConfigDto dto)
+        {
+            if (dto != null)
+            {
+                var notificationContent = $"Hệ thống sẽ mở vào lúc {dto.OpenTime.AddHours(7).ToString(new CultureInfo("vi-VN"))}" +
+                                          $" và sẽ đóng vào lúc {dto.CloseTime.AddHours(7).ToString(new CultureInfo("vi-VN"))}.";
+                await notificationService.CreateGlobalNotificationAsync(notificationContent);
+
+                dto.IsNotified = true;
+                await unitOfWork.Repository<SystemConfig>().UpdateAsync(mapper.MapToEntity(dto));
+                await unitOfWork.SaveChangesAsync();
+            }
+
         }
     }
 }
