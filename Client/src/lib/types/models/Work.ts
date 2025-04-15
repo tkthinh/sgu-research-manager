@@ -14,6 +14,12 @@ export interface Work {
   workLevelId?: string;
   workTypeName?: string;
   workLevelName?: string;
+
+  academicYearId?: string;
+  academicYearName?: string;
+  exchangeDeadline?: string;
+
+
   createdDate: string;
   modifiedDate: string | null;
   coAuthorUserIds: string[];
@@ -37,6 +43,7 @@ export interface CreateWorkRequest {
   source: number;
   workTypeId: string;
   workLevelId?: string;
+  academicYearId?: string;
   author: {
     authorRoleId: string;
     purposeId: string;
@@ -57,6 +64,7 @@ export interface UpdateWorkRequest {
   source: number;
   workTypeId?: string;
   workLevelId?: string;
+  academicYearId?: string;
   coAuthorUserIds: string[];
 }
 

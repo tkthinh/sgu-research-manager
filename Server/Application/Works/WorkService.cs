@@ -10,10 +10,10 @@ using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 using System.Globalization;
 using System.Data;
-using System.Linq.Expressions;
 using Application.Shared.Messages;
 using Application.AcademicYears;
 using Microsoft.EntityFrameworkCore;
+using Application.AuthorRegistrations;
 
 namespace Application.Works
 {
@@ -26,11 +26,11 @@ namespace Application.Works
         private readonly IGenericRepository<Factor> _factorRepository;
         private readonly IWorkRepository _workRepository;
         private readonly ISystemConfigService _systemConfigService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserRepository _userRepository;
         private readonly ILogger<WorkService> _logger;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAcademicYearService _academicYearService;
+        private readonly IAuthorService _authorService;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -40,10 +40,10 @@ namespace Application.Works
             ILogger<WorkService> logger,
             IWorkRepository workRepository,
             ISystemConfigService systemConfigService,
-            IHttpContextAccessor httpContextAccessor,
             IUserRepository userRepository,
             ICurrentUserService currentUserService,
-            IAcademicYearService academicYearService)
+            IAcademicYearService academicYearService,
+            IAuthorService authorService)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
@@ -53,11 +53,11 @@ namespace Application.Works
             _factorRepository = unitOfWork.Repository<Factor>();
             _workRepository = workRepository;
             _systemConfigService = systemConfigService;
-            _httpContextAccessor = httpContextAccessor;
             _userRepository = userRepository;
             _logger = logger;
             _currentUserService = currentUserService;
             _academicYearService = academicYearService;
+            _authorService = authorService;
         }
 
         public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
@@ -88,7 +88,9 @@ namespace Application.Works
                 throw new Exception(ErrorMessages.SystemClosedNewWork);
 
             var existingWork = await _unitOfWork.Repository<Work>()
-                .FirstOrDefaultAsync(w => w.Title == request.Title, cancellationToken);
+                .FirstOrDefaultAsync(w => w.Title == request.Title && 
+                    w.WorkTypeId == request.WorkTypeId && 
+                    w.WorkLevelId == request.WorkLevelId, cancellationToken);
             if (existingWork != null)
                 throw new Exception(ErrorMessages.WorkAlreadyExists);
 
@@ -103,6 +105,7 @@ namespace Application.Works
                 Source = WorkSource.NguoiDungKeKhai,
                 WorkTypeId = request.WorkTypeId,
                 WorkLevelId = request.WorkLevelId,
+                AcademicYearId = request.AcademicYearId,
                 ExchangeDeadline = request.TimePublished.HasValue ? request.TimePublished.Value.AddMonths(18) : null,
                 CreatedDate = DateTime.UtcNow,
                 IsLocked = false // Công trình mới luôn có IsLocked = false
@@ -149,7 +152,6 @@ namespace Application.Works
             var authorHour = await CalculateAuthorHour(workHour, request.TotalAuthors ?? 0,
                 request.TotalMainAuthors ?? 0, request.Author.AuthorRoleId);
             author.AuthorHour = authorHour;
-            author.MarkedForScoring = false;
 
             // Loại bỏ userId của tác giả chính khỏi request.CoAuthorUserIds để tránh trùng lặp
             var coAuthorUserIds = request.CoAuthorUserIds
@@ -255,7 +257,9 @@ namespace Application.Works
             if (work == null)
                 throw new Exception(ErrorMessages.WorkNotFound);
 
-            // Kiểm tra giới hạn nếu có
+            // Lấy năm học hiện tại
+            var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
+
             if (marked)
             {
                 // 1. Lấy Factor để kiểm tra giới hạn
@@ -268,11 +272,14 @@ namespace Application.Works
                     cancellationToken);
 
                 // 2. Đếm số lượng công trình đã được đánh dấu với cùng điều kiện
-                var markedAuthors = await _unitOfWork.Repository<Author>().FindAsync(a =>
-                    a.UserId == author.UserId &&
-                    a.MarkedForScoring &&
-                    a.PurposeId == author.PurposeId &&
-                    a.ScoreLevel == author.ScoreLevel);
+                var authorRegistrations = await _unitOfWork.Repository<AuthorRegistration>()
+                    .Include(ar => ar.Author)
+                    .Where(ar => 
+                        ar.Author.UserId == author.UserId &&
+                        ar.AcademicYearId == currentAcademicYear.Id &&
+                        ar.Author.PurposeId == author.PurposeId && 
+                        ar.Author.ScoreLevel == author.ScoreLevel)
+                    .ToListAsync(cancellationToken);
 
                 // 3. Lấy thông tin WorkType và WorkLevel để hiển thị thông báo lỗi
                 var workType = await _unitOfWork.Repository<WorkType>().GetByIdAsync(work.WorkTypeId);
@@ -285,7 +292,7 @@ namespace Application.Works
                 // 4. Kiểm tra giới hạn nếu có MaxAllowed
                 if (factor?.MaxAllowed != null)
                 {
-                    if (markedAuthors.Count() >= factor.MaxAllowed)
+                    if (authorRegistrations.Count() >= factor.MaxAllowed)
                     {
                         var workTypeInfo = workType?.Name ?? "Không xác định";
                         var workLevelInfo = workLevel?.Name ?? "Không xác định";
@@ -300,7 +307,6 @@ namespace Application.Works
                 }
 
                 // 5. Tạo bản ghi AuthorRegistration nếu chưa có
-                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
                 var existingRegistration = await _unitOfWork.Repository<AuthorRegistration>()
                     .FirstOrDefaultAsync(ar => ar.AuthorId == authorId && ar.AcademicYearId == currentAcademicYear.Id);
 
@@ -317,7 +323,6 @@ namespace Application.Works
             else
             {
                 // Nếu bỏ đánh dấu, xóa bản ghi AuthorRegistration nếu có
-                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
                 var existingRegistration = await _unitOfWork.Repository<AuthorRegistration>()
                     .FirstOrDefaultAsync(ar => ar.AuthorId == authorId && ar.AcademicYearId == currentAcademicYear.Id);
 
@@ -327,8 +332,6 @@ namespace Application.Works
                 }
             }
 
-            // Cập nhật trạng thái đánh dấu
-            author.MarkedForScoring = marked;
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
@@ -380,6 +383,8 @@ namespace Application.Works
             work.Source = workRequest.Source;
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
+            if (workRequest.AcademicYearId.HasValue)
+                work.AcademicYearId = workRequest.AcademicYearId.Value;
             work.ExchangeDeadline = work.TimePublished.HasValue ? work.TimePublished.Value.AddMonths(18) : null;
             work.ModifiedDate = DateTime.UtcNow;
         }
@@ -621,6 +626,7 @@ namespace Application.Works
             work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
+            // Không cập nhật SystemConfigId khi tác giả cập nhật công trình
             work.ExchangeDeadline = work.TimePublished.HasValue ? work.TimePublished.Value.AddMonths(18) : null;
             work.ModifiedDate = DateTime.UtcNow;
         }
@@ -829,110 +835,131 @@ namespace Application.Works
 
         public async Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            // Lấy danh sách các WorkId mà user là tác giả (có trong bảng Author)
-            var authors = await _unitOfWork.Repository<Author>()
-                .FindAsync(a => a.UserId == userId);
-
-            var authorWorkIds = authors.Select(a => a.WorkId).Distinct().ToList();
-
-            // Lấy danh sách các WorkId mà user được thêm làm đồng tác giả (có trong bảng WorkAuthor)
-            var workAuthors = await _unitOfWork.Repository<WorkAuthor>()
-                .FindAsync(wa => wa.UserId == userId);
-
-            var workAuthorWorkIds = workAuthors.Select(wa => wa.WorkId).Distinct().ToList();
-
-            // Kết hợp tất cả WorkId (loại bỏ trùng lặp)
-            var allWorkIds = authorWorkIds.Union(workAuthorWorkIds).Distinct().ToList();
-
-            if (!allWorkIds.Any())
+            try
             {
-                return Enumerable.Empty<WorkDto>();
-            }
-
-            // Lấy thông tin đầy đủ của các công trình
-            var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(allWorkIds, cancellationToken);
-
-            // Lấy năm học hiện tại
-            var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
-            var currentDate = DateOnly.FromDateTime(DateTime.UtcNow);
-
-            // Lọc và xử lý dữ liệu
-            var filteredWorks = works
-                .Where(work => work.Source == WorkSource.NguoiDungKeKhai) // Chỉ lấy công trình do người dùng kê khai
-                .Select(work =>
+                // Lấy năm học hiện tại
+                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
+                if (currentAcademicYear == null)
                 {
-                    // Kiểm tra xem user đã có thông tin tác giả trong công trình này chưa
-                    var userAuthor = authors.FirstOrDefault(a => a.WorkId == work.Id);
-                    var isCoAuthor = workAuthorWorkIds.Contains(work.Id);
-
-                    // Chỉ giữ thông tin tác giả của user hiện tại (nếu có)
-                    var filteredWork = _mapper.MapToDto(work);
-                    filteredWork.Authors = userAuthor != null
-                        ? new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) }
-                        : new List<AuthorDto>();
-
-                    return filteredWork;
-                })
-                .Where(w => w != null)
-                .ToList();
-
-            var filteredWorksByRegistration = new List<WorkDto>();
-            foreach (var work in filteredWorks)
-            {
-                var author = work.Authors?.FirstOrDefault();
-
-                // 2. Nếu user là đồng tác giả (không phải tác giả chính), thêm vào danh sách
-                if (author == null && workAuthorWorkIds.Contains(work.Id))
-                {
-                    filteredWorksByRegistration.Add(work);
-                    continue;
+                    _logger.LogWarning("Không tìm thấy năm học hiện tại");
+                    return Enumerable.Empty<WorkDto>();
                 }
 
-                // Bỏ qua nếu không phải tác giả chính
-                if (author == null) continue;
+                _logger.LogInformation("Năm học hiện tại: {AcademicYearName} (ID: {AcademicYearId})", 
+                    currentAcademicYear.Name, currentAcademicYear.Id);
 
-                // Kiểm tra xem công trình có thuộc đợt hiện tại không
-                var workDate = DateOnly.FromDateTime(work.CreatedDate);
-                var isCurrentPeriod = workDate >= currentAcademicYear.StartDate && workDate <= currentAcademicYear.EndDate;
+                // 1. Lấy danh sách tác giả có thể đăng ký của người dùng
+                var registrableAuthors = await _authorService.GetAllRegistableAuthorsOfUser(userId, cancellationToken);
 
-                // 1. Nếu là công trình của đợt hiện tại, thêm vào danh sách
-                if (isCurrentPeriod)
+                // 2. Lấy danh sách tác giả đã được đăng ký trong năm học hiện tại (qua bảng AuthorRegistration)
+                var authorRegistrations = await _unitOfWork.Repository<AuthorRegistration>()
+                    .Include(ar => ar.Author)
+                    .Where(ar => ar.AcademicYearId == currentAcademicYear.Id && ar.Author.UserId == userId)
+                    .ToListAsync(cancellationToken);
+                
+                var registeredAuthorIds = authorRegistrations.Select(ar => ar.AuthorId).ToList();
+                
+                _logger.LogInformation("Số lượng tác giả đã đăng ký quy đổi: {Count}", registeredAuthorIds.Count);
+                
+                // Lấy tất cả các tác giả của người dùng đã được đăng ký trong năm học hiện tại
+                var registeredAuthors = await _unitOfWork.Repository<Author>()
+                    .Include(a => a.Work)
+                    .Include(a => a.AuthorRole)
+                    .Include(a => a.Purpose)
+                    .Include(a => a.SCImagoField)
+                    .Include(a => a.Field)
+                    .Include(a => a.AuthorRegistration)
+                    .Where(a => registeredAuthorIds.Contains(a.Id) && a.UserId == userId)
+                    .ToListAsync(cancellationToken);
+
+                // 3. Lấy danh sách công trình mà người dùng được thêm làm đồng tác giả
+                var coAuthorWorks = await _unitOfWork.Repository<WorkAuthor>()
+                    .Include(wa => wa.Work)
+                    .Where(wa => wa.UserId == userId)
+                    .Select(wa => wa.Work)
+                    .ToListAsync(cancellationToken);
+
+                // Kết hợp hai danh sách tác giả
+                var allAuthors = registrableAuthors.ToList();
+                
+                // Đảm bảo AuthorRegistration được gán cho các tác giả đã đăng ký
+                foreach (var author in registeredAuthors)
                 {
-                    filteredWorksByRegistration.Add(work);
-                    continue;
-                }
-
-                // 3. Xử lý công trình của các đợt trước
-                var authorEntity = await _unitOfWork.Repository<Author>()
-                    .FirstOrDefaultAsync(a => a.Id == author.Id);
-
-                if (authorEntity == null) continue;
-
-                // Nếu đã đánh dấu quy đổi thì bỏ qua
-                if (authorEntity.MarkedForScoring) continue;
-
-                // Kiểm tra thời hạn quy đổi
-                if (work.TimePublished.HasValue)
-                {
-                    var exchangeDeadline = work.TimePublished.Value.AddMonths(18);
+                    var authorDto = _authorMapper.MapToDto(author);
                     
-                    // Nếu quá hạn, cập nhật WorkHour = 0
-                    if (currentDate > exchangeDeadline)
+                    // Tìm AuthorRegistration tương ứng
+                    var registration = authorRegistrations.FirstOrDefault(ar => ar.AuthorId == author.Id);
+                    if (registration != null)
                     {
-                        authorEntity.WorkHour = 0;
-                        authorEntity.AuthorHour = 0;
-                        await _unitOfWork.Repository<Author>().UpdateAsync(authorEntity);
-                        await _unitOfWork.SaveChangesAsync(cancellationToken);
+                        // Gán thông tin AuthorRegistration
+                        authorDto.AuthorRegistration = new AuthorRegistrationDto
+                        {
+                            Id = registration.Id,
+                            AuthorId = registration.AuthorId,
+                            AcademicYearId = registration.AcademicYearId
+                        };
+                        
+                        _logger.LogInformation("Tác giả {AuthorId} đã được đăng ký với AuthorRegistration {RegistrationId}", 
+                            author.Id, registration.Id);
+                    }
+                    
+                    // Kiểm tra xem tác giả có tồn tại trong danh sách registrableAuthors chưa
+                    var existingAuthor = allAuthors.FirstOrDefault(a => a.Id == author.Id);
+                    if (existingAuthor != null)
+                    {
+                        // Cập nhật AuthorRegistration cho tác giả đã tồn tại
+                        existingAuthor.AuthorRegistration = authorDto.AuthorRegistration;
+                    }
+                    else
+                    {
+                        // Thêm tác giả mới vào danh sách
+                        allAuthors.Add(authorDto);
                     }
                 }
 
-                // Thêm vào danh sách vì chưa đánh dấu quy đổi
-                filteredWorksByRegistration.Add(work);
+                if (!allAuthors.Any() && !coAuthorWorks.Any())
+                {
+                    _logger.LogInformation("Không tìm thấy tác giả nào có thể đăng ký hoặc đã đăng ký cho userId={UserId}", userId);
+                    return Enumerable.Empty<WorkDto>();
+                }
+
+                // Lấy danh sách workId từ tất cả tác giả và công trình đồng tác giả
+                var authorWorkIds = allAuthors.Select(a => a.WorkId).Distinct().ToList();
+                var coAuthorWorkIds = coAuthorWorks.Select(w => w.Id).Distinct().ToList();
+                var allWorkIds = authorWorkIds.Union(coAuthorWorkIds).Distinct().ToList();
+
+                // Lấy thông tin đầy đủ của các công trình
+                var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(allWorkIds, cancellationToken);
+                
+                // Tạo WorkDto từ mỗi công trình
+                var workDtos = works.Select(work => 
+                {
+                    var dto = _mapper.MapToDto(work);
+                    
+                    // Lọc chỉ giữ lại thông tin tác giả của người dùng hiện tại
+                    var authorDto = allAuthors.FirstOrDefault(a => a.WorkId == work.Id);
+                    if (authorDto != null)
+                    {
+                        dto.Authors = new List<AuthorDto> { authorDto };
+                    }
+                    else
+                    {
+                        dto.Authors = new List<AuthorDto>();
+                    }
+                    
+                    return dto;
+                }).ToList();
+            
+                // Fill coAuthorUserIds cho tất cả các công trình
+                await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
+            
+                return workDtos;
             }
-
-            await FillCoAuthorUserIdsForMultipleWorksAsync(filteredWorksByRegistration, cancellationToken);
-
-            return filteredWorksByRegistration;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy công trình của người dùng {UserId}", userId);
+                throw;
+            }
         }
 
         /// <summary>
@@ -1023,7 +1050,7 @@ namespace Application.Works
             const double REGULAR_RATIO = 2.0 / 3;
             
             // Kiểm tra các điều kiện không hợp lệ
-            if (workHour <= 0 || totalAuthors <= 0 || totalMainAuthors <= 0 || totalMainAuthors > totalAuthors || authorRoleId == null)
+            if (workHour <= 0 || authorRoleId == null)
             {
                 return 0;
             }
@@ -1033,6 +1060,22 @@ namespace Application.Works
             if (authorRole is null)
             {
                 throw new Exception(ErrorMessages.AuthorRoleNotFound);
+            }
+
+            // Lấy thông tin công trình để kiểm tra loại
+            var work = await _unitOfWork.Repository<Work>()
+                .FirstOrDefaultAsync(w => w.Authors.Any(a => a.AuthorRoleId == authorRoleId));
+            
+            // Nếu là công trình hội thảo, hội nghị thì trả về workHour
+            if (work?.WorkTypeId == Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa"))
+            {
+                return workHour;
+            }
+
+            // Kiểm tra các điều kiện không hợp lệ cho các loại công trình khác
+            if (totalAuthors <= 0 || totalMainAuthors <= 0 || totalMainAuthors > totalAuthors)
+            {
+                return 0;
             }
 
             decimal authorHour;
@@ -1335,11 +1378,37 @@ namespace Application.Works
                 // Bắt đầu điền dữ liệu tổng hợp từ dòng tiếp theo
                 summaryStartRow++;
 
+                // Danh sách các loại công trình
+                var workTypes = new[] { 
+                    "Bài báo khoa học", 
+                    "Báo cáo khoa học", 
+                    "Đề tài", 
+                    "Giáo trình", 
+                    "Sách", 
+                    "Hội thảo, hội nghị", 
+                    "Hướng dẫn SV NCKH", 
+                    "Khác" 
+                };
+
+                // Danh sách các loại công trình thuộc nhóm "Sách"
+                var bookWorkTypeNames = new[] {
+                    "Chương sách",
+                    "Chuyên khảo",
+                    "Tham khảo",
+                    "Giáo trình - Sách",
+                    "Tài liệu hướng dẫn"
+                };
+
+                // Tính số lượng công trình theo loại
                 var workTypeCounts = exportData
-                    .GroupBy(w => w.WorkTypeName ?? "Khác")
+                    .GroupBy(w => {
+                        // Nếu là một trong các loại sách, gộp chung vào "Sách"
+                        if (bookWorkTypeNames.Contains(w.WorkTypeName))
+                            return "Sách";
+                        return w.WorkTypeName;
+                    })
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                var workTypes = new[] { "Bài báo khoa học", "Báo cáo khoa học", "Đề tài", "Giáo trình", "Sách", "Hội thảo, hội nghị", "Hướng dẫn SV NCKH", "Khác" };
                 for (int i = 0; i < workTypes.Length; i++)
                 {
                     worksheet.Cells[summaryStartRow + i, 1].Value = i + 1;
@@ -1735,6 +1804,99 @@ namespace Application.Works
                 _logger.LogError(ex, "Lỗi khi tạo bài báo khoa học từ đề tài {ProjectId}", project.Id);
                 throw;
             }
+        }
+
+        // Triển khai các phương thức mới để lọc công trình theo đợt kê khai
+        public async Task<IEnumerable<WorkDto>> GetWorksBySystemConfigIdAsync(Guid systemConfigId, CancellationToken cancellationToken = default)
+        {
+            // Lấy AcademicYearId từ SystemConfig
+            var systemConfig = await _unitOfWork.Repository<SystemConfig>()
+                .FirstOrDefaultAsync(sc => sc.Id == systemConfigId, cancellationToken);
+            
+            if (systemConfig == null)
+            {
+                return Enumerable.Empty<WorkDto>();
+            }
+            
+            // Chuyển sang gọi theo AcademicYearId
+            return await GetWorksByAcademicYearIdAsync(systemConfig.AcademicYearId, cancellationToken);
+        }
+
+        // Triển khai phương thức lọc công trình theo năm học
+        public async Task<IEnumerable<WorkDto>> GetWorksByAcademicYearIdAsync(Guid academicYearId, CancellationToken cancellationToken = default)
+        {
+            var works = await _workRepository.GetWorksByAcademicYearIdAsync(academicYearId, cancellationToken);
+            var workDtos = _mapper.MapToDtos(works);
+            await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
+            return workDtos;
+        }
+
+        // Triển khai phương thức lọc công trình của người dùng hiện tại theo đợt kê khai
+        public async Task<IEnumerable<WorkDto>> GetCurrentUserWorksBySystemConfigIdAsync(Guid userId, Guid systemConfigId, CancellationToken cancellationToken = default)
+        {
+            
+            // Lấy config hiện tại để biết đây có phải là đợt hiện tại hay không
+            var currentSystemConfig = await _systemConfigService.GetCurrentActiveSystemConfig(cancellationToken);
+            var isCurrentPeriod = currentSystemConfig != null && currentSystemConfig.Id == systemConfigId;
+                        
+            // Lấy AcademicYearId từ SystemConfig
+            var systemConfig = await _unitOfWork.Repository<SystemConfig>()
+                .FirstOrDefaultAsync(sc => sc.Id == systemConfigId, cancellationToken);
+            
+            if (systemConfig == null)
+            {
+                return Enumerable.Empty<WorkDto>();
+            }
+            
+            // Chuyển sang gọi theo AcademicYearId
+            return await GetCurrentUserWorksByAcademicYearIdAsync(userId, systemConfig.AcademicYearId, cancellationToken);
+        }
+
+        // Triển khai phương thức lọc công trình của người dùng hiện tại theo năm học
+        public async Task<IEnumerable<WorkDto>> GetCurrentUserWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default)
+        {
+            // Kiểm tra nếu đây là năm học hiện tại
+            var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
+            var isCurrentYear = currentAcademicYear.Id == academicYearId;
+            
+            // 1. Lấy các công trình mà người dùng đã kê khai trong năm học này
+            var declaredWorks = await _workRepository.GetDeclaredWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+            
+            // 2. Lấy các công trình mà người dùng được người khác thêm vào danh sách đồng tác giả trong năm học này
+            var coAuthorWorks = await _workRepository.GetCoAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+            
+            // 3. Nếu đây là năm học hiện tại, thêm cả các công trình từ các năm học trước mà chưa được đăng ký
+            var previousWorks = new List<Work>();
+            
+            if (isCurrentYear)
+            {
+                // Lấy các công trình từ các năm học trước
+                var previousYears = await _unitOfWork.Repository<AcademicYear>()
+                    .FindAsync(ay => ay.Id != academicYearId);
+                var previousYearIds = previousYears.Select(y => y.Id).ToList();
+                
+                if (previousYearIds.Any())
+                {
+                    previousWorks = (await _workRepository.GetWorksByAcademicYearIdsAsync(previousYearIds, cancellationToken))
+                        .Where(w => w.Authors != null && w.Authors.Any(a => 
+                            a.UserId == userId && 
+                            (a.AuthorRegistration == null || a.AuthorRegistration.AcademicYearId != academicYearId)))
+                        .ToList();
+                }
+            }
+            
+            // Kết hợp tất cả danh sách và loại bỏ trùng lặp
+            var allWorks = declaredWorks.Concat(coAuthorWorks).Concat(previousWorks)
+                .GroupBy(w => w.Id)
+                .Select(g => g.First())
+                .ToList();
+            
+            var workDtos = _mapper.MapToDtos(allWorks);
+            
+            // Fill coAuthorUserIds cho tất cả các công trình
+            await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
+            
+            return workDtos;
         }
     }
 }

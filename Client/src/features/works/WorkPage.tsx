@@ -9,14 +9,18 @@ import {
   Typography,
   Tooltip,
   Container,
-  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
-import { deleteWork, getMyWorks } from "../../lib/api/worksApi";
+import { deleteWork, getMyWorks, getCurrentUserWorksByAcademicYearId } from "../../lib/api/worksApi";
 import { formatMonthYear } from "../../lib/utils/dateUtils";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -33,8 +37,9 @@ import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 import { exportWorks } from "../../lib/api/excelApi";
 import { useAuth } from "../../app/shared/contexts/AuthContext";
 import { useSystemStatus } from '../../hooks/useSystemStatus';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { getAcademicYears } from "../../lib/api/academicYearApi";
+import FilterListIcon from '@mui/icons-material/FilterList';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 export default function WorksPage() {
   const queryClient = useQueryClient();
@@ -42,20 +47,41 @@ export default function WorksPage() {
   const { user } = useAuth();
   const { isSystemOpen, canEditWork } = useSystemStatus();
 
-  // Sử dụng hook để lấy dữ liệu form
-  const formData = useWorkFormData();
+  // State cho bộ lọc
+  const [academicYearId, setAcademicYearId] = useState<string>("");
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  
+  // Thêm state mới để theo dõi tùy chọn đã chọn trước khi áp dụng
+  const [tempAcademicYearId, setTempAcademicYearId] = useState<string>("");
 
-  // Fetch works
+  // Fetch danh sách năm học cho bộ lọc
+  const { data: academicYearsData } = useQuery({
+    queryKey: ["academic-years"],
+    queryFn: getAcademicYears,
+  });
+
+  // Fetch works dựa vào filter
   const { 
     data: worksData, 
     error: worksError, 
     isPending: isLoadingWorks, 
     refetch 
   } = useQuery({
-    queryKey: ["works", "my-works"],
-    queryFn: getMyWorks,
+    queryKey: ["works", "my-works", academicYearId],
+    queryFn: async () => {
+      if (!academicYearId) {
+        // Mặc định: Lấy tất cả công trình của user hiện tại
+        return getMyWorks();
+      } else {
+        // Lọc theo năm học
+        return getCurrentUserWorksByAcademicYearId(academicYearId);
+      }
+    },
     staleTime: 0, // Luôn refetch khi cần
   });
+
+  // Sử dụng hook để lấy dữ liệu form
+  const formData = useWorkFormData();
 
   // Sử dụng hook để quản lý các dialog và logic cập nhật công trình
   const {
@@ -218,6 +244,38 @@ export default function WorksPage() {
       // Lỗi đã được xử lý trong onError của mutation
       console.error("Lỗi khi xuất Excel:", error);
     }
+  };
+
+  // Mở dialog bộ lọc
+  const handleOpenFilterDialog = () => {
+    setTempAcademicYearId(academicYearId);
+    setFilterDialogOpen(true);
+  };
+
+  // Đóng dialog bộ lọc
+  const handleCloseFilterDialog = () => {
+    setTempAcademicYearId(academicYearId);
+    setFilterDialogOpen(false);
+  };
+
+  // Xử lý thay đổi năm học
+  const handleAcademicYearChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setTempAcademicYearId(event.target.value as string);
+  };
+
+  // Áp dụng bộ lọc
+  const handleApplyFilter = () => {
+    setAcademicYearId(tempAcademicYearId);
+    handleCloseFilterDialog();
+    refetch();
+  };
+
+  // Reset bộ lọc
+  const handleResetFilter = () => {
+    setAcademicYearId("");
+    setTempAcademicYearId("");
+    handleCloseFilterDialog();
+    refetch();
   };
 
   const columns: GridColDef[] = [
@@ -555,11 +613,46 @@ export default function WorksPage() {
   if (isLoadingWorks) return <CircularProgress />;
   if (worksError) return <p>Lỗi: {(worksError as Error).message}</p>;
 
+  // Tạo thông tin bộ lọc hiện tại để hiển thị
+  const getFilterInfo = () => {
+    if (!academicYearId) {
+      return null;
+    }
+    
+    const selectedYear = academicYearsData?.data?.find(year => year.id === academicYearId);
+    const filterInfo = `Năm học: ${selectedYear?.name || academicYearId}`;
+    
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Typography variant="body1">
+          <strong>Bộ lọc hiện tại:</strong> {filterInfo}
+        </Typography>
+        <Button 
+          size="small" 
+          color="error" 
+          sx={{ ml: 2 }}
+          onClick={handleResetFilter}
+          startIcon={<RestartAltIcon />}
+        >
+          Xóa bộ lọc
+        </Button>
+      </Box>
+    );
+  };
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
         <Typography variant="h6">Danh sách công trình</Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button 
+            variant="outlined" 
+            color="primary" 
+            onClick={handleOpenFilterDialog}
+            startIcon={<FilterListIcon />}
+          >
+            Lọc
+          </Button>
           <Button 
             variant="contained" 
             color="primary" 
@@ -580,6 +673,8 @@ export default function WorksPage() {
           </Button>
         </Box>
       </Box>
+
+      {getFilterInfo()}
 
       {isLoadingWorks ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -605,6 +700,55 @@ export default function WorksPage() {
         scimagoFields={formData.scimagoFields}
         fields={formData.fields}
       />
+
+      {/* Dialog bộ lọc */}
+      <Dialog open={filterDialogOpen} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Lọc công trình</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id="academic-year-label">Năm học</InputLabel>
+                <Select
+                  labelId="academic-year-label"
+                  value={tempAcademicYearId}
+                  onChange={handleAcademicYearChange}
+                  label="Năm học"
+                >
+                  <MenuItem value="">
+                    <em>-- Chọn năm học --</em>
+                  </MenuItem>
+                  {academicYearsData?.data?.map((year) => (
+                    <MenuItem key={year.id} value={year.id}>
+                      {year.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseFilterDialog} color="inherit">
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleResetFilter} 
+            color="error"
+            startIcon={<RestartAltIcon />}
+          >
+            Xóa bộ lọc
+          </Button>
+          <Button 
+            onClick={handleApplyFilter} 
+            color="primary" 
+            variant="contained"
+            startIcon={<FilterListIcon />}
+          >
+            Áp dụng
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
