@@ -5,4 +5,5 @@ export interface SystemConfig {
   closeTime: string;
   academicYearId: string;
   academicYearName?: string;
+  isNotified: boolean;
 }

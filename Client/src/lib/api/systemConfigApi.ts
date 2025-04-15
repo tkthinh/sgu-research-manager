@@ -36,7 +36,7 @@ export const getSystemConfigByAcademicYearId = async (
 };
 
 export const createSystemConfig = async (
-  data: Partial<SystemConfig>,
+  data: Partial<SystemConfig>
 ): Promise<ApiResponse<SystemConfig>> => {
   const response = await apiClient.post<ApiResponse<SystemConfig>>(
     "/systemConfigs",
@@ -44,6 +44,16 @@ export const createSystemConfig = async (
   );
   return response.data;
 };
+
+export const notifySystemConfig = async (
+  data: Partial<SystemConfig>, id: string
+): Promise<ApiResponse<object>> => {
+  const response = await apiClient.post<ApiResponse<object>>(
+    `/systemConfigs/notify/${id}`,
+    data
+  );
+  return response.data;
+}
 
 export const updateSystemConfig = async (
   id: string,

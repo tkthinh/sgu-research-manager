@@ -18,8 +18,10 @@ import { getCurrentAcademicYear } from "../../../lib/api/academicYearApi";
 import {
   deleteSystemConfig,
   getSystemConfigByAcademicYearId,
+  notifySystemConfig,
 } from "../../../lib/api/systemConfigApi";
 import { AcademicYear } from "../../../lib/types/models/AcademicYear";
+import { SystemConfig } from "../../../lib/types/models/SystemConfig";
 import { formatDateTime } from "../../../lib/utils/dateTimeFormatter";
 import { isSystemOpen } from "../../../lib/utils/systemCheck";
 import SystemConfigForm from "./SystemConfigForm";
@@ -76,7 +78,7 @@ export default function SystemConfigPage() {
   const handleClose = () => {
     setOpen(false);
     refetch();
-  }
+  };
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -110,6 +112,33 @@ export default function SystemConfigPage() {
     }
   };
 
+  //Notify system config
+  const [notifyDialogOpen, setNotifyDialogOpen] = useState(false);
+  const [notifyTarget, setNotifyTarget] = useState<SystemConfig | null>(null);
+
+  const handleNotifyClick = (data: SystemConfig) => {
+    setNotifyTarget(data);
+    setNotifyDialogOpen(true);
+  };
+
+  const handleNotifyCancel = () => {
+    setNotifyDialogOpen(false);
+    setNotifyTarget(null);
+  };
+
+  const notifyMutation = useMutation({
+    mutationFn: () => notifySystemConfig(notifyTarget!, notifyTarget?.id! ),
+    onSuccess: () => {
+      toast.success("Đã tạo thông báo thành công.");
+      setNotifyDialogOpen(false);
+      setNotifyTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["system-configs"] });
+    },
+    onError: (error) => {
+      toast.error("Lỗi khi tạo thông báo: " + (error as Error).message);
+    },
+  });
+
   const columns: GridColDef[] = [
     { field: "name", headerName: "Tên cấu hình", width: 200 },
     { field: "academicYearName", headerName: "Năm học", width: 200 },
@@ -126,30 +155,52 @@ export default function SystemConfigPage() {
       valueFormatter: (params) => formatDateTime(params),
     },
     {
+      field: "isNotified",
+      headerName: "Đã thông báo",
+      type: "boolean",
+      width: 120,
+    },
+    {
       field: "actions",
       headerName: "Hành động",
-      width: 300,
-      renderCell: (params) => (
-        <Box>
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={() => handleOpen(params.row)}
-            sx={{ marginRight: 1 }}
-          >
-            Sửa
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => handleDeleteClick(params.row.id)}
-          >
-            Xóa
-          </Button>
-        </Box>
-      ),
+      width: 400,
+      renderCell: (params) => {
+        const isNotified = params.row.isNotified;
+
+        return (
+          <Box>
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              onClick={() => handleOpen(params.row)}
+              sx={{ marginRight: 1 }}
+              disabled={isNotified}
+            >
+              Sửa
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={() => handleDeleteClick(params.row.id)}
+              sx={{ marginRight: 1 }}
+              disabled={isNotified}
+            >
+              Xóa
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              size="small"
+              onClick={() => handleNotifyClick(params.row)}
+              disabled={isNotified}
+            >
+              Thông báo
+            </Button>
+          </Box>
+        );
+      },
     },
   ];
 
@@ -179,8 +230,14 @@ export default function SystemConfigPage() {
       </Paper>
       {isAnySystemOpen !== undefined && (
         <Box my={4}>
-          <Typography fontSize={24} variant="body1">Trạng thái hệ thống:{" "}
-            <Typography fontSize={24} component="span" fontWeight={500} color={isAnySystemOpen ? "primary" : "red"}>
+          <Typography fontSize={24} variant="body1">
+            Trạng thái hệ thống:{" "}
+            <Typography
+              fontSize={24}
+              component="span"
+              fontWeight={500}
+              color={isAnySystemOpen ? "primary" : "red"}
+            >
               {isAnySystemOpen ? "Đang mở" : "Đang đóng"}
             </Typography>
           </Typography>
@@ -191,7 +248,7 @@ export default function SystemConfigPage() {
         handleClose={handleClose}
         data={selectedData}
       />
-
+      {/* Delete dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>
@@ -205,6 +262,30 @@ export default function SystemConfigPage() {
             variant="contained"
           >
             {deleteMutation.isPending ? "Đang xóa..." : "Xóa"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Notify dialog */}
+      <Dialog open={notifyDialogOpen} onClose={handleNotifyCancel}>
+        <DialogTitle>Xác nhận gửi thông báo</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Sau khi thông báo, cấu hình này sẽ không thể chỉnh sửa hoặc xóa. Bạn
+            có chắc chắn muốn tiếp tục?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleNotifyCancel}>Hủy</Button>
+          <Button
+            onClick={() => {
+              if (notifyTarget) {
+                notifyMutation.mutate();
+              }
+            }}
+            variant="contained"
+            color="secondary"
+          >
+            {notifyMutation.isPending ? "Đang gửi..." : "Thông báo"}
           </Button>
         </DialogActions>
       </Dialog>
