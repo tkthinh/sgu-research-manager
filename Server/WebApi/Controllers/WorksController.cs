@@ -233,11 +233,11 @@ namespace WebApi.Controllers
 
         [HttpPatch("authors/{authorId}/mark")]
         [Authorize(Roles = "User")]
-        public async Task<ActionResult<ApiResponse<object>>> RegistedWorkByAuthor([FromRoute] Guid authorId, [FromBody] bool registed)
+        public async Task<ActionResult<ApiResponse<object>>> RegisterWorkByAuthor([FromRoute] Guid authorId, [FromBody] bool registered)
         {
             try
             {
-                await _workService.RegistedWorkByAuthorAsync(authorId, registed);
+                await _workService.RegisterWorkByAuthorAsync(authorId, registered);
                 return Ok(new ApiResponse<object>(true, "Cập nhật trạng thái MarkedForScoring thành công"));
             }
             catch (Exception ex)

@@ -171,7 +171,7 @@ namespace Application.Works
 
             return workDto;
         }
-        public async Task RegistedWorkByAuthorAsync(Guid authorId, bool registed, CancellationToken cancellationToken = default)
+        public async Task RegisterWorkByAuthorAsync(Guid authorId, bool registered, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
             if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
@@ -192,7 +192,7 @@ namespace Application.Works
             // Lấy năm học hiện tại
             var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
 
-            if (registed)
+            if (registered)
             {
                 // 1. Lấy Factor để kiểm tra giới hạn
                 var factor = await FindFactorAsync(

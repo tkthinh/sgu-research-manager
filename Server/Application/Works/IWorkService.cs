@@ -9,6 +9,6 @@ namespace Application.Works
         Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkWithAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
         Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default);
 
-        Task RegistedWorkByAuthorAsync(Guid authorId, bool registed, CancellationToken cancellationToken = default);
+        Task RegisterWorkByAuthorAsync(Guid authorId, bool registered, CancellationToken cancellationToken = default);
     }
 }
