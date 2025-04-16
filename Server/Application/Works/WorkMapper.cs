@@ -15,6 +15,13 @@ namespace Application.Works
 
         public WorkDto MapToDto(Work entity)
         {
+            // Lấy userIds từ WorkAuthors
+            var coAuthorUserIds = entity.WorkAuthors?
+                .Select(wa => wa.UserId)
+                .Where(uid => uid != Guid.Empty)
+                .Distinct()
+                .ToList() ?? new List<Guid>();
+
             return new WorkDto
             {
                 Id = entity.Id,
@@ -33,6 +40,7 @@ namespace Application.Works
                 AcademicYearName = entity.AcademicYear?.Name,
                 ExchangeDeadline = entity.ExchangeDeadline,
                 Authors = entity.Authors != null ? _authorMapper.MapToDtos(entity.Authors) : null,
+                CoAuthorUserIds = coAuthorUserIds,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };

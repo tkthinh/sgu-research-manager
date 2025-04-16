@@ -4,8 +4,7 @@ import apiClient from "./api";
 
 // Fetch all works
 export const getWorks = async (): Promise<ApiResponse<Work[]>> => {
-  const response = await apiClient.get<ApiResponse<Work[]>>("/works");
-  return response.data;
+  return await getWorksWithFilter();
 };
 
 // Fetch work by ID
@@ -15,17 +14,9 @@ export const getWorkById = async (id: string): Promise<ApiResponse<Work>> => {
 };
 
 // Create a new work
-export const createWork = async (data: CreateWorkRequest): Promise<ApiResponse<Work>> => {
-  try {
-    console.log("WorksApi:createWork - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
-    const response = await apiClient.post<ApiResponse<Work>>("/works", data);
-    console.log("WorksApi:createWork - Phản hồi:", JSON.stringify(response.data, null, 2));
-    return response.data;
-  } catch (error: any) {
-    console.error("WorksApi:createWork - Chi tiết lỗi:", error.response?.data);
-    console.error("WorksApi:createWork - Status code:", error.response?.status);
-    throw error;
-  }
+export const createWork = async (requestData: CreateWorkRequest): Promise<ApiResponse<Work>> => {
+  const response = await apiClient.post<ApiResponse<Work>>("/works", requestData);
+  return response.data;
 };
 
 // Delete a work
@@ -36,14 +27,12 @@ export const deleteWork = async (id: string): Promise<ApiResponse<boolean>> => {
 
 // Get works by user ID
 export const getWorksByUserId = async (userId: string): Promise<ApiResponse<Work[]>> => {
-  const response = await apiClient.get<ApiResponse<Work[]>>(`/works/user/${userId}`);
-  return response.data;
+  return await getWorksWithFilter({ userId });
 };
 
 // Get works by department ID
 export const getWorksByDepartmentId = async (departmentId: string): Promise<ApiResponse<Work[]>> => {
-  const response = await apiClient.get<ApiResponse<Work[]>>(`/works/department/${departmentId}`);
-  return response.data;
+  return await getWorksWithFilter({ departmentId });
 };
 
 // Get works by system config ID (đợt kê khai)
@@ -54,8 +43,7 @@ export const getWorksBySystemConfigId = async (systemConfigId: string): Promise<
 
 // Get works by academic year ID
 export const getWorksByAcademicYearId = async (academicYearId: string): Promise<ApiResponse<Work[]>> => {
-  const response = await apiClient.get<ApiResponse<Work[]>>(`/works/academic-year/${academicYearId}`);
-  return response.data;
+  return await getWorksWithFilter({ academicYearId });
 };
 
 // Get current user's works by system config ID (đợt kê khai)
@@ -66,8 +54,91 @@ export const getCurrentUserWorksBySystemConfigId = async (systemConfigId: string
 
 // Get current user's works by academic year ID
 export const getCurrentUserWorksByAcademicYearId = async (academicYearId: string): Promise<ApiResponse<Work[]>> => {
-  const response = await apiClient.get<ApiResponse<Work[]>>(`/works/my-works/academic-year/${academicYearId}`);
+  return await getWorksWithFilter({ academicYearId, isCurrentUser: true });
+};
+
+// Get current user's works by academic year ID and proof status
+export const getCurrentUserWorksByAcademicYearAndProofStatus = async (academicYearId: string, proofStatus: number): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ academicYearId, proofStatus, isCurrentUser: true });
+};
+
+// Get current user's works by academic year ID and source
+export const getCurrentUserWorksByAcademicYearAndSource = async (academicYearId: string, source: number): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ academicYearId, source, isCurrentUser: true });
+};
+
+// Get current user's works as coauthor by academic year ID
+export const getCurrentUserCoAuthorWorksByAcademicYearId = async (academicYearId: string): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ academicYearId, onlyCoAuthorWorks: true, isCurrentUser: true });
+};
+
+// Get current user's registered works
+export const getRegisteredWorks = async (): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ onlyRegisteredWorks: true, isCurrentUser: true });
+};
+
+// Get current user's works
+export const getMyWorks = async (): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ isCurrentUser: true });
+};
+
+// Get all works of current user (including imported works)
+export const getAllMyWorks = async (): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ isCurrentUser: true });
+};
+
+// Get all works of current user by academic year ID (including imported works)
+export const getAllMyWorksByAcademicYearId = async (academicYearId: string): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ academicYearId, isCurrentUser: true });
+};
+
+// Get marked works
+export const getMarkedWorks = async (): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ onlyRegisteredWorks: true, isCurrentUser: true });
+};
+
+// Get user works by academic year ID
+export const getUserWorksByAcademicYearId = async (userId: string, academicYearId: string): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ userId, academicYearId });
+};
+
+// Get works by department and academic year ID
+export const getWorksByDepartmentAndAcademicYearId = async (departmentId: string, academicYearId: string): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ departmentId, academicYearId });
+};
+
+// Get current user's registered works by academic year ID
+export const getRegisteredWorksByAcademicYear = async (academicYearId: string): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({ academicYearId, onlyRegisteredWorks: true, isCurrentUser: true });
+};
+
+// Get works with filter
+export const getWorksWithFilter = async (
+  params?: {
+    userId?: string;
+    departmentId?: string;
+    academicYearId?: string;
+    proofStatus?: number;
+    source?: number;
+    onlyRegisteredWorks?: boolean;
+    onlyCoAuthorWorks?: boolean;
+    onlyRegisterableWorks?: boolean;
+    isCurrentUser?: boolean;
+  }
+): Promise<ApiResponse<Work[]>> => {
+  const response = await apiClient.get<ApiResponse<Work[]>>("/works/filter", { params });
   return response.data;
+};
+
+// Get works that can be registered for conversion in current academic year
+export const getRegisterableWorksByAcademicYearId = async (
+  academicYearId: string
+): Promise<ApiResponse<Work[]>> => {
+  return await getWorksWithFilter({
+    academicYearId,
+    onlyRegisterableWorks: true,
+    isCurrentUser: true
+  });
 };
 
 // Set marked for scoring
@@ -93,47 +164,14 @@ export const setMarkedForScoring = async (authorId: string, marked: boolean): Pr
 };
 
 // Update work by admin
-export const updateWorkByAdmin = async (workId: string, userId: string, data: UpdateWorkWithAuthorRequest): Promise<ApiResponse<Work>> => {
-  try {
-    console.log("WorksApi:updateWorkByAdmin - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
-    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}/admin-update/${userId}`, data);
-    console.log("WorksApi:updateWorkByAdmin - Phản hồi:", JSON.stringify(response.data, null, 2));
-    return response.data;
-  } catch (error: any) {
-    console.error("WorksApi:updateWorkByAdmin - Chi tiết lỗi:", error.response?.data);
-    console.error("WorksApi:updateWorkByAdmin - Status code:", error.response?.status);
-    throw error;
-  }
+export const updateWorkByAdmin = async (workId: string, userId: string, requestData: UpdateWorkWithAuthorRequest): Promise<ApiResponse<Work>> => {
+  const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}/admin-update/${userId}`, requestData);
+  return response.data;
 };
 
 // Update work by author
-export const updateWorkByAuthor = async (id: string, data: UpdateWorkWithAuthorRequest): Promise<ApiResponse<Work>> => {
-  try {
-    console.log("WorksApi:updateWorkByAuthor - Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
-    const response = await apiClient.patch<ApiResponse<Work>>(`/works/${id}`, data);
-    console.log("WorksApi:updateWorkByAuthor - Phản hồi:", JSON.stringify(response.data, null, 2));
-    return response.data;
-  } catch (error: any) {
-    console.error("WorksApi:updateWorkByAuthor - Chi tiết lỗi:", error.response?.data);
-    console.error("WorksApi:updateWorkByAuthor - Status code:", error.response?.status);
-    throw error;
-  }
-};
-
-// Get current user's works
-export const getMyWorks = async (): Promise<ApiResponse<Work[]>> => {
-  const response = await apiClient.get<ApiResponse<Work[]>>("/works/my-works");
-  return response.data;
-};
-
-// Get all works of current user (including imported works)
-export const getAllMyWorks = async (): Promise<ApiResponse<Work[]>> => {
-  const response = await apiClient.get<ApiResponse<Work[]>>("/works/all-my-works");
-  return response.data;
-};
-
-export const getMarkedWorks = async (): Promise<ApiResponse<Work[]>> => {
-  const response = await apiClient.get<ApiResponse<Work[]>>("/works/marked");
+export const updateWorkByAuthor = async (workId: string, requestData: UpdateWorkWithAuthorRequest): Promise<ApiResponse<Work>> => {
+  const response = await apiClient.patch<ApiResponse<Work>>(`/works/${workId}`, requestData);
   return response.data;
 };
 

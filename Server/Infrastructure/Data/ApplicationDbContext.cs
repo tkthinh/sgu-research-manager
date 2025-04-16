@@ -91,6 +91,23 @@ namespace Infrastructure.Data
                 .HasForeignKey(w => w.WorkLevelId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Thêm chỉ mục cho bảng Work để tối ưu hiệu suất truy vấn
+            builder.Entity<Work>()
+                .HasIndex(w => w.AcademicYearId)
+                .HasDatabaseName("IX_Works_AcademicYearId");
+
+            builder.Entity<Work>()
+                .HasIndex(w => w.WorkTypeId)
+                .HasDatabaseName("IX_Works_WorkTypeId");
+
+            builder.Entity<Work>()
+                .HasIndex(w => w.ExchangeDeadline)
+                .HasDatabaseName("IX_Works_ExchangeDeadline");
+
+            builder.Entity<Work>()
+                .HasIndex(w => w.Source)
+                .HasDatabaseName("IX_Works_Source");
+
             // Author Relationships
             builder.Entity<Author>()
                 .HasOne(a => a.Work)
@@ -138,13 +155,27 @@ namespace Infrastructure.Data
                 .HasIndex(a => new { a.WorkId, a.UserId })
                 .IsUnique();
 
+            // Thêm chỉ mục cho bảng Author để tối ưu hiệu suất truy vấn
+            builder.Entity<Author>()
+                .HasIndex(a => a.WorkId)
+                .HasDatabaseName("IX_Authors_WorkId");
+
+            builder.Entity<Author>()
+                .HasIndex(a => a.UserId)
+                .HasDatabaseName("IX_Authors_UserId");
+
+            // Thêm chỉ mục cho trường ProofStatus để tối ưu truy vấn theo trạng thái
+            builder.Entity<Author>()
+                .HasIndex(a => a.ProofStatus)
+                .HasDatabaseName("IX_Authors_ProofStatus");
+
             builder.Entity<Author>()
             .Property(a => a.AuthorHour)
             .HasPrecision(10, 1); // Precision = 10, Scale = 1 (1 chữ số thập phân)
 
             // WorkAuthor
             builder.Entity<WorkAuthor>()
-                .HasKey(wa => new { wa.WorkId, wa.UserId });
+                .HasKey(wa => wa.Id);
 
             builder.Entity<WorkAuthor>()
                 .HasOne(wa => wa.Work)
@@ -157,6 +188,19 @@ namespace Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(wa => wa.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Thêm chỉ mục cho bảng WorkAuthor để tối ưu hiệu suất truy vấn
+            builder.Entity<WorkAuthor>()
+                .HasIndex(wa => wa.WorkId)
+                .HasDatabaseName("IX_WorkAuthors_WorkId");
+
+            builder.Entity<WorkAuthor>()
+                .HasIndex(wa => wa.UserId)
+                .HasDatabaseName("IX_WorkAuthors_UserId");
+
+            builder.Entity<WorkAuthor>()
+                .HasIndex(wa => new { wa.UserId, wa.WorkId })
+                .HasDatabaseName("IX_WorkAuthors_UserId_WorkId");
 
             // AuthorRole
             builder.Entity<AuthorRole>()
@@ -234,6 +278,15 @@ namespace Infrastructure.Data
                 .HasForeignKey<AuthorRegistration>(er => er.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Thêm chỉ mục cho AuthorRegistration để tối ưu truy vấn
+            builder.Entity<AuthorRegistration>()
+                .HasIndex(ar => ar.AuthorId)
+                .HasDatabaseName("IX_AuthorRegistrations_AuthorId");
+
+            builder.Entity<AuthorRegistration>()
+                .HasIndex(ar => ar.AcademicYearId)
+                .HasDatabaseName("IX_AuthorRegistrations_AcademicYearId");
+
             // Enum to string
             builder.Entity<Work>()
                 .Property(w => w.Source)
@@ -258,7 +311,6 @@ namespace Infrastructure.Data
             builder.ApplyConfiguration(new FactorSeeding());
             builder.ApplyConfiguration(new AcademicYearSeeding());
         }
-
     }
 }
 

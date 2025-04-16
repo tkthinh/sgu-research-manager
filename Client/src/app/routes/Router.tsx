@@ -11,6 +11,7 @@ import DepartmentPage from "../../features/settings/departments/DepartmentPage";
 import FactorPage from "../../features/settings/factors/FactorPage";
 import FieldPage from "../../features/settings/fields/FieldPage";
 import WorkPage from "../../features/works/WorkPage";
+import TestPage from "../../features/test/test";
 
 import PurposePage from "../../features/settings/purposes/PurposePage";
 import ScimagoFieldPage from "../../features/settings/scimagoFields/ScimagoFieldPage";
@@ -31,6 +32,7 @@ import WorkScoreDetailPage from "../../features/work-scores/WorkScoreDetailPage"
 import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
 import WorkScorePage from "../../features/work-scores/WorkScorePage";
 import CachePage from "../../features/settings/caches/CachePage";
+import ReportPage from "../../features/report/ReportPage";
 
 export const router = createBrowserRouter([
   {
@@ -93,8 +95,24 @@ export const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
+              // ============== TEST ==============
+              {
+                path: "/test",
+                element: (
+                  <ProtectedRoute allowedRoles={["User", "Manager", "Admin"]}>
+                    <TestPage />
+                  </ProtectedRoute>
+                ),
+              },
               // ============== BÁO CÁO ==============
-              { path: "/bao-cao", element: <></> },
+              {
+                path: "/bao-cao",
+                element: (
+                  <ProtectedRoute allowedRoles={["User", "Manager"]}>
+                    <ReportPage />
+                  </ProtectedRoute>
+                ),
+              },
               // ============== HỆ THỐNG ==============
               {
                 path: "/quan-ly-tai-khoan",

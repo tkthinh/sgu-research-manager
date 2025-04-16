@@ -6,14 +6,10 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Domain.Enums;
 using Application.SystemConfigs;
-using Microsoft.AspNetCore.Http;
-using OfficeOpenXml;
-using System.Globalization;
 using System.Data;
 using Application.Shared.Messages;
 using Application.AcademicYears;
 using Microsoft.EntityFrameworkCore;
-using Application.AuthorRegistrations;
 
 namespace Application.Works
 {
@@ -21,16 +17,13 @@ namespace Application.Works
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGenericMapper<WorkDto, Work> _mapper;
-        private readonly IGenericMapper<AuthorDto, Author> _authorMapper;
-        private readonly IGenericRepository<AuthorRole> _authorRoleRepository;
-        private readonly IGenericRepository<Factor> _factorRepository;
         private readonly IWorkRepository _workRepository;
         private readonly ISystemConfigService _systemConfigService;
-        private readonly IUserRepository _userRepository;
         private readonly ILogger<WorkService> _logger;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAcademicYearService _academicYearService;
-        private readonly IAuthorService _authorService;
+        private readonly IWorkCalculateService _workCalculateService;
+        private readonly IWorkExportService _workExportService;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -43,44 +36,21 @@ namespace Application.Works
             IUserRepository userRepository,
             ICurrentUserService currentUserService,
             IAcademicYearService academicYearService,
-            IAuthorService authorService)
+            IAuthorService authorService,
+            IWorkCalculateService workCalculateService,
+            IWorkExportService workExportService)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _authorMapper = authorMapper;
-            _authorRoleRepository = unitOfWork.Repository<AuthorRole>();
-            _factorRepository = unitOfWork.Repository<Factor>();
             _workRepository = workRepository;
             _systemConfigService = systemConfigService;
-            _userRepository = userRepository;
             _logger = logger;
             _currentUserService = currentUserService;
             _academicYearService = academicYearService;
-            _authorService = authorService;
+            _workCalculateService = workCalculateService;
+            _workExportService = workExportService;
         }
-
-        public async Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default)
-        {
-            var works = await _workRepository.GetWorksWithAuthorsAsync();
-            var workDtos = _mapper.MapToDtos(works).ToList();
-
-            await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
-
-            return workDtos;
-        }
-
-        public async Task<WorkDto?> GetWorkByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(id);
-            if (work is null)
-                return null;
-
-            var dto = _mapper.MapToDto(work);
-            await FillCoAuthorUserIdsAsync(dto, cancellationToken); // Điền CoAuthorUserIds
-            return dto;
-        }
-
         public async Task<WorkDto> CreateWorkWithAuthorAsync(CreateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
@@ -88,8 +58,8 @@ namespace Application.Works
                 throw new Exception(ErrorMessages.SystemClosedNewWork);
 
             var existingWork = await _unitOfWork.Repository<Work>()
-                .FirstOrDefaultAsync(w => w.Title == request.Title && 
-                    w.WorkTypeId == request.WorkTypeId && 
+                .FirstOrDefaultAsync(w => w.Title == request.Title &&
+                    w.WorkTypeId == request.WorkTypeId &&
                     w.WorkLevelId == request.WorkLevelId, cancellationToken);
             if (existingWork != null)
                 throw new Exception(ErrorMessages.WorkAlreadyExists);
@@ -201,45 +171,7 @@ namespace Application.Works
 
             return workDto;
         }
-
-        public async Task<IEnumerable<WorkDto>> GetWorksByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
-        {
-            var authors = await _unitOfWork.Repository<Author>()
-                .FindAsync(a => a.UserId == userId);
-
-            if (!authors.Any())
-            {
-                return Enumerable.Empty<WorkDto>();
-            }
-
-            var workIds = authors.Select(a => a.WorkId).Distinct();
-            var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(workIds, cancellationToken);
-
-            var filteredWorks = works.Select(work =>
-            {
-                var userAuthor = authors.FirstOrDefault(a => a.WorkId == work.Id);
-                if (userAuthor is null)
-               {
-                  return null;
-               }
-                
-                    var filteredWork = _mapper.MapToDto(work);
-                    filteredWork.Authors = new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) };
-                    return filteredWork;
-            }).Where(w => w is not null).ToList();
-
-            await FillCoAuthorUserIdsForMultipleWorksAsync(filteredWorks!, cancellationToken);
-
-            return filteredWorks!;
-        }
-
-        public async Task<IEnumerable<WorkDto>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default)
-        {
-            var works = await _workRepository.GetWorksByDepartmentIdAsync(departmentId, cancellationToken);
-            return _mapper.MapToDtos(works);
-        }
-
-        public async Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default)
+        public async Task RegistedWorkByAuthorAsync(Guid authorId, bool registed, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
             if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
@@ -260,7 +192,7 @@ namespace Application.Works
             // Lấy năm học hiện tại
             var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
 
-            if (marked)
+            if (registed)
             {
                 // 1. Lấy Factor để kiểm tra giới hạn
                 var factor = await FindFactorAsync(
@@ -419,12 +351,6 @@ namespace Application.Works
             author.ScoreLevel = authorRequest.ScoreLevel ?? author.ScoreLevel;
             author.SCImagoFieldId = authorRequest.SCImagoFieldId ?? author.SCImagoFieldId;
             author.FieldId = authorRequest.FieldId ?? author.FieldId;
-        }
-
-        private bool ShouldRecalculateAuthorHours(UpdateAuthorRequestDto authorRequest, UpdateWorkRequestDto? workRequest)
-        {
-            return authorRequest.ScoreLevel.HasValue ||
-                (workRequest is not null && (workRequest.TotalAuthors.HasValue || workRequest.TotalMainAuthors.HasValue));
         }
 
         private async Task UpdateAuthorHoursAsync(
@@ -696,47 +622,7 @@ namespace Application.Works
 
         private async Task<Factor> FindFactorAsync(Guid workTypeId, Guid? workLevelId, Guid purposeId, Guid? authorRoleId, ScoreLevel? scoreLevel, CancellationToken cancellationToken = default)
         {
-            // Tìm kiếm chính xác theo tất cả điều kiện
-            var factors = await _factorRepository.FindAsync(f =>
-                f.WorkTypeId == workTypeId &&
-                // Xử lý WorkLevelId null
-                ((workLevelId == null && f.WorkLevelId == null) || (workLevelId != null && f.WorkLevelId == workLevelId)) &&
-                f.PurposeId == purposeId &&
-                // Xử lý AuthorRoleId null
-                ((authorRoleId == null && f.AuthorRoleId == null) || (authorRoleId != null && f.AuthorRoleId == authorRoleId)) &&
-                // Xử lý ScoreLevel null
-                ((scoreLevel == null && f.ScoreLevel == null) || (scoreLevel != null && f.ScoreLevel == scoreLevel)));
-
-            var factor = factors.FirstOrDefault();
-
-            // Nếu không tìm thấy và authorRoleId có giá trị, thử tìm với authorRoleId = null
-            if (factor == null && authorRoleId.HasValue)
-            {
-                factors = await _factorRepository.FindAsync(f =>
-                    f.WorkTypeId == workTypeId &&
-                    ((workLevelId == null && f.WorkLevelId == null) || (workLevelId != null && f.WorkLevelId == workLevelId)) &&
-                    f.PurposeId == purposeId &&
-                    f.AuthorRoleId == null &&
-                    ((scoreLevel == null && f.ScoreLevel == null) || (scoreLevel != null && f.ScoreLevel == scoreLevel)));
-
-                factor = factors.FirstOrDefault();
-            }
-
-            // Log thông tin debug
-            if (factor != null)
-            {
-                _logger.LogInformation(
-                    "Tìm thấy Factor với WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}. ConvertHour={ConvertHour}",
-                    workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel, factor.ConvertHour);
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "Không tìm thấy Factor cho WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
-                    workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel);
-            }
-
-            return factor;
+            return await _workCalculateService.FindFactorAsync(workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel, cancellationToken);
         }
 
         private async Task UpdateExistingAuthorAsync(Author author, Work work, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken)
@@ -833,270 +719,6 @@ namespace Application.Works
             await SafeInvalidateCacheAsync(work.Id);
         }
 
-        public async Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                // Lấy năm học hiện tại
-                var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
-                if (currentAcademicYear == null)
-                {
-                    _logger.LogWarning("Không tìm thấy năm học hiện tại");
-                    return Enumerable.Empty<WorkDto>();
-                }
-
-                _logger.LogInformation("Năm học hiện tại: {AcademicYearName} (ID: {AcademicYearId})", 
-                    currentAcademicYear.Name, currentAcademicYear.Id);
-
-                // 1. Lấy danh sách tác giả có thể đăng ký của người dùng
-                var registrableAuthors = await _authorService.GetAllRegistableAuthorsOfUser(userId, cancellationToken);
-
-                // 2. Lấy danh sách tác giả đã được đăng ký trong năm học hiện tại (qua bảng AuthorRegistration)
-                var authorRegistrations = await _unitOfWork.Repository<AuthorRegistration>()
-                    .Include(ar => ar.Author)
-                    .Where(ar => ar.AcademicYearId == currentAcademicYear.Id && ar.Author.UserId == userId)
-                    .ToListAsync(cancellationToken);
-                
-                var registeredAuthorIds = authorRegistrations.Select(ar => ar.AuthorId).ToList();
-                
-                _logger.LogInformation("Số lượng tác giả đã đăng ký quy đổi: {Count}", registeredAuthorIds.Count);
-                
-                // Lấy tất cả các tác giả của người dùng đã được đăng ký trong năm học hiện tại
-                var registeredAuthors = await _unitOfWork.Repository<Author>()
-                    .Include(a => a.Work)
-                    .Include(a => a.AuthorRole)
-                    .Include(a => a.Purpose)
-                    .Include(a => a.SCImagoField)
-                    .Include(a => a.Field)
-                    .Include(a => a.AuthorRegistration)
-                    .Where(a => registeredAuthorIds.Contains(a.Id) && a.UserId == userId)
-                    .ToListAsync(cancellationToken);
-
-                // 3. Lấy danh sách công trình mà người dùng được thêm làm đồng tác giả
-                var coAuthorWorks = await _unitOfWork.Repository<WorkAuthor>()
-                    .Include(wa => wa.Work)
-                    .Where(wa => wa.UserId == userId)
-                    .Select(wa => wa.Work)
-                    .ToListAsync(cancellationToken);
-
-                // Kết hợp hai danh sách tác giả
-                var allAuthors = registrableAuthors.ToList();
-                
-                // Đảm bảo AuthorRegistration được gán cho các tác giả đã đăng ký
-                foreach (var author in registeredAuthors)
-                {
-                    var authorDto = _authorMapper.MapToDto(author);
-                    
-                    // Tìm AuthorRegistration tương ứng
-                    var registration = authorRegistrations.FirstOrDefault(ar => ar.AuthorId == author.Id);
-                    if (registration != null)
-                    {
-                        // Gán thông tin AuthorRegistration
-                        authorDto.AuthorRegistration = new AuthorRegistrationDto
-                        {
-                            Id = registration.Id,
-                            AuthorId = registration.AuthorId,
-                            AcademicYearId = registration.AcademicYearId
-                        };
-                        
-                        _logger.LogInformation("Tác giả {AuthorId} đã được đăng ký với AuthorRegistration {RegistrationId}", 
-                            author.Id, registration.Id);
-                    }
-                    
-                    // Kiểm tra xem tác giả có tồn tại trong danh sách registrableAuthors chưa
-                    var existingAuthor = allAuthors.FirstOrDefault(a => a.Id == author.Id);
-                    if (existingAuthor != null)
-                    {
-                        // Cập nhật AuthorRegistration cho tác giả đã tồn tại
-                        existingAuthor.AuthorRegistration = authorDto.AuthorRegistration;
-                    }
-                    else
-                    {
-                        // Thêm tác giả mới vào danh sách
-                        allAuthors.Add(authorDto);
-                    }
-                }
-
-                if (!allAuthors.Any() && !coAuthorWorks.Any())
-                {
-                    _logger.LogInformation("Không tìm thấy tác giả nào có thể đăng ký hoặc đã đăng ký cho userId={UserId}", userId);
-                    return Enumerable.Empty<WorkDto>();
-                }
-
-                // Lấy danh sách workId từ tất cả tác giả và công trình đồng tác giả
-                var authorWorkIds = allAuthors.Select(a => a.WorkId).Distinct().ToList();
-                var coAuthorWorkIds = coAuthorWorks.Select(w => w.Id).Distinct().ToList();
-                var allWorkIds = authorWorkIds.Union(coAuthorWorkIds).Distinct().ToList();
-
-                // Lấy thông tin đầy đủ của các công trình
-                var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(allWorkIds, cancellationToken);
-                
-                // Tạo WorkDto từ mỗi công trình
-                var workDtos = works.Select(work => 
-                {
-                    var dto = _mapper.MapToDto(work);
-                    
-                    // Lọc chỉ giữ lại thông tin tác giả của người dùng hiện tại
-                    var authorDto = allAuthors.FirstOrDefault(a => a.WorkId == work.Id);
-                    if (authorDto != null)
-                    {
-                        dto.Authors = new List<AuthorDto> { authorDto };
-                    }
-                    else
-                    {
-                        dto.Authors = new List<AuthorDto>();
-                    }
-                    
-                    return dto;
-                }).ToList();
-            
-                // Fill coAuthorUserIds cho tất cả các công trình
-                await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
-            
-                return workDtos;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi lấy công trình của người dùng {UserId}", userId);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Lấy tất cả công trình của người dùng, bao gồm cả công trình do người dùng kê khai và công trình được admin import vào
-        /// </summary>
-        /// <param name="userId">ID của người dùng</param>
-        /// <param name="cancellationToken">Token hủy</param>
-        /// <returns>Danh sách công trình</returns>
-        public async Task<IEnumerable<WorkDto>> GetAllWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default)
-        {
-            // Lấy danh sách các WorkId mà user là tác giả (có trong bảng Author)
-            var authors = await _unitOfWork.Repository<Author>()
-                .FindAsync(a => a.UserId == userId);
-
-            var authorWorkIds = authors.Select(a => a.WorkId).Distinct().ToList();
-
-            // Lấy danh sách các WorkId mà user được thêm làm đồng tác giả (có trong bảng WorkAuthor)
-            var workAuthors = await _unitOfWork.Repository<WorkAuthor>()
-                .FindAsync(wa => wa.UserId == userId);
-
-            var workAuthorWorkIds = workAuthors.Select(wa => wa.WorkId).Distinct().ToList();
-
-            // Kết hợp tất cả WorkId (loại bỏ trùng lặp)
-            var allWorkIds = authorWorkIds.Union(workAuthorWorkIds).Distinct().ToList();
-
-            if (!allWorkIds.Any())
-            {
-                return Enumerable.Empty<WorkDto>();
-            }
-
-            // Lấy thông tin đầy đủ của các công trình
-            var works = await _workRepository.GetWorksWithAuthorsByIdsAsync(allWorkIds, cancellationToken);
-
-            // Lọc và xử lý dữ liệu
-            var filteredWorks = works.Select(work =>
-            {
-                // Kiểm tra xem user đã có thông tin tác giả trong công trình này chưa
-                var userAuthor = authors.FirstOrDefault(a => a.WorkId == work.Id);
-                var isCoAuthor = workAuthorWorkIds.Contains(work.Id);
-
-                // Chỉ giữ thông tin tác giả của user hiện tại (nếu có)
-                var filteredWork = _mapper.MapToDto(work);
-                filteredWork.Authors = userAuthor != null
-                    ? new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) }
-                    : new List<AuthorDto>();
-
-                return filteredWork;
-            }).Where(w => w != null).ToList();
-
-            await FillCoAuthorUserIdsForMultipleWorksAsync(filteredWorks, cancellationToken);
-
-            return filteredWorks;
-        }
-
-        private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
-        {
-            // Nếu factor không tồn tại, trả về 0
-            if (factor is null)
-            {
-                _logger.LogWarning("CalculateWorkHour - Factor is null, returning 0");
-                return 0;
-            }
-            
-            // Kiểm tra xem ScoreLevel có khớp không
-            if ((scoreLevel.HasValue != factor.ScoreLevel.HasValue) || 
-                (scoreLevel.HasValue && factor.ScoreLevel.HasValue && scoreLevel.Value != factor.ScoreLevel.Value))
-            {
-                _logger.LogWarning("CalculateWorkHour - ScoreLevel mismatch: Request={RequestLevel}, Factor={FactorLevel}, nhưng vẫn trả về ConvertHour={ConvertHour}",
-                    scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null",
-                    factor.ScoreLevel.HasValue ? factor.ScoreLevel.Value.ToString() : "null",
-                    factor.ConvertHour);
-                    
-                // Vẫn trả về ConvertHour của Factor nếu Factor được tìm thấy
-                return factor.ConvertHour;
-            }
-            
-            // Nếu mọi thứ khớp hoặc cả hai đều null, trả về ConvertHour
-            _logger.LogInformation("CalculateWorkHour - Returning ConvertHour={ConvertHour} cho ScoreLevel={ScoreLevel}", 
-                factor.ConvertHour, 
-                scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null");
-            return factor.ConvertHour;
-        }
-
-        private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid? authorRoleId, CancellationToken cancellationToken = default)
-        {
-            // Hằng số tỷ lệ phân bổ giờ chuẩn
-            const double MAIN_AUTHOR_RATIO = 1.0 / 3;
-            const double REGULAR_RATIO = 2.0 / 3;
-            
-            // Kiểm tra các điều kiện không hợp lệ
-            if (workHour <= 0 || authorRoleId == null)
-            {
-                return 0;
-            }
-
-            // Lấy thông tin vai trò tác giả
-            var authorRole = await _authorRoleRepository.GetByIdAsync(authorRoleId.Value);
-            if (authorRole is null)
-            {
-                throw new Exception(ErrorMessages.AuthorRoleNotFound);
-            }
-
-            // Lấy thông tin công trình để kiểm tra loại
-            var work = await _unitOfWork.Repository<Work>()
-                .FirstOrDefaultAsync(w => w.Authors.Any(a => a.AuthorRoleId == authorRoleId));
-            
-            // Nếu là công trình hội thảo, hội nghị thì trả về workHour
-            if (work?.WorkTypeId == Guid.Parse("140a3e34-ded1-4bfa-8633-fbea545cbdaa"))
-            {
-                return workHour;
-            }
-
-            // Kiểm tra các điều kiện không hợp lệ cho các loại công trình khác
-            if (totalAuthors <= 0 || totalMainAuthors <= 0 || totalMainAuthors > totalAuthors)
-            {
-                return 0;
-            }
-
-            decimal authorHour;
-            
-            // Tính toán giờ chuẩn dựa trên vai trò tác giả (chính/thường)
-            if (authorRole.IsMainAuthor)
-            {
-                // Công thức cho tác giả chính
-                authorHour = (decimal)(MAIN_AUTHOR_RATIO * (workHour / totalMainAuthors) + 
-                                      REGULAR_RATIO * (workHour / totalAuthors));
-            }
-            else
-            {
-                // Công thức cho tác giả thường
-                authorHour = (decimal)(REGULAR_RATIO * (workHour / totalAuthors));
-            }
-
-            // Làm tròn đến 1 chữ số thập phân để đảm bảo tính nhất quán
-            return Math.Round(authorHour, 1);
-        }
-
         public async Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default)
         {
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
@@ -1162,574 +784,6 @@ namespace Application.Works
                 // Đảm bảo ít nhất trả về một danh sách rỗng thay vì null
                 workDto.CoAuthorUserIds = new List<Guid>();
             }
-        }
-
-        private async Task FillCoAuthorUserIdsForMultipleWorksAsync(IEnumerable<WorkDto> workDtos, CancellationToken cancellationToken = default)
-        {
-            if (workDtos is null || !workDtos.Any())
-                return;
-
-            // Lấy userId từ service
-            var (isSuccess, currentUserId, _) = _currentUserService.GetCurrentUser();
-
-            // Lấy tất cả workIds
-            var workIds = workDtos.Select(w => w.Id).Distinct().ToList();
-
-            // Thực hiện 2 truy vấn cho tất cả công trình cùng lúc
-            var allAuthors = await _unitOfWork.Repository<Author>()
-                .FindAsync(a => workIds.Contains(a.WorkId));
-
-            var allWorkAuthors = await _unitOfWork.Repository<WorkAuthor>()
-                .FindAsync(wa => workIds.Contains(wa.WorkId));
-
-            // Nhóm dữ liệu theo WorkId để tránh lọc lặp đi lặp lại
-            var authorsByWorkId = allAuthors.GroupBy(a => a.WorkId)
-                .ToDictionary(g => g.Key, g => g.Select(a => a.UserId).ToList());
-
-            var workAuthorsByWorkId = allWorkAuthors.GroupBy(wa => wa.WorkId)
-                .ToDictionary(g => g.Key, g => g.Select(wa => wa.UserId).ToList());
-
-            // Điền dữ liệu cho từng WorkDto
-            foreach (var workDto in workDtos)
-            {
-                // Lấy danh sách userIds của authors (nếu có)
-                var authorUserIds = authorsByWorkId.TryGetValue(workDto.Id, out var authors) 
-                    ? authors 
-                    : new List<Guid>();
-
-                // Lấy danh sách userIds của work authors (nếu có)
-                var coAuthorUserIds = workAuthorsByWorkId.TryGetValue(workDto.Id, out var workAuthors) 
-                    ? workAuthors 
-                    : new List<Guid>();
-
-                // Kết hợp, loại bỏ trùng lặp và loại bỏ userId của người dùng đang đăng nhập
-                var combinedUserIds = authorUserIds.Union(coAuthorUserIds);
-                if (isSuccess)
-                {
-                    combinedUserIds = combinedUserIds.Where(uid => uid != currentUserId);
-                }
-                workDto.CoAuthorUserIds = combinedUserIds.Distinct().ToList();
-            }
-        }
-
-        public async Task<byte[]> ExportWorksByUserAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
-        {
-            // Thử tìm file template ở các vị trí khác nhau
-            string[] possiblePaths = new[]
-            {
-                // Đường dẫn từ thư mục bin của WebApi
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "ExportByUserTemplate.xlsx"),
-                
-                // Đường dẫn từ thư mục gốc của Server project
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "ExportByUserTemplate.xlsx")),
-                
-                // Đường dẫn từ thư mục gốc của solution
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "ExportByUserTemplate.xlsx"))
-            };
-
-            string? templatePath = null;
-            foreach (var path in possiblePaths)
-            {
-                var normalizedPath = Path.GetFullPath(path);
-                _logger.LogInformation("Đang thử tìm file template tại: {Path}", normalizedPath);
-                
-                if (File.Exists(normalizedPath))
-                {
-                    templatePath = normalizedPath;
-                    _logger.LogInformation("Đã tìm thấy file template tại: {Path}", normalizedPath);
-                    break;
-                }
-            }
-
-            if (templatePath == null)
-            {
-                var errorMessage = $"Không tìm thấy file template Excel. Đã thử các đường dẫn sau:\n{string.Join("\n", possiblePaths.Select(p => Path.GetFullPath(p)))}";
-                _logger.LogError(errorMessage);
-                throw new FileNotFoundException(errorMessage);
-            }
-
-            using (var package = new ExcelPackage(new FileInfo(templatePath)))
-            {
-                var worksheet = package.Workbook.Worksheets[0]; // Lấy sheet đầu tiên
-
-                // Điền thông tin cá nhân từ bản ghi đầu tiên
-                var userInfo = exportData.FirstOrDefault();
-                if (userInfo is null)
-                    throw new Exception(ErrorMessages.NoDataToExport);
-
-                // Điền thông tin cá nhân vào các ô tương ứng
-                worksheet.Cells["C2"].Value = userInfo.DepartmentName;
-
-                worksheet.Cells["B8"].Value = userInfo.FullName;
-                worksheet.Cells["B9"].Value = userInfo.FieldName;
-                worksheet.Cells["B10"].Value = userInfo.PhoneNumber;
-
-                worksheet.Cells["E8"].Value = userInfo.AcademicTitle;
-                worksheet.Cells["E9"].Value = userInfo.Specialization;
-                worksheet.Cells["E10"].Value = userInfo.Email;
-
-                worksheet.Cells["H8"].Value = userInfo.UserName;
-                worksheet.Cells["H9"].Value = userInfo.OfficerRank;
-
-                // Điền dữ liệu công trình vào bảng
-                int startRow = 15; // Dòng bắt đầu của dữ liệu
-                int currentRow = startRow;
-
-                // Điền thông tin từng công trình
-                for (int i = 0; i < exportData.Count; i++)
-                {
-                    var work = exportData[i];
-                    
-                    worksheet.Cells[currentRow, 1].Value = i + 1;
-                    worksheet.Cells[currentRow, 2].Value = work.Title;
-                    worksheet.Cells[currentRow, 3].Value = work.WorkTypeName;
-                    worksheet.Cells[currentRow, 4].Value = work.WorkLevelName ?? "";
-                    worksheet.Cells[currentRow, 5].Value = work.TimePublished.HasValue ? 
-                        $"{work.TimePublished.Value.Month:D2}/{work.TimePublished.Value.Year}" : 
-                        "";
-                    worksheet.Cells[currentRow, 6].Value = work.TotalAuthors.HasValue ? work.TotalAuthors.Value : "";
-                    worksheet.Cells[currentRow, 7].Value = work.TotalMainAuthors.HasValue ? work.TotalMainAuthors.Value : "";
-                    worksheet.Cells[currentRow, 8].Value = work.Position.HasValue ? work.Position.Value : "";
-                    worksheet.Cells[currentRow, 9].Value = work.AuthorRoleName ?? "";
-                    worksheet.Cells[currentRow, 10].Value = work.CoAuthorNames ?? "";
-                    worksheet.Cells[currentRow, 11].Value = work.Details != null && work.Details.Any() ? 
-                        string.Join("; ", work.Details.Select(kv => $"{kv.Key}: {kv.Value}")) : 
-                        "";
-                    worksheet.Cells[currentRow, 12].Value = work.PurposeName ?? "";
-
-                    // Xử lý hiển thị mức điểm
-                    string scoreLevelText = work.ScoreLevel switch
-                    {
-                        ScoreLevel.BaiBaoMotDiem => "Bài báo khoa học 1 điểm",
-                        ScoreLevel.BaiBaoNuaDiem => "Bài báo khoa học 0.5 điểm",
-                        ScoreLevel.BaiBaoKhongBayNamDiem => "Bài báo khoa học 0.75 điểm",
-                        ScoreLevel.BaiBaoTopMuoi => "Bài báo khoa học Top 10%",
-                        ScoreLevel.BaiBaoTopBaMuoi => "Bài báo khoa học Top 30%",
-                        ScoreLevel.BaiBaoTopNamMuoi => "Bài báo khoa học Top 50%",
-                        ScoreLevel.BaiBaoTopConLai => "Bài báo khoa học Top còn lại",
-
-                        ScoreLevel.HDSVDatGiaiNhat => "Hướng dẫn sinh viên đạt giải Nhất",
-                        ScoreLevel.HDSVDatGiaiNhi => "Hướng dẫn sinh viên đạt giải Nhì",
-                        ScoreLevel.HDSVDatGiaiBa => "Hướng dẫn sinh viên đạt giải Ba",
-                        ScoreLevel.HDSVDatGiaiKK => "Hướng dẫn sinh viên đạt giải Khuyến khích",
-                        ScoreLevel.HDSVConLai => "Hướng dẫn sinh viên đạt các giải còn lại",
-
-                        ScoreLevel.TacPhamNgheThuatCapTruong => "Tác phẩm nghệ thuật cấp Trường",
-                        ScoreLevel.TacPhamNgheThuatCapQuocGia => "Tác phẩm nghệ thuật cấp Quốc gia",
-                        ScoreLevel.TacPhamNgheThuatCapQuocTe => "Tác phẩm nghệ thuật cấp Quốc tế",
-                        ScoreLevel.TacPhamNgheThuatCapTinhThanhPho => "Tác phẩm nghệ thuật cấp Tỉnh/Thành phố",
-
-                        ScoreLevel.ThanhTichHuanLuyenCapQuocGia => "Thành tích huấn luyện cấp Quốc gia",
-                        ScoreLevel.ThanhTichHuanLuyenCapQuocTe => "Thành tích huấn luyện cấp Quốc tế",
-
-                        ScoreLevel.GiaiPhapHuuIchCapQuocGia => "Giải pháp hữu ích cấp Quốc gia",
-                        ScoreLevel.GiaiPhapHuuIchCapQuocTe => "Giải pháp hữu ích cấp Quốc tế",
-                        ScoreLevel.GiaiPhapHuuIchCapTinhThanhPho => "Giải pháp hữu ích cấp Tỉnh/Thành phố",
-
-                        ScoreLevel.KetQuaNghienCuu => "Kết quả nghiên cứu",
-
-                        ScoreLevel.Sach => "Sách",
-                        _ => ""
-                    };
-
-                    worksheet.Cells[currentRow, 13].Value = scoreLevelText;
-                    worksheet.Cells[currentRow, 14].Value = work.SCImagoFieldName ?? "";
-                    worksheet.Cells[currentRow, 15].Value = work.ScoringFieldName ?? "";
-                    
-                    // Định dạng giờ quy đổi với 1 chữ số thập phân
-                    if (work.AuthorHour.HasValue)
-                    {
-                        var authorHourValue = (decimal)work.AuthorHour.Value;
-                        worksheet.Cells[currentRow, 16].Value = Math.Round(authorHourValue, 1, MidpointRounding.AwayFromZero);
-                        worksheet.Cells[currentRow, 16].Style.Numberformat.Format = "#,##0.0";
-                    }
-                    else
-                    {
-                        worksheet.Cells[currentRow, 16].Value = "";
-                    }
-
-                    // Xử lý hiển thị trạng thái
-                    string proofStatusText = work.ProofStatus switch
-                    {
-                        ProofStatus.ChuaXuLy => "Chưa xử lý",
-                        ProofStatus.HopLe => "Hợp lệ",
-                        ProofStatus.KhongHopLe => "Không hợp lệ",
-                        _ => ""
-                    };
-
-                    worksheet.Cells[currentRow, 17].Value = proofStatusText;
-                    worksheet.Cells[currentRow, 18].Value = work.Note ?? "";
-
-                    currentRow++;
-                }
-
-                // Tính tổng số công trình theo loại
-                // Để trống 2 dòng sau danh sách công trình
-                var summaryStartRow = currentRow + 2;
-
-                // Chèn dòng trống cho phần tổng hợp
-                worksheet.InsertRow(summaryStartRow, exportData.Count + 3); // +3 cho tiêu đề, dòng trống và tổng số
-
-                // Thêm tiêu đề phần tổng hợp
-                worksheet.Cells[summaryStartRow, 1, summaryStartRow, 3].Merge = true;
-                worksheet.Cells[summaryStartRow, 1].Value = "III. TỔNG HỢP CÔNG TRÌNH THEO LOẠI";
-                worksheet.Cells[summaryStartRow, 1].Style.Font.Bold = true;
-
-                // Bắt đầu điền dữ liệu tổng hợp từ dòng tiếp theo
-                summaryStartRow++;
-
-                // Danh sách các loại công trình
-                var workTypes = new[] { 
-                    "Bài báo khoa học", 
-                    "Báo cáo khoa học", 
-                    "Đề tài", 
-                    "Giáo trình", 
-                    "Sách", 
-                    "Hội thảo, hội nghị", 
-                    "Hướng dẫn SV NCKH", 
-                    "Khác" 
-                };
-
-                // Danh sách các loại công trình thuộc nhóm "Sách"
-                var bookWorkTypeNames = new[] {
-                    "Chương sách",
-                    "Chuyên khảo",
-                    "Tham khảo",
-                    "Giáo trình - Sách",
-                    "Tài liệu hướng dẫn"
-                };
-
-                // Tính số lượng công trình theo loại
-                var workTypeCounts = exportData
-                    .GroupBy(w => {
-                        // Nếu là một trong các loại sách, gộp chung vào "Sách"
-                        if (bookWorkTypeNames.Contains(w.WorkTypeName))
-                            return "Sách";
-                        return w.WorkTypeName;
-                    })
-                    .ToDictionary(g => g.Key, g => g.Count());
-
-                for (int i = 0; i < workTypes.Length; i++)
-                {
-                    worksheet.Cells[summaryStartRow + i, 1].Value = i + 1;
-                    worksheet.Cells[summaryStartRow + i, 2].Value = workTypes[i];
-                    worksheet.Cells[summaryStartRow + i, 3].Value = workTypeCounts.ContainsKey(workTypes[i]) ? workTypeCounts[workTypes[i]] : 0;
-                }
-
-                // Tổng số sản phẩm
-                worksheet.Cells[summaryStartRow + workTypes.Length + 1, 1].Value = "Tổng số sản phẩm:";
-                worksheet.Cells[summaryStartRow + workTypes.Length + 1, 2, summaryStartRow + workTypes.Length + 1, 3].Merge = true;
-                worksheet.Cells[summaryStartRow + workTypes.Length + 1, 2].Value = exportData.Count;
-
-                return package.GetAsByteArray();
-            }
-        }
-
-        public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default)
-        {
-            // Lấy thông tin cá nhân của user với đầy đủ details
-            var user = await _userRepository.GetUserByIdWithDetailsAsync(userId);
-            if (user is null)
-                throw new Exception(ErrorMessages.UserNotFound);
-
-            // Lấy danh sách công trình của user
-            var works = await GetWorksByCurrentUserAsync(userId, cancellationToken);
-
-            // Lấy thông tin đồng tác giả với đầy đủ details
-            var allCoAuthorUserIds = works.SelectMany(w => w.CoAuthorUserIds).Distinct().ToList();
-            var coAuthors = await _userRepository.GetUsersWithDetailsAsync();
-            var filteredCoAuthors = coAuthors.Where(u => allCoAuthorUserIds.Contains(u.Id));
-
-            // Ánh xạ dữ liệu vào ExportExcelDto
-            var exportData = works.Select(w =>
-            {
-                var author = w.Authors?.FirstOrDefault();
-                var coAuthorNames = string.Join(", ", w.CoAuthorUserIds
-                    .Select(uid => filteredCoAuthors.FirstOrDefault(u => u.Id == uid)?.FullName ?? "Không xác định"));
-
-                return new ExportExcelDto
-                {
-                    UserName = user.UserName ?? "Không xác định",
-                    FullName = user.FullName ?? "Không xác định",
-                    Email = user.Email ?? "Không xác định",
-                    AcademicTitle = user.AcademicTitle.ToString() ?? "Không xác định", // Học hàm/học vị
-                    OfficerRank = user.OfficerRank.ToString() ?? "Không xác định", // Ngạch công chức
-                    DepartmentName = user.Department?.Name ?? "Không xác định",
-                    FieldName = author?.FieldName ?? "Không xác định", // Ngành - Field
-                    Specialization= user.Specialization ?? "Không xác định", // Chuyên ngành
-                    PhoneNumber = user.PhoneNumber ?? "Không xác định",
-                    Title = w.Title ?? "Không xác định",
-                    WorkTypeName = w.WorkTypeName ?? "Không xác định",
-                    WorkLevelName = w.WorkLevelName,
-                    TimePublished = w.TimePublished,
-                    TotalAuthors = w.TotalAuthors,
-                    TotalMainAuthors = w.TotalMainAuthors,
-                    Position = author?.Position,
-                    AuthorRoleName = author?.AuthorRoleName,
-                    CoAuthorUserIds = w.CoAuthorUserIds,
-                    CoAuthorNames = coAuthorNames,
-                    Details = w.Details ?? new Dictionary<string, string>(),
-                    PurposeName = author?.PurposeName,
-                    SCImagoFieldName = author?.SCImagoFieldName,
-                    ScoringFieldName = author?.FieldName,
-                    ScoreLevel = author?.ScoreLevel,
-                    AuthorHour = (int?)author?.AuthorHour, // Chuyển đổi decimal sang int
-                    ProofStatus = author?.ProofStatus,
-                    Note = author?.Note
-                };
-            }).ToList();
-
-            return exportData;
-        }
-
-        public async Task ImportAsync(IFormFile file)
-        {
-            if (file is null || file.Length == 0)
-                throw new ArgumentException(ErrorMessages.InvalidFile);
-
-            var importRows = new List<ImportExcelDto>();
-
-            using (var stream = new MemoryStream())
-            {
-                await file.CopyToAsync(stream);
-                stream.Position = 0;
-
-                using (var package = new ExcelPackage(stream))
-                {
-                    var worksheet = package.Workbook.Worksheets.First();
-                    int rowCount = worksheet.Dimension.Rows;
-
-                    // Giả sử dòng đầu tiên là header
-                    for (int row = 2; row <= rowCount; row++)
-                    {
-                        // Parse cột Details (giả sử cột 16)
-                        string detailsText = worksheet.Cells[row, 16].Text.Trim();
-                        Dictionary<string, string> details = new Dictionary<string, string>();
-                        if (!string.IsNullOrEmpty(detailsText))
-                        {
-                            var lines = detailsText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (var line in lines)
-                            {
-                                var parts = line.Split(new[] { ':' }, 2);
-                                if (parts.Length == 2)
-                                {
-                                    string key = parts[0].Trim();
-                                    string value = parts[1].Trim();
-                                    if (!string.IsNullOrEmpty(key))
-                                        details[key] = value;
-                                }
-                            }
-                        }
-
-                        var dto = new ImportExcelDto
-                        {
-                            Username = worksheet.Cells[row, 1].Text.Trim(),
-                            FullName = worksheet.Cells[row, 2].Text.Trim(),
-                            DepartmentName = worksheet.Cells[row, 3].Text.Trim(),
-                            Title = worksheet.Cells[row, 4].Text.Trim(),
-                            WorkTypeName = worksheet.Cells[row, 5].Text.Trim(),
-                            WorkLevelName = worksheet.Cells[row, 6].Text.Trim(),
-                            TimePublished = ParseMonthYear(worksheet.Cells[row, 7].Text.Trim()),
-                            TotalAuthors = int.TryParse(worksheet.Cells[row, 8].Text.Trim(), out var ta) ? ta : (int?)null,
-                            TotalMainAuthors = int.TryParse(worksheet.Cells[row, 9].Text.Trim(), out var tma) ? tma : (int?)null,
-                            Position = int.TryParse(worksheet.Cells[row, 10].Text.Trim(), out var pos) ? pos : (int?)null,
-                            AuthorRoleName = worksheet.Cells[row, 11].Text.Trim(),
-                            PurposeName = worksheet.Cells[row, 12].Text.Trim(),
-                            SCImagoFieldName = worksheet.Cells[row, 13].Text.Trim(),
-                            ScoringFieldName = worksheet.Cells[row, 14].Text.Trim(),
-                            ScoreLevel = Enum.TryParse<ScoreLevel>(worksheet.Cells[row, 15].Text.Trim(), out var scoreLevel)
-                                                ? scoreLevel
-                                                : (ScoreLevel?)null,
-                            Details = details
-                        };
-
-                        importRows.Add(dto);
-                    }
-                }
-            }
-
-            await ProcessImportRows(importRows);
-        }
-
-        private async Task ProcessImportRows(List<ImportExcelDto> importRows)
-        {
-            var userRepo = _unitOfWork.Repository<User>();
-            var authorRepo = _unitOfWork.Repository<Author>();
-            var authorRoleRepo = _unitOfWork.Repository<AuthorRole>();
-            var purposeRepo = _unitOfWork.Repository<Purpose>();
-            var scImagoRepo = _unitOfWork.Repository<SCImagoField>();
-            var fieldRepo = _unitOfWork.Repository<Field>();
-            var workRepo = _unitOfWork.Repository<Work>();
-            var workTypeRepo = _unitOfWork.Repository<WorkType>();
-            var workLevelRepo = _unitOfWork.Repository<WorkLevel>();
-
-            foreach (var dto in importRows)
-            {
-                // 1) Tìm User
-                var user = await userRepo.FirstOrDefaultAsync(u =>
-                    u.UserName.ToLower() == dto.Username.ToLower());
-                if (user is null) continue;
-
-                // 2) Tìm WorkType, WorkLevel
-                var workType = await workTypeRepo.FirstOrDefaultAsync(wt =>
-                    wt.Name.ToLower() == dto.WorkTypeName.ToLower());
-                if (workType is null) continue;
-
-                WorkLevel? workLevel = null;
-                if (!string.IsNullOrWhiteSpace(dto.WorkLevelName))
-                {
-                    workLevel = await workLevelRepo.FirstOrDefaultAsync(wl =>
-                        wl.Name.ToLower() == dto.WorkLevelName.ToLower());
-                }
-
-                // 3) Tìm công trình dựa trên 4 trường: Title, WorkTypeId, WorkLevelId, TimePublished
-                //    Nếu 4 trường này trùng nhau thì xem là cùng 1 công trình
-                // Lấy Id nếu workLevel != null
-                Guid? workLevelId = workLevel?.Id;
-                DateOnly? timePublished = null;
-                if (dto.TimePublished.HasValue)
-                {
-                    timePublished = new DateOnly(dto.TimePublished.Value.Year, dto.TimePublished.Value.Month, 1);
-                }
-
-                var existingWork = await workRepo.FirstOrDefaultAsync(w =>
-                    w.Title.ToLower() == dto.Title.ToLower() &&
-                    w.WorkTypeId == workType.Id &&
-                    (workLevelId == null ? w.WorkLevelId == null : w.WorkLevelId == workLevelId) &&
-                    (timePublished == null ? w.TimePublished == null : 
-                     w.TimePublished.Value.Year == timePublished.Value.Year && 
-                     w.TimePublished.Value.Month == timePublished.Value.Month)
-                );
-
-
-                Work work;
-                if (existingWork is null)
-                {
-                    // => Chưa có công trình này, tạo mới
-                    work = new Work
-                    {
-                        Title = dto.Title,
-                        TimePublished = timePublished,
-                        TotalAuthors = dto.TotalAuthors,
-                        TotalMainAuthors = dto.TotalMainAuthors,
-                        Details = dto.Details,
-                        WorkTypeId = workType.Id,
-                        WorkLevelId = workLevel?.Id,
-                        Source = WorkSource.QuanLyNhap
-                    };
-                    await workRepo.CreateAsync(work);
-                }
-                else
-                {
-                    work = existingWork;
-                }
-
-                // 4) Tìm AuthorRole, Purpose, SCImagoField, ScoringField
-                var authorRole = await authorRoleRepo.FirstOrDefaultAsync(ar =>
-                    ar.Name.ToLower() == dto.AuthorRoleName.ToLower());
-                if (authorRole is null) continue;
-
-                var purpose = await purposeRepo.FirstOrDefaultAsync(p =>
-                    p.Name.ToLower() == dto.PurposeName.ToLower());
-                if (purpose is null) continue;
-
-                SCImagoField? scImagoField = null;
-                if (!string.IsNullOrWhiteSpace(dto.SCImagoFieldName))
-                {
-                    scImagoField = await scImagoRepo.FirstOrDefaultAsync(s =>
-                        s.Name.ToLower() == dto.SCImagoFieldName.ToLower());
-                }
-
-                Field? field = null;
-                if (!string.IsNullOrWhiteSpace(dto.ScoringFieldName))
-                {
-                    field = await fieldRepo.FirstOrDefaultAsync(sf =>
-                        sf.Name.ToLower() == dto.ScoringFieldName.ToLower());
-                }
-
-                // 5) Kiểm tra Author đã tồn tại chưa (dựa trên UserId + WorkId)
-                var existingAuthor = await authorRepo.FirstOrDefaultAsync(a =>
-                    a.UserId == user.Id && a.WorkId == work.Id);
-                if (existingAuthor is not null)
-                {
-                    // => Tác giả đã tồn tại, bỏ qua hoặc update
-                    continue;
-                }
-
-                // 6) Tạo mới Author
-                var newAuthor = new Author
-                {
-                    UserId = user.Id,
-                    WorkId = work.Id,
-                    AuthorRoleId = authorRole.Id,
-                    PurposeId = purpose.Id,
-                    SCImagoFieldId = scImagoField?.Id,
-                    FieldId = field?.Id,
-                    Position = dto.Position,
-                    ScoreLevel = dto.ScoreLevel,
-                    ProofStatus = ProofStatus.ChuaXuLy
-                };
-
-                // 7) Tính workHour, authorHour (nếu cần)
-                var factorRepo = _unitOfWork.Repository<Factor>();
-                var factor = await factorRepo.FirstOrDefaultAsync(f =>
-                    f.WorkTypeId == work.WorkTypeId &&
-                    f.WorkLevelId == work.WorkLevelId &&
-                    f.PurposeId == purpose.Id &&
-                    (f.AuthorRoleId == null || f.AuthorRoleId == authorRole.Id) &&
-                    f.ScoreLevel == newAuthor.ScoreLevel);
-
-                if (factor is not null)
-                {
-                    int workHour = CalculateWorkHour(newAuthor.ScoreLevel, factor);
-                    newAuthor.WorkHour = workHour;
-
-                    int totalAuthors = work.TotalAuthors ?? 0;
-                    int totalMainAuthors = work.TotalMainAuthors ?? 0;
-                    decimal authorHour = await CalculateAuthorHour(workHour, totalAuthors, totalMainAuthors, authorRole.Id);
-                    newAuthor.AuthorHour = authorHour;
-                }
-                else
-                {
-                    newAuthor.WorkHour = 0;
-                    newAuthor.AuthorHour = 0;
-                }
-
-                await authorRepo.CreateAsync(newAuthor);
-            }
-
-            // Cuối cùng, lưu tất cả thay đổi
-            await _unitOfWork.SaveChangesAsync();
-        }
-
-        private DateOnly? ParseMonthYear(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            // Thử parse các định dạng khác nhau
-            string[] formats = { 
-                "MM/yyyy", "M/yyyy", "yyyy-MM", "MM-yyyy", "M-yyyy",
-                "d/M/yyyy", "dd/MM/yyyy", "d-M-yyyy", "dd-MM-yyyy",
-                "yyyy/MM/dd", "yyyy-MM-dd"
-            };
-
-            foreach (var format in formats)
-            {
-                if (DateTime.TryParseExact(value, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime result))
-                {
-                    // Luôn trả về ngày 1 của tháng đó
-                    return new DateOnly(result.Year, result.Month, 1);
-                }
-            }
-
-            // Thử parse bằng DateTime.Parse nếu các format trên không khớp
-            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
-            {
-                return new DateOnly(parsedDate.Year, parsedDate.Month, 1);
-            }
-
-            return null;
         }
 
         private async Task CreateScientificArticleFromProjectAsync(Work project, Guid userId, CancellationToken cancellationToken)
@@ -1806,97 +860,35 @@ namespace Application.Works
             }
         }
 
-        // Triển khai các phương thức mới để lọc công trình theo đợt kê khai
-        public async Task<IEnumerable<WorkDto>> GetWorksBySystemConfigIdAsync(Guid systemConfigId, CancellationToken cancellationToken = default)
+        public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            // Lấy AcademicYearId từ SystemConfig
-            var systemConfig = await _unitOfWork.Repository<SystemConfig>()
-                .FirstOrDefaultAsync(sc => sc.Id == systemConfigId, cancellationToken);
-            
-            if (systemConfig == null)
-            {
-                return Enumerable.Empty<WorkDto>();
-            }
-            
-            // Chuyển sang gọi theo AcademicYearId
-            return await GetWorksByAcademicYearIdAsync(systemConfig.AcademicYearId, cancellationToken);
+            // Chuyển hướng đến service export
+            return await _workExportService.GetExportExcelDataAsync(userId, cancellationToken);
         }
 
-        // Triển khai phương thức lọc công trình theo năm học
-        public async Task<IEnumerable<WorkDto>> GetWorksByAcademicYearIdAsync(Guid academicYearId, CancellationToken cancellationToken = default)
+        public async Task<byte[]> ExportWorksByUserAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
         {
-            var works = await _workRepository.GetWorksByAcademicYearIdAsync(academicYearId, cancellationToken);
-            var workDtos = _mapper.MapToDtos(works);
-            await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
-            return workDtos;
+            // Chuyển hướng đến service export
+            return await _workExportService.ExportWorksByUserAsync(exportData, cancellationToken);
         }
 
-        // Triển khai phương thức lọc công trình của người dùng hiện tại theo đợt kê khai
-        public async Task<IEnumerable<WorkDto>> GetCurrentUserWorksBySystemConfigIdAsync(Guid userId, Guid systemConfigId, CancellationToken cancellationToken = default)
+        // Các phương thức tiện ích
+        private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
         {
-            
-            // Lấy config hiện tại để biết đây có phải là đợt hiện tại hay không
-            var currentSystemConfig = await _systemConfigService.GetCurrentActiveSystemConfig(cancellationToken);
-            var isCurrentPeriod = currentSystemConfig != null && currentSystemConfig.Id == systemConfigId;
-                        
-            // Lấy AcademicYearId từ SystemConfig
-            var systemConfig = await _unitOfWork.Repository<SystemConfig>()
-                .FirstOrDefaultAsync(sc => sc.Id == systemConfigId, cancellationToken);
-            
-            if (systemConfig == null)
-            {
-                return Enumerable.Empty<WorkDto>();
-            }
-            
-            // Chuyển sang gọi theo AcademicYearId
-            return await GetCurrentUserWorksByAcademicYearIdAsync(userId, systemConfig.AcademicYearId, cancellationToken);
+            // Sử dụng từ WorkCalculateService
+            return _workCalculateService.CalculateWorkHour(scoreLevel, factor);
         }
 
-        // Triển khai phương thức lọc công trình của người dùng hiện tại theo năm học
-        public async Task<IEnumerable<WorkDto>> GetCurrentUserWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default)
+        private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid? authorRoleId, CancellationToken cancellationToken = default)
         {
-            // Kiểm tra nếu đây là năm học hiện tại
-            var currentAcademicYear = await _academicYearService.GetCurrentAcademicYear(cancellationToken);
-            var isCurrentYear = currentAcademicYear.Id == academicYearId;
-            
-            // 1. Lấy các công trình mà người dùng đã kê khai trong năm học này
-            var declaredWorks = await _workRepository.GetDeclaredWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
-            
-            // 2. Lấy các công trình mà người dùng được người khác thêm vào danh sách đồng tác giả trong năm học này
-            var coAuthorWorks = await _workRepository.GetCoAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
-            
-            // 3. Nếu đây là năm học hiện tại, thêm cả các công trình từ các năm học trước mà chưa được đăng ký
-            var previousWorks = new List<Work>();
-            
-            if (isCurrentYear)
-            {
-                // Lấy các công trình từ các năm học trước
-                var previousYears = await _unitOfWork.Repository<AcademicYear>()
-                    .FindAsync(ay => ay.Id != academicYearId);
-                var previousYearIds = previousYears.Select(y => y.Id).ToList();
-                
-                if (previousYearIds.Any())
-                {
-                    previousWorks = (await _workRepository.GetWorksByAcademicYearIdsAsync(previousYearIds, cancellationToken))
-                        .Where(w => w.Authors != null && w.Authors.Any(a => 
-                            a.UserId == userId && 
-                            (a.AuthorRegistration == null || a.AuthorRegistration.AcademicYearId != academicYearId)))
-                        .ToList();
-                }
-            }
-            
-            // Kết hợp tất cả danh sách và loại bỏ trùng lặp
-            var allWorks = declaredWorks.Concat(coAuthorWorks).Concat(previousWorks)
-                .GroupBy(w => w.Id)
-                .Select(g => g.First())
-                .ToList();
-            
-            var workDtos = _mapper.MapToDtos(allWorks);
-            
-            // Fill coAuthorUserIds cho tất cả các công trình
-            await FillCoAuthorUserIdsForMultipleWorksAsync(workDtos, cancellationToken);
-            
-            return workDtos;
+            // Sử dụng từ WorkCalculateService
+            return await _workCalculateService.CalculateAuthorHour(workHour, totalAuthors, totalMainAuthors, authorRoleId, cancellationToken);
+        }
+
+        private bool ShouldRecalculateAuthorHours(UpdateAuthorRequestDto authorRequest, UpdateWorkRequestDto? workRequest)
+        {
+            // Sử dụng từ WorkCalculateService
+            return _workCalculateService.ShouldRecalculateAuthorHours(authorRequest, workRequest);
         }
     }
 }
