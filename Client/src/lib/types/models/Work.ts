@@ -72,3 +72,14 @@ export interface UpdateWorkWithAuthorRequest {
   workRequest?: UpdateWorkRequest;
   authorRequest?: UpdateAuthorRequest;
 }
+
+export interface WorkFilter {
+  userId?: string;
+  departmentId?: string;
+  academicYearId?: string;
+  proofStatus?: number;
+  source?: number;
+  onlyRegisteredWorks?: boolean;
+  onlyRegisterableWorks?: boolean;
+  isCurrentUser?: boolean;
+}

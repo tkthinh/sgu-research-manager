@@ -231,7 +231,7 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpPatch("authors/{authorId}/mark")]
+        [HttpPatch("authors/{authorId}/register")]
         [Authorize(Roles = "User")]
         public async Task<ActionResult<ApiResponse<object>>> RegisterWorkByAuthor([FromRoute] Guid authorId, [FromBody] bool registered)
         {
