@@ -11,6 +11,7 @@ import DepartmentPage from "../../features/settings/departments/DepartmentPage";
 import FactorPage from "../../features/settings/factors/FactorPage";
 import FieldPage from "../../features/settings/fields/FieldPage";
 import WorkPage from "../../features/works/WorkPage";
+import TestPage from "../../features/test/test";
 
 import PurposePage from "../../features/settings/purposes/PurposePage";
 import ScimagoFieldPage from "../../features/settings/scimagoFields/ScimagoFieldPage";
@@ -91,6 +92,15 @@ export const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute>
                     <UpdateInfoPage />
+                  </ProtectedRoute>
+                ),
+              },
+              // ============== TEST ==============
+              {
+                path: "/test",
+                element: (
+                  <ProtectedRoute allowedRoles={["User", "Manager", "Admin"]}>
+                    <TestPage />
                   </ProtectedRoute>
                 ),
               },
