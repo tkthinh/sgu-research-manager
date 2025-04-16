@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 
 namespace Domain.Interfaces
 {
@@ -33,5 +34,23 @@ namespace Domain.Interfaces
         
         // Phương thức lấy các công trình chưa đánh dấu quy đổi từ các đợt trước
         Task<IEnumerable<Work>> GetUnmarkedPreviousWorksAsync(Guid userId, Guid currentAcademicYearId, CancellationToken cancellationToken = default);
+        
+        // Phương thức lấy công trình có thể đăng ký quy đổi của người dùng trong năm học
+        //Task<IEnumerable<Work>> GetRegisterableWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, DateTime currentDate, CancellationToken cancellationToken = default);
+
+        // Phương thức lấy công trình đã đăng ký quy đổi của người dùng trong năm học
+        Task<IEnumerable<Work>> GetRegisteredWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default);
+        
+        // Phương thức lấy công trình của người dùng theo năm học và trạng thái
+        Task<IEnumerable<Work>> GetWorksByAcademicYearAndProofStatusAsync(Guid userId, Guid academicYearId, ProofStatus proofStatus, CancellationToken cancellationToken = default);
+        
+        // Phương thức lấy công trình của người dùng theo năm học và nguồn
+        Task<IEnumerable<Work>> GetWorksByAcademicYearAndSourceAsync(Guid userId, Guid academicYearId, WorkSource source, CancellationToken cancellationToken = default);
+        
+        // Phương thức lấy công trình của người dùng cụ thể theo năm học (dành cho admin)
+        Task<IEnumerable<Work>> GetUserWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default);
+        
+        // Phương thức lấy công trình theo khoa/phòng ban và năm học
+        Task<IEnumerable<Work>> GetWorksByDepartmentAndAcademicYearIdAsync(Guid departmentId, Guid academicYearId, CancellationToken cancellationToken = default);
     }
 }

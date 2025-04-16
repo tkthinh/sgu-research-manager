@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data.Repositories
@@ -156,6 +157,115 @@ namespace Infrastructure.Data.Repositories
          Console.WriteLine($"GetUnmarkedPreviousWorksAsync: Found {result.Count} works");
          
          return result;
+      }
+
+      // Phương thức lấy công trình có thể đăng ký quy đổi của người dùng trong năm học
+      //public async Task<IEnumerable<Work>> GetRegisterableWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, DateTime currentDate, CancellationToken cancellationToken = default)
+      //{
+      //   // Lấy thông tin năm học để kiểm tra deadline
+      //   var academicYear = await context.AcademicYears
+      //      .FirstOrDefaultAsync(ay => ay.Id == academicYearId, cancellationToken);
+
+      //   if (academicYear == null || academicYear.ExchangeDeadline < currentDate)
+      //   {
+      //      return Enumerable.Empty<Work>();
+      //   }
+
+      //   // Lấy tất cả các công trình của người dùng (là tác giả) trong năm học hiện tại
+      //   var userWorks = await GetAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+         
+      //   // Lấy tất cả công trình của người dùng được add vào làm đồng tác giả
+      //   var coAuthorWorks = await GetCoAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+         
+      //   // Lấy tất cả công trình của người dùng từ các năm học trước mà chưa đăng ký quy đổi
+      //   var previousWorks = await GetUnmarkedPreviousWorksAsync(userId, academicYearId, cancellationToken);
+         
+      //   // Kết hợp tất cả công trình
+      //   var allWorks = userWorks.Union(coAuthorWorks).Union(previousWorks).DistinctBy(w => w.Id);
+         
+      //   // Lấy danh sách ID tác giả đã đăng ký quy đổi trong năm học này
+      //   var registeredAuthorIds = await context.AuthorRegistrations
+      //      .Where(ar => ar.AcademicYearId == academicYearId)
+      //      .Select(ar => ar.AuthorId)
+      //      .ToListAsync(cancellationToken);
+         
+      //   // Lọc những công trình chưa đăng ký quy đổi (tức là không có author nào của user trong bảng AuthorRegistration)
+      //   var registerableWorks = allWorks.Where(w => 
+      //      !w.Authors!.Any(a => a.UserId == userId && registeredAuthorIds.Contains(a.Id))
+      //   ).ToList();
+         
+      //   return registerableWorks;
+      //}
+
+      // Phương thức lấy công trình đã đăng ký quy đổi của người dùng trong năm học
+      public async Task<IEnumerable<Work>> GetRegisteredWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default)
+      {
+         // Lấy tất cả AuthorRegistration của user trong năm học
+         var authorRegistrationIds = await context.AuthorRegistrations
+            .Where(ar => ar.AcademicYearId == academicYearId && ar.Author.UserId == userId)
+            .Select(ar => ar.AuthorId)
+            .ToListAsync(cancellationToken);
+         
+         if (!authorRegistrationIds.Any())
+         {
+            return Enumerable.Empty<Work>();
+         }
+         
+         // Lấy tất cả công trình có author trong danh sách đã đăng ký
+         var works = await GetWorksWithAuthorsQuery(true)
+            .Where(w => w.Authors!.Any(a => authorRegistrationIds.Contains(a.Id)))
+            .ToListAsync(cancellationToken);
+         
+         return works;
+      }
+
+      // Phương thức lấy công trình của người dùng theo năm học và trạng thái
+      public async Task<IEnumerable<Work>> GetWorksByAcademicYearAndProofStatusAsync(Guid userId, Guid academicYearId, ProofStatus proofStatus, CancellationToken cancellationToken = default)
+      {
+         // Lấy tất cả công trình của người dùng trong năm học
+         var userWorks = await GetAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+         var coAuthorWorks = await GetCoAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+         
+         // Kết hợp tất cả công trình
+         var allWorks = userWorks.Union(coAuthorWorks).DistinctBy(w => w.Id).ToList();
+         
+         // Lọc công trình theo ProofStatus của người dùng
+         var filteredWorks = allWorks.Where(w => 
+            w.Authors!.Any(a => a.UserId == userId && a.ProofStatus == proofStatus)
+         ).ToList();
+         
+         return filteredWorks;
+      }
+
+      // Phương thức lấy công trình của người dùng theo năm học và nguồn
+      public async Task<IEnumerable<Work>> GetWorksByAcademicYearAndSourceAsync(Guid userId, Guid academicYearId, WorkSource source, CancellationToken cancellationToken = default)
+      {
+         // Lấy tất cả công trình của người dùng trong năm học có nguồn phù hợp
+         return await GetWorksWithAuthorsQuery(true)
+            .Where(w => w.AcademicYearId == academicYearId && 
+                      w.Source == source &&
+                      (w.Authors!.Any(a => a.UserId == userId) || 
+                       w.WorkAuthors!.Any(wa => wa.UserId == userId)))
+            .ToListAsync(cancellationToken);
+      }
+
+      // Phương thức lấy công trình của người dùng cụ thể theo năm học (dành cho admin)
+      public async Task<IEnumerable<Work>> GetUserWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default)
+      {
+         // Cho admin: lấy tất cả công trình của một user cụ thể theo năm học
+         var userWorks = await GetAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+         var coAuthorWorks = await GetCoAuthorWorksByAcademicYearIdAsync(userId, academicYearId, cancellationToken);
+         
+         return userWorks.Union(coAuthorWorks).DistinctBy(w => w.Id).ToList();
+      }
+
+      // Phương thức lấy công trình theo khoa/phòng ban và năm học
+      public async Task<IEnumerable<Work>> GetWorksByDepartmentAndAcademicYearIdAsync(Guid departmentId, Guid academicYearId, CancellationToken cancellationToken = default)
+      {
+         return await GetWorksWithAuthorsQuery(true)
+            .Where(w => w.AcademicYearId == academicYearId && 
+                      w.Authors!.Any(a => a.User != null && a.User.DepartmentId == departmentId))
+            .ToListAsync(cancellationToken);
       }
    }
 }

@@ -11,18 +11,21 @@ namespace WebApi.Controllers
     [ApiController]
     public class ExcelController : ControllerBase
     {
-        private readonly IWorkService _workService;
+        private readonly IWorkExportService _workExportService;
+        private readonly IWorkImportService _workImportService;
         private readonly ILogger<WorksController> _logger;
         private readonly ICurrentUserService _currentUserService;
 
         public ExcelController(
-            IWorkService workService, 
+            IWorkExportService workExportService, 
             ILogger<WorksController> logger,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IWorkImportService workImportService)
         {
-            _workService = workService;
+            _workExportService = workExportService;
             _logger = logger;
             _currentUserService = currentUserService;
+            _workImportService = workImportService;
         }
 
         [HttpPost("import")]
@@ -39,7 +42,7 @@ namespace WebApi.Controllers
                 return BadRequest("Chỉ chấp nhận file Excel (.xlsx hoặc .xls)");
             }
 
-            await _workService.ImportAsync(file);
+            await _workImportService.ImportAsync(file);
             return Ok("Import thành công");
         }
 
@@ -65,7 +68,7 @@ namespace WebApi.Controllers
                 _logger.LogInformation("Bắt đầu xuất Excel cho userId: {UserId}", userId);
 
                 // Lấy dữ liệu export
-                var exportData = await _workService.GetExportExcelDataAsync(userId);
+                var exportData = await _workExportService.GetExportExcelDataAsync(userId);
 
                 // Kiểm tra exportData có dữ liệu không
                 if (exportData == null || !exportData.Any())
@@ -75,7 +78,7 @@ namespace WebApi.Controllers
                 }
 
                 // Tạo file Excel từ WorkService
-                var fileBytes = await _workService.ExportWorksByUserAsync(exportData);
+                var fileBytes = await _workExportService.ExportWorksByUserAsync(exportData);
 
                 // Kiểm tra fileBytes có dữ liệu không
                 if (fileBytes == null || fileBytes.Length == 0)

@@ -19,6 +19,7 @@ namespace WebApi.Controllers
     public class WorksController : ControllerBase
     {
         private readonly IWorkService _workService;
+        private readonly IWorkQueryService _workQueryService;
         private readonly ILogger<WorksController> _logger;
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly IUnitOfWork _unitOfWork;
@@ -26,7 +27,8 @@ namespace WebApi.Controllers
         private readonly IAcademicYearService _academicYearService;
 
         public WorksController(
-            IWorkService workService, 
+            IWorkService workService,
+            IWorkQueryService workQueryService,
             ILogger<WorksController> logger, 
             IHubContext<NotificationHub> hubContext, 
             IUnitOfWork unitOfWork,
@@ -34,6 +36,7 @@ namespace WebApi.Controllers
             IAcademicYearService academicYearService)
         {
             _workService = workService;
+            _workQueryService = workQueryService;
             _logger = logger;
             _hubContext = hubContext;
             _unitOfWork = unitOfWork;
@@ -46,7 +49,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var works = await _workService.GetAllWorksWithAuthorsAsync();
+                var works = await _workQueryService.GetAllWorksWithAuthorsAsync();
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
                     "Lấy dữ liệu công trình thành công",
@@ -63,7 +66,7 @@ namespace WebApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ApiResponse<WorkDto>>> GetWork([FromRoute] Guid id)
         {
-            var work = await _workService.GetWorkByIdWithAuthorsAsync(id);
+            var work = await _workQueryService.GetWorkByIdWithAuthorsAsync(id);
             if (work is null)
             {
                 return NotFound(new ApiResponse<WorkDto>(
@@ -118,7 +121,7 @@ namespace WebApi.Controllers
                 }
 
                 // Kiểm tra xem userId có phải là tác giả của công trình không
-                var work = await _workService.GetWorkByIdWithAuthorsAsync(id);
+                var work = await _workQueryService.GetWorkByIdWithAuthorsAsync(id);
                 if (work == null)
                 {
                     return NotFound(new ApiResponse<object>(false, "Công trình không tồn tại"));
@@ -188,7 +191,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var works = await _workService.GetWorksByUserIdAsync(userId);
+                var works = await _workQueryService.GetWorksByUserIdAsync(userId);
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
                     "Lấy danh sách công trình của user thành công",
@@ -207,7 +210,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var works = await _workService.GetWorksByDepartmentIdAsync(departmentId);
+                var works = await _workQueryService.GetWorksByDepartmentIdAsync(departmentId);
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
                     "Lấy danh sách công trình theo phòng ban thành công",
@@ -223,11 +226,11 @@ namespace WebApi.Controllers
 
         [HttpPatch("authors/{authorId}/mark")]
         [Authorize(Roles = "User")]
-        public async Task<ActionResult<ApiResponse<object>>> SetMarkedForScoring([FromRoute] Guid authorId, [FromBody] bool marked)
+        public async Task<ActionResult<ApiResponse<object>>> RegistedWorkByAuthor([FromRoute] Guid authorId, [FromBody] bool registed)
         {
             try
             {
-                await _workService.SetMarkedForScoringAsync(authorId, marked);
+                await _workService.RegistedWorkByAuthorAsync(authorId, registed);
                 return Ok(new ApiResponse<object>(true, "Cập nhật trạng thái MarkedForScoring thành công"));
             }
             catch (Exception ex)
@@ -246,7 +249,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var work = await _workService.GetWorkByIdWithAuthorsAsync(workId);
+                var work = await _workQueryService.GetWorkByIdWithAuthorsAsync(workId);
                 if (work == null)
                     return NotFound(new ApiResponse<WorkDto>(false, "Công trình không tồn tại"));
 
@@ -303,7 +306,7 @@ namespace WebApi.Controllers
                 }
 
                 // Kiểm tra xem công trình có tồn tại không trước khi làm bất kỳ thứ gì khác
-                var work = await _workService.GetWorkByIdWithAuthorsAsync(workId);
+                var work = await _workQueryService.GetWorkByIdWithAuthorsAsync(workId);
                 if (work == null)
                 {
                     return NotFound(new ApiResponse<object>(false, "Công trình không tồn tại"));
@@ -419,7 +422,7 @@ namespace WebApi.Controllers
                 }
 
                 // Lấy danh sách công trình mà user đã kê khai
-                var works = await _workService.GetWorksByCurrentUserAsync(userId);
+                var works = await _workQueryService.GetWorksByCurrentUserAsync(userId);
 
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
@@ -447,7 +450,7 @@ namespace WebApi.Controllers
                 }
 
                 // Lấy tất cả công trình của người dùng, bao gồm cả công trình do người dùng kê khai và công trình được admin import vào
-                var works = await _workService.GetAllWorksByCurrentUserAsync(userId);
+                var works = await _workQueryService.GetAllWorksByCurrentUserAsync(userId);
 
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
@@ -482,7 +485,7 @@ namespace WebApi.Controllers
                 }
 
                 // Lấy tất cả các công trình
-                var works = await _workService.GetAllWorksByAcademicYearIdAsync(userId, academicYearId);
+                var works = await _workQueryService.GetAllMyWorksByAcademicYearIdAsync(userId, academicYearId);
 
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
@@ -502,7 +505,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                var works = await _workService.GetWorksByAcademicYearIdAsync(academicYearId);
+                var works = await _workQueryService.GetWorksByAcademicYearIdAsync(academicYearId);
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
                     "Lấy danh sách công trình theo năm học thành công",
@@ -518,7 +521,7 @@ namespace WebApi.Controllers
 
         [HttpGet("my-works/academic-year/{academicYearId}")]
         [Authorize(Roles = "User")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetCurrentUserWorksByAcademicYearId([FromRoute] Guid academicYearId)
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyWorksByAcademicYearId([FromRoute] Guid academicYearId)
         {
             try
             {
@@ -528,7 +531,7 @@ namespace WebApi.Controllers
                     return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
                 }
 
-                var works = await _workService.GetCurrentUserWorksByAcademicYearIdAsync(userId, academicYearId);
+                var works = await _workQueryService.GetMyWorksByAcademicYearIdAsync(userId, academicYearId);
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
                     "Lấy danh sách công trình của người dùng theo năm học thành công",
@@ -541,6 +544,39 @@ namespace WebApi.Controllers
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
+
+        //[HttpGet("registerable/academic-year/{academicYearId}")]
+        //[Authorize(Roles = "User")]
+        //public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyRegisterableWorksByAcademicYearId([FromRoute] Guid academicYearId)
+        //{
+        //    try
+        //    {
+        //        var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+        //        if (!isSuccess)
+        //        {
+        //            return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+        //        }
+
+        //        // Kiểm tra năm học
+        //        var academicYear = await _academicYearService.GetByIdAsync(academicYearId);
+        //        if (academicYear == null)
+        //        {
+        //            return BadRequest(new ApiResponse<object>(false, "Năm học không tồn tại"));
+        //        }
+
+        //        var works = await _workQueryService.GetMyRegisterableWorksByAcademicYearIdAsync(userId, academicYearId);
+        //        return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+        //            true,
+        //            $"Lấy danh sách công trình có thể đăng ký quy đổi trong năm học {academicYear.Name} thành công",
+        //            works
+        //        ));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Lỗi khi lấy danh sách công trình có thể đăng ký quy đổi theo năm học");
+        //        return BadRequest(new ApiResponse<object>(false, ex.Message));
+        //    }
+        //}
 
         [HttpGet("registered")]
         [Authorize(Roles = "User")]
@@ -561,33 +597,11 @@ namespace WebApi.Controllers
                     return BadRequest(new ApiResponse<object>(false, "Không có năm học nào đang mở"));
                 }
 
-                _logger.LogInformation($"GetRegisteredWorks - Lấy danh sách công trình đã đăng ký quy đổi cho user {userId} trong năm học {currentAcademicYear.Name}");
-
-                // Lấy danh sách công trình đã được đăng ký (có AuthorRegistration) trong năm học hiện tại
-                var works = await _workService.GetAllWorksByCurrentUserAsync(userId);
-                
-                _logger.LogInformation($"GetRegisteredWorks - Tổng số công trình của user: {works.Count()}");
-                
-                var registeredWorks = works.Where(w => 
-                    w.Authors?.Any(a => 
-                        a.UserId == userId && 
-                        a.AuthorRegistration != null
-                    ) == true
-                ).ToList();
-                
-                _logger.LogInformation($"GetRegisteredWorks - Số công trình đã đăng ký quy đổi: {registeredWorks.Count}");
-                
-                // Debug thông tin về authorRegistration
-                foreach (var work in registeredWorks)
-                {
-                    var author = work.Authors?.FirstOrDefault(a => a.UserId == userId);
-                    _logger.LogInformation($"Work: {work.Title}, AuthorId: {author?.Id}, HasRegistration: {author?.AuthorRegistration != null}, RegistrationId: {author?.AuthorRegistration?.AcademicYearId}");
-                }
-
+                var works = await _workQueryService.GetMyRegisteredWorksByAcademicYearIdAsync(userId, currentAcademicYear.Id);
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
                     "Lấy danh sách công trình đã đăng ký quy đổi thành công",
-                    registeredWorks
+                    works
                 ));
             }
             catch (Exception ex)
@@ -599,7 +613,7 @@ namespace WebApi.Controllers
 
         [HttpGet("registered/academic-year/{academicYearId}")]
         [Authorize(Roles = "User")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetRegisteredWorksByAcademicYear([FromRoute] Guid academicYearId)
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyRegisteredWorksByAcademicYearId([FromRoute] Guid academicYearId)
         {
             try
             {
@@ -616,40 +630,142 @@ namespace WebApi.Controllers
                     return BadRequest(new ApiResponse<object>(false, "Năm học không tồn tại"));
                 }
 
-                _logger.LogInformation($"GetRegisteredWorksByAcademicYear - Lấy danh sách công trình đã đăng ký quy đổi cho user {userId} trong năm học {academicYear.Name}");
-
-                // Lấy tất cả công trình theo năm học
-                var works = await _workService.GetAllWorksByAcademicYearIdAsync(userId, academicYearId);
-                
-                _logger.LogInformation($"GetRegisteredWorksByAcademicYear - Tổng số công trình của user theo năm học: {works.Count()}");
-                
-                // Lọc các công trình đã đăng ký quy đổi (có AuthorRegistration với AcademicYearId tương ứng)
-                var registeredWorks = works.Where(w => 
-                    w.Authors?.Any(a => 
-                        a.UserId == userId && 
-                        a.AuthorRegistration != null &&
-                        a.AuthorRegistration.AcademicYearId == academicYearId
-                    ) == true
-                ).ToList();
-                
-                _logger.LogInformation($"GetRegisteredWorksByAcademicYear - Số công trình đã đăng ký quy đổi theo năm học: {registeredWorks.Count}");
-                
-                // Debug thông tin về authorRegistration
-                foreach (var work in registeredWorks)
-                {
-                    var author = work.Authors?.FirstOrDefault(a => a.UserId == userId);
-                    _logger.LogInformation($"Work: {work.Title}, AuthorId: {author?.Id}, HasRegistration: {author?.AuthorRegistration != null}, RegistrationId: {author?.AuthorRegistration?.AcademicYearId}");
-                }
-
+                var works = await _workQueryService.GetMyRegisteredWorksByAcademicYearIdAsync(userId, academicYearId);
                 return Ok(new ApiResponse<IEnumerable<WorkDto>>(
                     true,
                     $"Lấy danh sách công trình đã đăng ký quy đổi trong năm học {academicYear.Name} thành công",
-                    registeredWorks
+                    works
                 ));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi lấy danh sách công trình đã đăng ký quy đổi theo năm học");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("my-works/academic-year/{academicYearId}/proof-status/{proofStatus}")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyWorksByAcademicYearAndProofStatus(
+            [FromRoute] Guid academicYearId, 
+            [FromRoute] ProofStatus proofStatus)
+        {
+            try
+            {
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+                if (!isSuccess)
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                var works = await _workQueryService.GetMyWorksByAcademicYearAndProofStatusAsync(userId, academicYearId, proofStatus);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    $"Lấy danh sách công trình theo năm học và trạng thái {proofStatus} thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo năm học và trạng thái");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("my-works/academic-year/{academicYearId}/source/{source}")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyWorksByAcademicYearAndSource(
+            [FromRoute] Guid academicYearId, 
+            [FromRoute] WorkSource source)
+        {
+            try
+            {
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+                if (!isSuccess)
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                var works = await _workQueryService.GetMyWorksByAcademicYearAndSourceAsync(userId, academicYearId, source);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    $"Lấy danh sách công trình theo năm học và nguồn {source} thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo năm học và nguồn");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("co-author/academic-year/{academicYearId}")]
+        [Authorize(Roles = "User")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetMyCoAuthorWorksByAcademicYearId([FromRoute] Guid academicYearId)
+        {
+            try
+            {
+                var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
+                if (!isSuccess)
+                {
+                    return Unauthorized(new ApiResponse<object>(false, "Không xác định được người dùng"));
+                }
+
+                var works = await _workQueryService.GetMyCoAuthorWorksByAcademicYearIdAsync(userId, academicYearId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình mà người dùng là đồng tác giả theo năm học thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình mà người dùng là đồng tác giả theo năm học");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("users/{userId}/academic-year/{academicYearId}")]
+        [Authorize(Roles = "Admin, Manager")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetUserWorksByAcademicYearId(
+            [FromRoute] Guid userId, 
+            [FromRoute] Guid academicYearId)
+        {
+            try
+            {
+                var works = await _workQueryService.GetUserWorksByAcademicYearIdAsync(userId, academicYearId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình của người dùng theo năm học thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình của người dùng theo năm học");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
+
+        [HttpGet("department/{departmentId}/academic-year/{academicYearId}")]
+        [Authorize(Roles = "Admin, Manager")]
+        public async Task<ActionResult<ApiResponse<IEnumerable<WorkDto>>>> GetWorksByDepartmentAndAcademicYearId(
+            [FromRoute] Guid departmentId, 
+            [FromRoute] Guid academicYearId)
+        {
+            try
+            {
+                var works = await _workQueryService.GetWorksByDepartmentAndAcademicYearIdAsync(departmentId, academicYearId);
+                return Ok(new ApiResponse<IEnumerable<WorkDto>>(
+                    true,
+                    "Lấy danh sách công trình theo phòng ban và năm học thành công",
+                    works
+                ));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi lấy danh sách công trình theo phòng ban và năm học");
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }

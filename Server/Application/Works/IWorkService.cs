@@ -1,5 +1,4 @@
 ﻿using Domain.Interfaces;
-using Microsoft.AspNetCore.Http;
 
 namespace Application.Works
 {
@@ -10,23 +9,6 @@ namespace Application.Works
         Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkWithAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
         Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default);
 
-
-        Task<IEnumerable<WorkDto>> GetWorksByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<WorkDto>> GetWorksByDepartmentIdAsync(Guid departmentId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<WorkDto>> GetAllWorksWithAuthorsAsync(CancellationToken cancellationToken = default);
-        Task<WorkDto?> GetWorkByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<IEnumerable<WorkDto>> GetWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<WorkDto>> GetAllWorksByCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
-
-        // Thêm các phương thức mới để lọc công trình
-        Task<IEnumerable<WorkDto>> GetWorksByAcademicYearIdAsync(Guid academicYearId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<WorkDto>> GetCurrentUserWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default);
-        Task<IEnumerable<WorkDto>> GetAllWorksByAcademicYearIdAsync(Guid userId, Guid academicYearId, CancellationToken cancellationToken = default);
-
-        Task SetMarkedForScoringAsync(Guid authorId, bool marked, CancellationToken cancellationToken = default);
-
-        Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default);
-        Task<byte[]> ExportWorksByUserAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default);
-        Task ImportAsync(IFormFile file);
+        Task RegistedWorkByAuthorAsync(Guid authorId, bool registed, CancellationToken cancellationToken = default);
     }
 }
