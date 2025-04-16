@@ -25,6 +25,7 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSignalR();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -55,7 +56,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHub<NotificationHub>("/notification-hub");
+app.MapHub<NotificationHub>("notification-hub");
 
 app.UseMiddleware<ExceptionMiddleware>();
 

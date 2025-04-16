@@ -42,19 +42,19 @@ namespace Infrastructure.Identity.Services
             if (!identityUser.IsApproved)
                 throw new Exception("Tài khoản chưa được phê duyệt");
 
-            // Build up those claims like a boss
-            var authClaims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, identityUser.UserName!),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+            var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
+            if (user == null)
+                throw new Exception("Người dùng không tồn tại trong hệ thống");
 
             var userRoles = await userManager.GetRolesAsync(identityUser);
-            authClaims.AddRange(userRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            var user = await userService.GetUserByIdentityIdAsync(identityUser.Id);
-            if (user != null)
-                authClaims.Add(new Claim("id", user.Id.ToString()));
+            var authClaims = new List<Claim>
+            {
+                new Claim("id", user.Id.ToString()!),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()!),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, string.Join(",", userRoles)),
+            };
 
             // Generate JWT token
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));

@@ -73,7 +73,11 @@ namespace Infrastructure
             .AddEntityFrameworkStores<AuthDbContext>()
             .AddDefaultTokenProviders();
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
                .AddJwtBearer(options =>
                {
                    options.TokenValidationParameters = new TokenValidationParameters
@@ -85,7 +89,22 @@ namespace Infrastructure
                        ValidateIssuerSigningKey = true,
                        ValidIssuer = configuration["Jwt:Issuer"],
                        ValidAudience = configuration["Jwt:Audience"],
-                       IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
+                       IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)),
+                       NameClaimType = "id"
+                   };
+                   options.Events = new JwtBearerEvents
+                   {
+                       OnMessageReceived = context =>
+                       {
+                           // IMPORTANT: update the path check based on your hub route!
+                           var accessToken = context.Request.Query["access_token"];
+                           var path = context.HttpContext.Request.Path;
+                           if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/notification-hub"))
+                           {
+                               context.Token = accessToken;
+                           }
+                           return Task.CompletedTask;
+                       }
                    };
                });
 
@@ -94,9 +113,6 @@ namespace Infrastructure
 
             // Đăng ký HttpContextAccessor
             services.AddHttpContextAccessor();
-
-            // Đăng ký SignalR
-            services.AddSignalR();
 
             // Đăng ký các service
             services.AddScoped<IDepartmentService, DepartmentService>();
