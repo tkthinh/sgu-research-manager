@@ -274,9 +274,9 @@ namespace Application.Works
             var user = await _userRepository.GetUserByIdWithDetailsAsync(userId);
             if (user is null)
                 throw new Exception(ErrorMessages.UserNotFound);
-
+            var filter = new WorkFilter { UserId = userId };
             // Lấy danh sách công trình của user
-            var works = await _workQueryService.GetWorksByCurrentUserAsync(userId, cancellationToken);
+            var works = await _workQueryService.GetWorksAsync(filter, cancellationToken);
 
             // Lấy thông tin đồng tác giả với đầy đủ details
             var allCoAuthorUserIds = works.SelectMany(w => w.CoAuthorUserIds).Distinct().ToList();
