@@ -19,7 +19,6 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<IEnumerable<AcademicYearDto>>>> GetAcademicYears()
         {
             try
@@ -39,7 +38,6 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<AcademicYearDto>>> GetAcademicYear([FromRoute] Guid id)
         {
             try

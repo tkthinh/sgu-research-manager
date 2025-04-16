@@ -1,9 +1,11 @@
 ﻿using Infrastructure;
-using Serilog;
-using OfficeOpenXml;
-using WebApi.Middlewares;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using Serilog;
+using WebApi.Hubs;
+using WebApi.Middlewares;
+using static WebApi.Hubs.NotificationHub;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,10 +30,12 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
-   options.AddPolicy("AllowDev",
-       policy => policy.WithOrigins("http://localhost:5173")
-                       .AllowAnyMethod()
-                       .AllowAnyHeader());
+    options.AddPolicy("AllowDev",
+        policy => policy.WithOrigins("http://localhost:5173")
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials()
+    );
 });
 
 var app = builder.Build();
@@ -44,14 +48,16 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseMiddleware<ExceptionMiddleware>();
-
 app.UseCors("AllowDev");
 
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<NotificationHub>("/notification-hub");
+
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapControllers();
 

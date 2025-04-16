@@ -10,8 +10,6 @@ export default function Dashboard() {
     queryFn: getGlobalNotifications,
   });
 
-  console.log("Global notifications data: ", data);
-
   // Toast notifications
   useEffect(() => {
     if (isSuccess && data) {
@@ -28,16 +26,14 @@ export default function Dashboard() {
   }, [error]);
 
   if (isLoading) return <CircularProgress />;
-  if (!data || !Array.isArray(data))
+  if (!data?.data || !Array.isArray(data.data))
     return <div>Không có thông báo nào để hiển thị.</div>;
 
   return (
     <>
-      {data.map((notification) => (
+      {data.data.map((notification) => (
         <Alert key={notification.id} severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body1">
-            {notification.content}
-          </Typography>
+          <Typography variant="body1">{notification.content}</Typography>
         </Alert>
       ))}
     </>

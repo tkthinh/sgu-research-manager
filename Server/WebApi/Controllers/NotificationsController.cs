@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography.Pkcs;
 using Application.Notifications;
+using Application.Shared.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,14 +20,19 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("global")]
-        public async Task<ActionResult<IEnumerable<NotificationDto>>> GetGlobalNotifications()
+        public async Task<ActionResult<ApiResponse<IEnumerable<NotificationDto>>>> GetGlobalNotifications()
         {
             var notifications = await notificationService.GetGlobalNotificationsAsync();
-            return Ok(notifications);
+            return Ok(new ApiResponse<IEnumerable<NotificationDto>>
+                (
+                true,
+                "Lấy dữ liệu thông báo chung thành công",
+                notifications
+                ));
         }
 
         [HttpGet("me")]
-        public async Task<ActionResult<IEnumerable<NotificationDto>>> GetUserNotifications()
+        public async Task<ActionResult<ApiResponse<IEnumerable<NotificationDto>>>> GetUserNotifications()
         {
             var userId = GetCurrentUserId();
             if (userId == Guid.Empty)
@@ -35,7 +41,12 @@ namespace WebApi.Controllers
             }
 
             var notifications = await notificationService.GetUserNotificationsAsync(userId);
-            return Ok(notifications);
+            return Ok(new ApiResponse<IEnumerable<NotificationDto>>
+                (
+                true,
+                "Lấy dữ liệu thông báo cá nhân thành công",
+                notifications
+                ));
         }
 
         private Guid GetCurrentUserId()

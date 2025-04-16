@@ -133,6 +133,7 @@ export default function SystemConfigPage() {
       setNotifyDialogOpen(false);
       setNotifyTarget(null);
       queryClient.invalidateQueries({ queryKey: ["system-configs"] });
+      refetch();
     },
     onError: (error) => {
       toast.error("Lỗi khi tạo thông báo: " + (error as Error).message);
