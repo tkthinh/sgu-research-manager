@@ -1,15 +1,8 @@
 using Application.Authors;
-using Application.AcademicYears;
 using Application.Shared.Services;
-using Application.SystemConfigs;
 using Domain.Entities;
 using Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Application.AuthorRegistrations;
-using Domain.Enums;
-using System.Text.Json;
 using System.Linq.Expressions;
 
 namespace Application.Works
@@ -21,10 +14,6 @@ namespace Application.Works
         private readonly IGenericMapper<AuthorDto, Author> _authorMapper;
         private readonly IWorkRepository _workRepository;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IAcademicYearService _academicYearService;
-        private readonly IAuthorService _authorService;
-        private readonly ISystemConfigService _systemConfigService;
-        private readonly IDistributedCache _cache;
         private readonly ILogger<WorkQueryService> _logger;
 
         public WorkQueryService(
@@ -33,10 +22,6 @@ namespace Application.Works
             IGenericMapper<AuthorDto, Author> authorMapper,
             IWorkRepository workRepository,
             ICurrentUserService currentUserService,
-            IAcademicYearService academicYearService,
-            IAuthorService authorService,
-            ISystemConfigService systemConfigService,
-            IDistributedCache cache,
             ILogger<WorkQueryService> logger)
         {
             _unitOfWork = unitOfWork;
@@ -44,16 +29,23 @@ namespace Application.Works
             _authorMapper = authorMapper;
             _workRepository = workRepository;
             _currentUserService = currentUserService;
-            _academicYearService = academicYearService;
-            _authorService = authorService;
-            _systemConfigService = systemConfigService;
-            _cache = cache;
             _logger = logger;
         }
 
-        /// <summary>
-        /// Lấy danh sách công trình theo bộ lọc
-        /// </summary>
+        public async Task<WorkDto?> GetWorkByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(id);
+            if (work is null)
+            {
+                return null;
+            }
+
+            var dto = _mapper.MapToDto(work);
+            await FillCoAuthorUserIdsAsync(dto, cancellationToken);
+
+            return dto;
+        }
+
         public async Task<IEnumerable<WorkDto>> GetWorksAsync(WorkFilter filter, CancellationToken cancellationToken = default)
         {
             try
@@ -88,14 +80,11 @@ namespace Application.Works
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi trong GetWorksAsync");
                 throw;
             }
         }
         
-        /// <summary>
         /// Xây dựng predicate từ WorkFilter để tạo truy vấn
-        /// </summary>
         private Expression<Func<Work, bool>> BuildWorkPredicate(WorkFilter filter)
         {
             // Bắt đầu với predicate true (lấy tất cả)
@@ -169,9 +158,7 @@ namespace Application.Works
             return predicate;
         }
         
-        /// <summary>
         /// Kết hợp hai predicate với nhau sử dụng phép AND
-        /// </summary>
         private Expression<Func<T, bool>> CombinePredicates<T>(
             Expression<Func<T, bool>> expr1, 
             Expression<Func<T, bool>> expr2)
@@ -194,9 +181,7 @@ namespace Application.Works
             return Expression.Lambda<Func<T, bool>>(combinedBody, param);
         }
         
-        /// <summary>
         /// Lớp để thay thế tham số trong expression
-        /// </summary>
         private class ParameterReplacer : ExpressionVisitor
         {
             private readonly ParameterExpression _oldParam;
@@ -214,9 +199,7 @@ namespace Application.Works
             }
         }
         
-        /// <summary>
         /// Xử lý kết quả truy vấn và áp dụng các bộ lọc bổ sung
-        /// </summary>
         private IEnumerable<WorkDto> ProcessWorksResult(List<Work> works, WorkFilter filter)
         {
             // Chuyển đổi thành DTO
@@ -259,9 +242,6 @@ namespace Application.Works
             return workDtos;
         }
 
-        /// <summary>
-        /// Phiên bản tối ưu hơn của FillCoAuthorUserIds, chỉ điền cho một WorkDto
-        /// </summary>
         private async Task FillCoAuthorUserIdsAsync(WorkDto workDto, CancellationToken cancellationToken = default)
         {
             if (workDto is null)
@@ -294,9 +274,7 @@ namespace Application.Works
             }
         }
 
-        /// <summary>
         /// Phiên bản tối ưu hơn của FillCoAuthorUserIdsForMultipleWorks
-        /// </summary>
         private async Task FillCoAuthorUserIdsEfficientlyAsync(IEnumerable<WorkDto> workDtos, CancellationToken cancellationToken = default)
         {
             if (workDtos is null || !workDtos.Any())
@@ -355,20 +333,6 @@ namespace Application.Works
                     workDto.CoAuthorUserIds = new List<Guid>();
                 }
             }
-        }
-
-        public async Task<WorkDto?> GetWorkByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(id);
-            if (work is null)
-            {
-                return null;
-            }
-
-            var dto = _mapper.MapToDto(work);
-            await FillCoAuthorUserIdsAsync(dto, cancellationToken);
-                
-            return dto;
         }
     }
 } 

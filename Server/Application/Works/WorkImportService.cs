@@ -1,14 +1,8 @@
-﻿using Application.AcademicYears;
-using Application.Authors;
-using Application.Shared.Messages;
-using Application.Shared.Services;
-using Application.SystemConfigs;
+﻿using Application.Shared.Messages;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
 using OfficeOpenXml;
 using System.Globalization;
 
@@ -17,44 +11,13 @@ namespace Application.Works
     public class WorkImportService : IWorkImportService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IGenericMapper<WorkDto, Work> _mapper;
-        private readonly IGenericMapper<AuthorDto, Author> _authorMapper;
-        private readonly IGenericRepository<AuthorRole> _authorRoleRepository;
-        private readonly IGenericRepository<Factor> _factorRepository;
-        private readonly IWorkRepository _workRepository;
-        private readonly ISystemConfigService _systemConfigService;
-        private readonly IUserRepository _userRepository;
-        private readonly ILogger<WorkService> _logger;
-        private readonly ICurrentUserService _currentUserService;
-        private readonly IAcademicYearService _academicYearService;
-        private readonly IAuthorService _authorService;
         private readonly IWorkCalculateService _workCalculateService;
 
         public WorkImportService(
             IUnitOfWork unitOfWork,
-            IGenericMapper<WorkDto, Work> mapper,
-            IGenericMapper<AuthorDto, Author> authorMapper,
-            ILogger<WorkService> logger,
-            IWorkRepository workRepository,
-            ISystemConfigService systemConfigService,
-            IUserRepository userRepository,
-            ICurrentUserService currentUserService,
-            IAcademicYearService academicYearService,
-            IAuthorService authorService,
             IWorkCalculateService workCalculateService)
         {
             _unitOfWork = unitOfWork;
-            _mapper = mapper;
-            _authorMapper = authorMapper;
-            _authorRoleRepository = unitOfWork.Repository<AuthorRole>();
-            _factorRepository = unitOfWork.Repository<Factor>();
-            _workRepository = workRepository;
-            _systemConfigService = systemConfigService;
-            _userRepository = userRepository;
-            _logger = logger;
-            _currentUserService = currentUserService;
-            _academicYearService = academicYearService;
-            _authorService = authorService;
             _workCalculateService = workCalculateService;
         }
 

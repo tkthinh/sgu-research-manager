@@ -8,7 +8,6 @@ namespace Application.Works
         Task<WorkDto> UpdateWorkByAdminAsync(Guid workId, Guid userId, UpdateWorkWithAuthorRequestDto request, CancellationToken cancellationToken = default);
         Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkWithAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default);
         Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default);
-
         Task RegisterWorkByAuthorAsync(Guid authorId, bool registered, CancellationToken cancellationToken = default);
     }
 }

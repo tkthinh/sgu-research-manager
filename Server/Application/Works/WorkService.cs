@@ -23,7 +23,6 @@ namespace Application.Works
         private readonly ICurrentUserService _currentUserService;
         private readonly IAcademicYearService _academicYearService;
         private readonly IWorkCalculateService _workCalculateService;
-        private readonly IWorkExportService _workExportService;
 
         public WorkService(
             IUnitOfWork unitOfWork,
@@ -37,8 +36,7 @@ namespace Application.Works
             ICurrentUserService currentUserService,
             IAcademicYearService academicYearService,
             IAuthorService authorService,
-            IWorkCalculateService workCalculateService,
-            IWorkExportService workExportService)
+            IWorkCalculateService workCalculateService)
             : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
@@ -49,7 +47,6 @@ namespace Application.Works
             _currentUserService = currentUserService;
             _academicYearService = academicYearService;
             _workCalculateService = workCalculateService;
-            _workExportService = workExportService;
         }
         public async Task<WorkDto> CreateWorkWithAuthorAsync(CreateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
@@ -92,7 +89,7 @@ namespace Application.Works
             if (factor == null)
                 throw new Exception(ErrorMessages.FactorNotFound);
 
-            var workHour = CalculateWorkHour(request.Author.ScoreLevel, factor);
+            var workHour = _workCalculateService.CalculateWorkHour(request.Author.ScoreLevel, factor);
 
             await _unitOfWork.Repository<Work>().CreateAsync(work);
 
@@ -119,7 +116,7 @@ namespace Application.Works
                 CreatedDate = DateTime.UtcNow
             };
 
-            var authorHour = await CalculateAuthorHour(workHour, request.TotalAuthors ?? 0,
+            var authorHour = await _workCalculateService.CalculateAuthorHour(workHour, request.TotalAuthors ?? 0,
                 request.TotalMainAuthors ?? 0, request.Author.AuthorRoleId);
             author.AuthorHour = authorHour;
 
@@ -171,6 +168,30 @@ namespace Application.Works
 
             return workDto;
         }
+
+
+        public async Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default)
+        {
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
+            if (work is null)
+                throw new Exception(ErrorMessages.WorkNotFound);
+
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
+                throw new Exception(ErrorMessages.SystemClosedDeleteWork);
+
+            // Xóa các tác giả liên quan
+            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == workId);
+            foreach (var author in authors)
+            {
+                await _unitOfWork.Repository<Author>().DeleteAsync(author.Id);
+            }
+
+            await _unitOfWork.Repository<Work>().DeleteAsync(work.Id);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            await SafeInvalidateCacheAsync(workId);
+        }
+
         public async Task RegisterWorkByAuthorAsync(Guid authorId, bool registered, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
@@ -301,6 +322,53 @@ namespace Application.Works
             return _mapper.MapToDto(work);
         }
 
+        public async Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkWithAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
+        {
+            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
+            if (work is null)
+                throw new Exception(ErrorMessages.WorkNotFound);
+
+            _logger.LogInformation("UpdateWorkByAuthorAsync - Received request for workId {WorkId}", workId);
+
+            // Lấy coAuthorUserIds từ WorkRequest
+            List<Guid> coAuthorUserIds = request.WorkRequest?.CoAuthorUserIds ?? new List<Guid>();
+
+            _logger.LogInformation("Found CoAuthorUserIds in WorkRequest: {Count} ids - {CoAuthorUserIds}",
+                coAuthorUserIds.Count,
+                string.Join(", ", coAuthorUserIds));
+
+            await ValidateSystemStateAsync(work, userId, cancellationToken);
+
+            if (request.WorkRequest is not null)
+            {
+                await UpdateWorkDetailsByAuthor(work, request.WorkRequest);
+
+                // Luôn gọi UpdateCoAuthorsAsync để cập nhật đúng danh sách đồng tác giả
+                // Ngay cả khi danh sách rỗng, việc này cũng đảm bảo xóa các đồng tác giả cũ nếu người dùng muốn
+                _logger.LogInformation("Updating CoAuthors with list: {Count} userIds - {UserIds}",
+                    coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
+                await UpdateCoAuthorsAsync(work, coAuthorUserIds, userId, cancellationToken);
+            }
+
+            var author = await GetOrCreateAuthorAsync(work, userId, request, cancellationToken);
+
+            // Lưu các thay đổi vào database
+            await SaveChangesAsync(work, author, cancellationToken);
+
+            _logger.LogInformation("Changes saved successfully for workId {WorkId}", workId);
+
+            // Ánh xạ sang DTO và điền thông tin đồng tác giả
+            var workDto = _mapper.MapToDto(work);
+
+            _logger.LogInformation("WorkDto mapped. Filling CoAuthorUserIds...");
+            await FillCoAuthorUserIdsAsync(workDto, cancellationToken);
+
+            _logger.LogInformation("UpdateWorkByAuthorAsync complete. Returning CoAuthorUserIds: {CoAuthorUserIds}",
+                string.Join(", ", workDto.CoAuthorUserIds));
+
+            return workDto;
+        }
+
         private async Task UpdateWorkDetailsByAdmin(Work work, UpdateWorkRequestDto workRequest)
         {
             // Cập nhật isLocked dựa trên trạng thái của các tác giả
@@ -332,7 +400,7 @@ namespace Application.Works
             UpdateAuthorBasicProperties(author, authorRequest);
 
                 // Tính lại WorkHour và AuthorHour nếu có thay đổi liên quan
-            if (ShouldRecalculateAuthorHours(authorRequest, workRequest))
+            if (_workCalculateService.ShouldRecalculateAuthorHours(authorRequest, workRequest))
             {
                 await UpdateAuthorHoursAsync(author, work, authorRequest.ScoreLevel, workRequest, cancellationToken);
             }
@@ -383,13 +451,13 @@ namespace Application.Works
             }
 
             // Tính toán WorkHour và AuthorHour
-            author.WorkHour = CalculateWorkHour(effectiveScoreLevel, factor);
+            author.WorkHour = _workCalculateService.CalculateWorkHour(effectiveScoreLevel, factor);
             
             // Sử dụng các giá trị từ workRequest nếu có, nếu không thì dùng các giá trị từ work
             int totalAuthors = workRequest?.TotalAuthors ?? work.TotalAuthors ?? 0;
             int totalMainAuthors = workRequest?.TotalMainAuthors ?? work.TotalMainAuthors ?? 0;
             
-            author.AuthorHour = await CalculateAuthorHour(
+            author.AuthorHour = await _workCalculateService.CalculateAuthorHour(
                 author.WorkHour,
                 totalAuthors,
                 totalMainAuthors,
@@ -407,53 +475,6 @@ namespace Application.Works
                 author.ProofStatus = authorRequest.ProofStatus.Value;
                 author.Note = authorRequest.Note ?? author.Note;
             }
-        }
-
-        public async Task<WorkDto> UpdateWorkByAuthorAsync(Guid workId, UpdateWorkWithAuthorRequestDto request, Guid userId, CancellationToken cancellationToken = default)
-        {
-            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
-            if (work is null)
-                throw new Exception(ErrorMessages.WorkNotFound);
-
-            _logger.LogInformation("UpdateWorkByAuthorAsync - Received request for workId {WorkId}", workId);
-            
-            // Lấy coAuthorUserIds từ WorkRequest
-            List<Guid> coAuthorUserIds = request.WorkRequest?.CoAuthorUserIds ?? new List<Guid>();
-            
-            _logger.LogInformation("Found CoAuthorUserIds in WorkRequest: {Count} ids - {CoAuthorUserIds}", 
-                coAuthorUserIds.Count, 
-                string.Join(", ", coAuthorUserIds));
-
-            await ValidateSystemStateAsync(work, userId, cancellationToken);
-
-            if (request.WorkRequest is not null)
-            {
-                await UpdateWorkDetailsByAuthor(work, request.WorkRequest);
-
-                // Luôn gọi UpdateCoAuthorsAsync để cập nhật đúng danh sách đồng tác giả
-                // Ngay cả khi danh sách rỗng, việc này cũng đảm bảo xóa các đồng tác giả cũ nếu người dùng muốn
-                _logger.LogInformation("Updating CoAuthors with list: {Count} userIds - {UserIds}", 
-                    coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
-                await UpdateCoAuthorsAsync(work, coAuthorUserIds, userId, cancellationToken);
-            }
-
-            var author = await GetOrCreateAuthorAsync(work, userId, request, cancellationToken);
-
-            // Lưu các thay đổi vào database
-            await SaveChangesAsync(work, author, cancellationToken);
-            
-            _logger.LogInformation("Changes saved successfully for workId {WorkId}", workId);
-
-            // Ánh xạ sang DTO và điền thông tin đồng tác giả
-            var workDto = _mapper.MapToDto(work);
-            
-            _logger.LogInformation("WorkDto mapped. Filling CoAuthorUserIds...");
-            await FillCoAuthorUserIdsAsync(workDto, cancellationToken);
-            
-            _logger.LogInformation("UpdateWorkByAuthorAsync complete. Returning CoAuthorUserIds: {CoAuthorUserIds}", 
-                string.Join(", ", workDto.CoAuthorUserIds));
-                
-            return workDto;
         }
 
         private async Task UpdateCoAuthorsAsync(Work work, List<Guid> newCoAuthorUserIds, Guid currentUserId, CancellationToken cancellationToken)
@@ -595,8 +616,8 @@ namespace Application.Works
             if (factor is null)
                 throw new Exception(ErrorMessages.FactorNotFound);
 
-            var workHour = CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
-            var authorHour = await CalculateAuthorHour(
+            var workHour = _workCalculateService.CalculateWorkHour(request.AuthorRequest.ScoreLevel, factor);
+            var authorHour = await _workCalculateService.CalculateAuthorHour(
                 workHour,
                 work.TotalAuthors ?? 0,
                 work.TotalMainAuthors ?? 0,
@@ -678,8 +699,8 @@ namespace Application.Works
                     }
 
                     // Tính giờ quy đổi
-                    author.WorkHour = CalculateWorkHour(author.ScoreLevel, factor);
-                    author.AuthorHour = await CalculateAuthorHour(
+                    author.WorkHour = _workCalculateService.CalculateWorkHour(author.ScoreLevel, factor);
+                    author.AuthorHour = await _workCalculateService.CalculateAuthorHour(
                         author.WorkHour,
                         work.TotalAuthors ?? 0,
                         work.TotalMainAuthors ?? 0,
@@ -717,28 +738,6 @@ namespace Application.Works
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await SafeInvalidateCacheAsync(work.Id);
-        }
-
-        public async Task DeleteWorkAsync(Guid workId, Guid userId, CancellationToken cancellationToken = default)
-        {
-            var work = await _workRepository.GetWorkWithAuthorsByIdAsync(workId);
-            if (work is null)
-                throw new Exception(ErrorMessages.WorkNotFound);
-
-            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
-                throw new Exception(ErrorMessages.SystemClosedDeleteWork);
-
-            // Xóa các tác giả liên quan
-            var authors = await _unitOfWork.Repository<Author>().FindAsync(a => a.WorkId == workId);
-            foreach (var author in authors)
-            {
-                await _unitOfWork.Repository<Author>().DeleteAsync(author.Id);
-            }
-
-            await _unitOfWork.Repository<Work>().DeleteAsync(work.Id);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            await SafeInvalidateCacheAsync(workId);
         }
 
         private async Task FillCoAuthorUserIdsAsync(WorkDto workDto, CancellationToken cancellationToken = default)
@@ -858,37 +857,6 @@ namespace Application.Works
                 _logger.LogError(ex, "Lỗi khi tạo bài báo khoa học từ đề tài {ProjectId}", project.Id);
                 throw;
             }
-        }
-
-        public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default)
-        {
-            // Chuyển hướng đến service export
-            return await _workExportService.GetExportExcelDataAsync(userId, cancellationToken);
-        }
-
-        public async Task<byte[]> ExportWorksByUserAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
-        {
-            // Chuyển hướng đến service export
-            return await _workExportService.ExportWorksByUserAsync(exportData, cancellationToken);
-        }
-
-        // Các phương thức tiện ích
-        private int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)
-        {
-            // Sử dụng từ WorkCalculateService
-            return _workCalculateService.CalculateWorkHour(scoreLevel, factor);
-        }
-
-        private async Task<decimal> CalculateAuthorHour(int workHour, int totalAuthors, int totalMainAuthors, Guid? authorRoleId, CancellationToken cancellationToken = default)
-        {
-            // Sử dụng từ WorkCalculateService
-            return await _workCalculateService.CalculateAuthorHour(workHour, totalAuthors, totalMainAuthors, authorRoleId, cancellationToken);
-        }
-
-        private bool ShouldRecalculateAuthorHours(UpdateAuthorRequestDto authorRequest, UpdateWorkRequestDto? workRequest)
-        {
-            // Sử dụng từ WorkCalculateService
-            return _workCalculateService.ShouldRecalculateAuthorHours(authorRequest, workRequest);
         }
     }
 }

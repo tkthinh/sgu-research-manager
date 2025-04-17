@@ -1,14 +1,8 @@
-﻿using Application.AcademicYears;
-using Application.Authors;
-using Application.Shared.Messages;
-using Application.Shared.Services;
-using Application.SystemConfigs;
+﻿using Application.Shared.Messages;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace Application.Works
@@ -16,27 +10,17 @@ namespace Application.Works
     public class WorkCalculateService : IWorkCalculateService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IGenericMapper<WorkDto, Work> _mapper;
-        private readonly IGenericMapper<AuthorDto, Author> _authorMapper;
         private readonly IGenericRepository<AuthorRole> _authorRoleRepository;
         private readonly IGenericRepository<Factor> _factorRepository;
         private readonly ILogger<WorkService> _logger;
 
         public WorkCalculateService(
             IUnitOfWork unitOfWork,
-            IGenericMapper<WorkDto, Work> mapper,
-            IGenericMapper<AuthorDto, Author> authorMapper,
-            ILogger<WorkService> logger,
-            IWorkRepository workRepository,
-            ISystemConfigService systemConfigService,
-            IUserRepository userRepository,
-            ICurrentUserService currentUserService,
-            IAcademicYearService academicYearService,
-            IAuthorService authorService)
+            IGenericRepository<AuthorRole> authorRoleRepository,
+            IGenericRepository<Factor> factorRepository,
+            ILogger<WorkService> logger)
         {
             _unitOfWork = unitOfWork;
-            _mapper = mapper;
-            _authorMapper = authorMapper;
             _authorRoleRepository = unitOfWork.Repository<AuthorRole>();
             _factorRepository = unitOfWork.Repository<Factor>();
             _logger = logger;
@@ -47,7 +31,6 @@ namespace Application.Works
             // Nếu factor không tồn tại, trả về 0
             if (factor is null)
             {
-                _logger.LogWarning("CalculateWorkHour - Factor is null, returning 0");
                 return 0;
             }
 
@@ -55,19 +38,11 @@ namespace Application.Works
             if ((scoreLevel.HasValue != factor.ScoreLevel.HasValue) ||
                 (scoreLevel.HasValue && factor.ScoreLevel.HasValue && scoreLevel.Value != factor.ScoreLevel.Value))
             {
-                _logger.LogWarning("CalculateWorkHour - ScoreLevel mismatch: Request={RequestLevel}, Factor={FactorLevel}, nhưng vẫn trả về ConvertHour={ConvertHour}",
-                    scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null",
-                    factor.ScoreLevel.HasValue ? factor.ScoreLevel.Value.ToString() : "null",
-                    factor.ConvertHour);
-
                 // Vẫn trả về ConvertHour của Factor nếu Factor được tìm thấy
                 return factor.ConvertHour;
             }
 
             // Nếu mọi thứ khớp hoặc cả hai đều null, trả về ConvertHour
-            _logger.LogInformation("CalculateWorkHour - Returning ConvertHour={ConvertHour} cho ScoreLevel={ScoreLevel}",
-                factor.ConvertHour,
-                scoreLevel.HasValue ? scoreLevel.Value.ToString() : "null");
             return factor.ConvertHour;
         }
 
@@ -149,19 +124,6 @@ namespace Application.Works
 
             // Ưu tiên các factor có AuthorRoleId khớp chính xác
             var factor = filtered.FirstOrDefault(f => f.AuthorRoleId == authorRoleId) ?? filtered.FirstOrDefault();
-
-            if (factor == null)
-            {
-                _logger.LogWarning(
-                    "FindFactorAsync - Không tìm thấy factor phù hợp: WorkTypeId={WorkTypeId}, WorkLevelId={WorkLevelId}, PurposeId={PurposeId}, AuthorRoleId={AuthorRoleId}, ScoreLevel={ScoreLevel}",
-                    workTypeId, workLevelId, purposeId, authorRoleId, scoreLevel);
-            }
-            else
-            {
-                _logger.LogInformation(
-                    "FindFactorAsync - Đã tìm thấy factor: Id={FactorId}, ConvertHour={ConvertHour}, MaxAllowed={MaxAllowed}",
-                    factor.Id, factor.ConvertHour, factor.MaxAllowed);
-            }
 
             return factor;
         }
