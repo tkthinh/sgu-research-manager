@@ -27,7 +27,7 @@ import ProtectedRoute from "../shared/components/ProtectedRoute";
 import NotFound from "../shared/pages/NotFound";
 import Unauthorized from "../shared/pages/Unauthorized";
 
-import MarkedWorksPage from "../../features/works/MarkedWorksPage";
+import WorkRegisterPage from "../../features/work-register/WorkRegisterPage";
 import WorkScoreDetailPage from "../../features/work-scores/WorkScoreDetailPage";
 import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
 import WorkScorePage from "../../features/work-scores/WorkScorePage";
@@ -59,7 +59,7 @@ export const router = createBrowserRouter([
                 path: "dang-ky-quy-doi",
                 element: (
                   <ProtectedRoute allowedRoles={["User"]}>
-                    <MarkedWorksPage />
+                    <WorkRegisterPage />
                   </ProtectedRoute>
                 ),
               },
