@@ -11,3 +11,8 @@ export const getMyNotifications = async (): Promise<ApiResponse<Notification[]>>
   const response = await apiClient.get<ApiResponse<Notification[]>>("/notifications/me");
   return response.data;
 };
+
+export const markNotificationAsRead = async (notificationId: string): Promise<ApiResponse<Notification>> => {
+  const response = await apiClient.put<ApiResponse<Notification>>(`/notifications/${notificationId}`);
+  return response.data;
+}
