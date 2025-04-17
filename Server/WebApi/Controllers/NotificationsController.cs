@@ -49,6 +49,22 @@ namespace WebApi.Controllers
                 ));
         }
 
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ApiResponse<NotificationDto>>> MarkNotificationAsRead([FromRoute] Guid id)
+        {
+            var notification = await notificationService.MarkNotificationAsReadAsync(id);
+            if (notification == null)
+            {
+                return NotFound(new ApiResponse<NotificationDto>(false, "Thông báo không tồn tại"));
+            }
+            return Ok(new ApiResponse<NotificationDto>
+                (
+                true,
+                "Đánh dấu thông báo đã đọc thành công",
+                notification
+                ));
+        }
+
         private Guid GetCurrentUserId()
         {
             var userClaims = HttpContext.User.Claims;

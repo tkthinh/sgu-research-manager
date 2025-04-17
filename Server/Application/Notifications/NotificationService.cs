@@ -5,6 +5,7 @@ using Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
 
 namespace Application.Notifications
 {
@@ -40,7 +41,18 @@ namespace Application.Notifications
                 IsRead = false,
             };
 
-            return await base.CreateAsync(dto);
+            var entity = mapper.MapToEntity(dto);
+            entity.CreatedDate = DateTime.UtcNow;
+
+            await unitOfWork.Repository<Notification>().CreateAsync(entity);
+            await unitOfWork.SaveChangesAsync();
+
+            if (isCacheAvailable)
+            {
+                await cache.RemoveAsync($"{cacheKeyPrefix}_user_{userId}");
+            }
+
+            return mapper.MapToDto(entity);
         }
 
         public async Task<IEnumerable<NotificationDto>> GetGlobalNotificationsAsync()
@@ -132,6 +144,26 @@ namespace Application.Notifications
             }
 
             return dtos;
+        }
+        public async Task<NotificationDto> MarkNotificationAsReadAsync(Guid id)
+        {
+            var notification = await unitOfWork.Repository<Notification>().GetByIdAsync(id);
+            if (notification == null)
+            {
+                throw new Exception($"Không tìm thấy thông báo.");
+            }
+
+            notification.IsRead = true;
+
+            await unitOfWork.Repository<Notification>().UpdateAsync(notification);
+            await unitOfWork.SaveChangesAsync();
+
+            if (isCacheAvailable && notification.UserId.HasValue)
+            {
+                await cache.RemoveAsync($"{cacheKeyPrefix}_user_{notification.UserId}");
+            }
+
+            return mapper.MapToDto(notification);
         }
     }
 

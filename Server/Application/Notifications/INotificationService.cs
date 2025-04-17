@@ -10,5 +10,7 @@ namespace Application.Notifications
 
         Task<IEnumerable<NotificationDto>> GetGlobalNotificationsAsync();
         Task<IEnumerable<NotificationDto>> GetUserNotificationsAsync(Guid userId);
+
+        Task<NotificationDto> MarkNotificationAsReadAsync(Guid id);
     }
 }

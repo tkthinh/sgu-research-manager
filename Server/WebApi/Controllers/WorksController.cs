@@ -11,6 +11,7 @@ using Domain.Enums;
 using Application.Shared.Services;
 using Application.SystemConfigs;
 using Application.AcademicYears;
+using Application.Notifications;
 
 namespace WebApi.Controllers
 {
@@ -24,6 +25,7 @@ namespace WebApi.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAcademicYearService _academicYearService;
+        private readonly INotificationService _notificationService;
 
         public WorksController(
             IWorkService workService, 
@@ -31,7 +33,9 @@ namespace WebApi.Controllers
             IHubContext<NotificationHub> hubContext, 
             IUnitOfWork unitOfWork,
             ICurrentUserService currentUserService,
-            IAcademicYearService academicYearService)
+            IAcademicYearService academicYearService,
+            INotificationService notificationService
+            )
         {
             _workService = workService;
             _logger = logger;
@@ -39,6 +43,7 @@ namespace WebApi.Controllers
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _academicYearService = academicYearService;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -272,7 +277,12 @@ namespace WebApi.Controllers
                         .ToList();
 
                     var notificationMessage = $"Công trình '{updatedWork.Title}' đã được admin chấm.";
-                    await _hubContext.Clients.Users(authorUserIds).SendAsync("ReceiveNotification", notificationMessage);
+
+                    foreach(var authorUserId in authorUserIds)
+                    {
+                        await _notificationService.CreateNotificationForUserAsync(Guid.Parse(authorUserId), notificationMessage);
+                        await _hubContext.Clients.User(authorUserId).SendAsync("ReceiveNotification", notificationMessage);
+                    }
                 }
 
                 return Ok(new ApiResponse<WorkDto>(
