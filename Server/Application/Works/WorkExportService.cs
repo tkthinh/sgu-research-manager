@@ -235,14 +235,21 @@ namespace Application.Works
             }
         }
 
-        public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(WorkFilter filter, CancellationToken cancellationToken = default)
         {
-            // Lấy thông tin cá nhân của user với đầy đủ details
-            var user = await _userRepository.GetUserByIdWithDetailsAsync(userId);
-            if (user is null)
+            if (filter.UserId == null)
+            {
                 throw new Exception(ErrorMessages.UserNotFound);
-            var filter = new WorkFilter { UserId = userId };
-            // Lấy danh sách công trình của user
+            }
+
+            // Lấy thông tin cá nhân của user với đầy đủ details
+            var user = await _userRepository.GetUserByIdWithDetailsAsync(filter.UserId.Value);
+            if (user is null)
+            {
+                throw new Exception(ErrorMessages.UserNotFound);
+            }
+
+            // Lấy danh sách công trình của user với filter
             var works = await _workQueryService.GetWorksAsync(filter, cancellationToken);
 
             // Lấy thông tin đồng tác giả với đầy đủ details
@@ -262,11 +269,11 @@ namespace Application.Works
                     UserName = user.UserName ?? "Không xác định",
                     FullName = user.FullName ?? "Không xác định",
                     Email = user.Email ?? "Không xác định",
-                    AcademicTitle = user.AcademicTitle.ToString() ?? "Không xác định", // Học hàm/học vị
-                    OfficerRank = user.OfficerRank.ToString() ?? "Không xác định", // Ngạch công chức
+                    AcademicTitle = user.AcademicTitle.ToString() ?? "Không xác định",
+                    OfficerRank = user.OfficerRank.ToString() ?? "Không xác định",
                     DepartmentName = user.Department?.Name ?? "Không xác định",
-                    FieldName = author?.FieldName ?? "Không xác định", // Ngành - Field
-                    Specialization = user.Specialization ?? "Không xác định", // Chuyên ngành
+                    FieldName = author?.FieldName ?? "Không xác định",
+                    Specialization = user.Specialization ?? "Không xác định",
                     PhoneNumber = user.PhoneNumber ?? "Không xác định",
                     Title = w.Title ?? "Không xác định",
                     WorkTypeName = w.WorkTypeName ?? "Không xác định",
@@ -283,7 +290,7 @@ namespace Application.Works
                     SCImagoFieldName = author?.SCImagoFieldName,
                     ScoringFieldName = author?.FieldName,
                     ScoreLevel = author?.ScoreLevel,
-                    AuthorHour = (int?)author?.AuthorHour, // Chuyển đổi decimal sang int
+                    AuthorHour = (int?)author?.AuthorHour,
                     ProofStatus = author?.ProofStatus,
                     Note = author?.Note
                 };

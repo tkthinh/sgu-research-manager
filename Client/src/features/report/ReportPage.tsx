@@ -17,6 +17,8 @@ import {
   SelectChangeEvent,
   Chip,
   Tooltip,
+  Divider,
+  Stack,
 } from '@mui/material';
 import { GridColDef } from '@mui/x-data-grid';
 import { Work } from '../../lib/types/models/Work';
@@ -24,6 +26,7 @@ import { getAcademicYears } from '../../lib/api/academicYearApi';
 import { ProofStatus } from '../../lib/types/enums/ProofStatus';
 import { WorkSource } from '../../lib/types/enums/WorkSource';
 import { getWorksWithFilter } from '../../lib/api/worksApi';
+import { exportWorks } from '../../lib/api/excelApi';
 import { useAuth } from '../../app/shared/contexts/AuthContext';
 import { AcademicYear } from '../../lib/types/models/AcademicYear';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -31,6 +34,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import HistoryIcon from '@mui/icons-material/History';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import GenericTable from '../../app/shared/components/tables/DataTable';
 
 interface FilterParams {
@@ -245,16 +249,68 @@ const ReportPage: React.FC = () => {
     },
   ];
 
+  // Thêm hàm xử lý export
+  const handleExport = async () => {
+    try {
+        setLoading(true);
+        const blob = await exportWorks(filter);
+        
+        // Tạo URL cho file blob
+        const url = window.URL.createObjectURL(blob);
+        
+        // Tạo link tải file
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `KeKhaiCongTrinh_${new Date().toISOString().slice(0,10)}.xlsx`);
+        
+        // Thêm link vào DOM và click
+        document.body.appendChild(link);
+        link.click();
+        
+        // Dọn dẹp
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Lỗi khi export:', error);
+        setError('Lỗi khi xuất file Excel');
+    } finally {
+        setLoading(false);
+    }
+  };
+
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       {/* Filter Panel */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" gutterBottom display="flex" alignItems="center">
-          <FilterListIcon sx={{ mr: 1 }} />
-          Bộ lọc
-        </Typography>
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: 3 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6" display="flex" alignItems="center" color="primary">
+            <FilterListIcon sx={{ mr: 1 }} />
+            Bộ lọc
+          </Typography>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleResetFilter}
+              startIcon={<RestartAltIcon />}
+            >
+              Đặt lại
+            </Button>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={fetchWorks}
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : <FilterListIcon />}
+            >
+              Tìm kiếm
+            </Button>
+          </Stack>
+        </Stack>
+
+        <Divider sx={{ mb: 3 }} />
         
-        <Grid container spacing={2}>
+        <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth size="small">
               <InputLabel>Năm học</InputLabel>
@@ -314,7 +370,7 @@ const ReportPage: React.FC = () => {
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <Box display="flex" flexDirection="column" gap={1}>
+            <Box display="flex" flexDirection="column" gap={2}>
               <FormControlLabel
                 control={
                   <Checkbox
@@ -338,35 +394,26 @@ const ReportPage: React.FC = () => {
               />
             </Box>
           </Grid>
-
-          <Grid item xs={12} display="flex" justifyContent="flex-end" gap={2}>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={handleResetFilter}
-              startIcon={<RestartAltIcon />}
-            >
-              Đặt lại
-            </Button>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              onClick={fetchWorks}
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} /> : <FilterListIcon />}
-            >
-              Tìm kiếm
-            </Button>
-          </Grid>
         </Grid>
       </Paper>
       
       {/* Results Panel */}
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom display="flex" alignItems="center" justifyContent="space-between">
-          <span>Kết quả ({works.length} công trình)</span>
-          {loading && <CircularProgress size={24} />}
-        </Typography>
+      <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6" display="flex" alignItems="center">
+            <span>Kết quả ({works.length} công trình)</span>
+            {loading && <CircularProgress size={24} sx={{ ml: 2 }} />}
+          </Typography>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={handleExport}
+            startIcon={<FileDownloadIcon />}
+            disabled={works.length === 0}
+          >
+            Xuất Excel
+          </Button>
+        </Stack>
         
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>

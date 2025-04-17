@@ -3,6 +3,8 @@ using Application.Works;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Application.Shared.Services;
+using Domain.Enums;
+using System;
 
 namespace WebApi.Controllers
 {
@@ -47,16 +49,15 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("export-by-user")]
-        public async Task<IActionResult> ExportWorksByUser()
+        public async Task<IActionResult> ExportWorksByUser(
+            [FromQuery] string? academicYearId,
+            [FromQuery] int? proofStatus,
+            [FromQuery] int? source,
+            [FromQuery] bool? onlyRegisteredWorks,
+            [FromQuery] bool? onlyRegisterableWorks)
         {
             try
             {
-                // Log tất cả claims để debug
-                foreach (var claim in User.Claims)
-                {
-                    _logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);
-                }
-
                 // Lấy userId từ service
                 var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
                 if (!isSuccess)
@@ -67,8 +68,19 @@ namespace WebApi.Controllers
 
                 _logger.LogInformation("Bắt đầu xuất Excel cho userId: {UserId}", userId);
 
-                // Lấy dữ liệu export
-                var exportData = await _workExportService.GetExportExcelDataAsync(userId);
+                // Tạo filter từ các tham số
+                var filter = new WorkFilter
+                {
+                    UserId = userId,
+                    AcademicYearId = academicYearId != null ? Guid.Parse(academicYearId) : (Guid?)null,
+                    ProofStatus = proofStatus.HasValue ? (ProofStatus)proofStatus.Value : (ProofStatus?)null,
+                    Source = source.HasValue ? (WorkSource)source.Value : (WorkSource?)null,
+                    OnlyRegisteredWorks = onlyRegisteredWorks ?? false,
+                    OnlyRegisterableWorks = onlyRegisterableWorks ?? false
+                };
+
+                // Lấy dữ liệu export với filter
+                var exportData = await _workExportService.GetExportExcelDataAsync(filter);
 
                 // Kiểm tra exportData có dữ liệu không
                 if (exportData == null || !exportData.Any())
@@ -86,9 +98,6 @@ namespace WebApi.Controllers
                     _logger.LogError("File Excel không được tạo thành công cho user {UserId}", userId);
                     return BadRequest(new ApiResponse<object>(false, "Không thể tạo file Excel"));
                 }
-
-                // Log kích thước file để kiểm tra
-                _logger.LogInformation("File Excel được tạo thành công, kích thước: {FileSize} bytes", fileBytes.Length);
 
                 // Tạo tên file với timestamp để tránh trùng lặp
                 var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");

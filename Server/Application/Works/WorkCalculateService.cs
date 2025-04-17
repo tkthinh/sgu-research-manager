@@ -2,7 +2,6 @@
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
-using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace Application.Works
@@ -12,18 +11,12 @@ namespace Application.Works
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGenericRepository<AuthorRole> _authorRoleRepository;
         private readonly IGenericRepository<Factor> _factorRepository;
-        private readonly ILogger<WorkService> _logger;
 
-        public WorkCalculateService(
-            IUnitOfWork unitOfWork,
-            IGenericRepository<AuthorRole> authorRoleRepository,
-            IGenericRepository<Factor> factorRepository,
-            ILogger<WorkService> logger)
+        public WorkCalculateService(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
             _authorRoleRepository = unitOfWork.Repository<AuthorRole>();
             _factorRepository = unitOfWork.Repository<Factor>();
-            _logger = logger;
         }
 
         public int CalculateWorkHour(ScoreLevel? scoreLevel, Factor factor)

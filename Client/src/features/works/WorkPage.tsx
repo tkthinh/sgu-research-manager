@@ -22,14 +22,12 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HistoryIcon from "@mui/icons-material/History";
 import AddIcon from "@mui/icons-material/Add";
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { getUserById } from "../../lib/api/usersApi";
 import { User } from "../../lib/types/models/User";
 import { useWorkFormData } from "../../hooks/useWorkData";
 import { useWorkDialogs } from "../../hooks/useWorkDialogs";
 import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDialog";
 import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
-import { exportWorks } from "../../lib/api/excelApi";
 import { useAuth } from "../../app/shared/contexts/AuthContext";
 import { useSystemStatus } from '../../hooks/useSystemStatus';
 import { getCurrentAcademicYear } from "../../lib/api/academicYearApi";
@@ -168,46 +166,6 @@ export default function WorksPage() {
       } catch (error) {
         // Lỗi đã được xử lý trong onError của mutation
       }
-    }
-  };
-
-  // Thêm mutation cho việc xuất Excel
-  const exportMutation = useMutation({
-    mutationFn: exportWorks,
-    onSuccess: (data) => {
-      const url = window.URL.createObjectURL(data);
-      const link = document.createElement('a');
-      link.href = url;
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      link.download = `KeKhaiCongTrinh_${timestamp}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      toast.success("Xuất Excel thành công!");
-    },
-    onError: (error: any) => {
-      console.error("Lỗi khi xuất Excel:", error);
-      let errorMessage = "Đã có lỗi xảy ra";
-      
-      if (error.message === "Bạn chưa đăng nhập") {
-        errorMessage = "Vui lòng đăng nhập lại để tiếp tục";
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast.error(`Lỗi khi xuất Excel: ${errorMessage}`);
-    },
-  });
-
-  // Hàm xử lý sự kiện xuất Excel
-  const handleExport = async () => {
-    try {
-      await exportMutation.mutateAsync();
-    } catch (error) {
-      console.error("Lỗi khi xuất Excel:", error);
     }
   };
 
@@ -551,16 +509,7 @@ export default function WorksPage() {
           <Button 
             variant="contained" 
             color="primary" 
-            onClick={handleExport}
-            startIcon={<FileDownloadIcon />}
-            disabled={exportMutation.isPending}
-          >
-            {exportMutation.isPending ? <CircularProgress size={24} /> : "Xuất Excel"}
-          </Button>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={() => handleOpenUpdateDialog(undefined as any)} 
+            onClick={() => handleOpenUpdateDialog(undefined)} 
             startIcon={<AddIcon />}
             disabled={!isSystemOpen}
           >
