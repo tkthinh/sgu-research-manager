@@ -9,18 +9,13 @@ import {
   Typography,
   Tooltip,
   Container,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
-import { deleteWork, getMyWorks, getCurrentUserWorksByAcademicYearId } from "../../lib/api/worksApi";
+import { deleteWork, getWorksWithFilter } from "../../lib/api/worksApi";
 import { formatMonthYear } from "../../lib/utils/dateUtils";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -37,9 +32,7 @@ import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 import { exportWorks } from "../../lib/api/excelApi";
 import { useAuth } from "../../app/shared/contexts/AuthContext";
 import { useSystemStatus } from '../../hooks/useSystemStatus';
-import { getAcademicYears } from "../../lib/api/academicYearApi";
-import FilterListIcon from '@mui/icons-material/FilterList';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { getCurrentAcademicYear } from "../../lib/api/academicYearApi";
 
 export default function WorksPage() {
   const queryClient = useQueryClient();
@@ -47,37 +40,29 @@ export default function WorksPage() {
   const { user } = useAuth();
   const { isSystemOpen, canEditWork } = useSystemStatus();
 
-  // State cho bộ lọc
-  const [academicYearId, setAcademicYearId] = useState<string>("");
-  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
-  
-  // Thêm state mới để theo dõi tùy chọn đã chọn trước khi áp dụng
-  const [tempAcademicYearId, setTempAcademicYearId] = useState<string>("");
-
-  // Fetch danh sách năm học cho bộ lọc
-  const { data: academicYearsData } = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: getAcademicYears,
+  // Fetch năm học hiện tại
+  const { data: currentAcademicYear } = useQuery({
+    queryKey: ["current-academic-year"],
+    queryFn: getCurrentAcademicYear,
   });
 
-  // Fetch works dựa vào filter
+  // Fetch works dựa vào filter mặc định
   const { 
     data: worksData, 
     error: worksError, 
     isPending: isLoadingWorks, 
     refetch 
   } = useQuery({
-    queryKey: ["works", "my-works", academicYearId],
+    queryKey: ["works", "my-works"],
     queryFn: async () => {
-      if (!academicYearId) {
-        // Mặc định: Lấy tất cả công trình của user hiện tại
-        return getMyWorks();
-      } else {
-        // Lọc theo năm học
-        return getCurrentUserWorksByAcademicYearId(academicYearId);
-      }
+      const filter = {
+        academicYearId: currentAcademicYear?.data?.id,
+        isCurrentUser: true
+      };
+      return getWorksWithFilter(filter);
     },
-    staleTime: 0, // Luôn refetch khi cần
+    enabled: !!currentAcademicYear?.data?.id,
+    staleTime: 0,
   });
 
   // Sử dụng hook để lấy dữ liệu form
@@ -98,7 +83,7 @@ export default function WorksPage() {
     userId: user?.id ?? "",
     worksData,
     refetchWorks: refetch,
-    isAuthorPage: true, // Đặt là true vì đây là trang của tác giả
+    isAuthorPage: true,
   });
 
   // Lấy thông tin đồng tác giả khi có dữ liệu công trình
@@ -111,7 +96,6 @@ export default function WorksPage() {
           if (work.coAuthorUserIds && work.coAuthorUserIds.length > 0) {
             const coAuthors: User[] = [];
             
-            // Lấy thông tin từng đồng tác giả
             for (const userId of work.coAuthorUserIds) {
               try {
                 const response = await getUserById(userId);
@@ -166,15 +150,10 @@ export default function WorksPage() {
     mutationFn: (id: string) => deleteWork(id),
     onSuccess: () => {
       toast.success("Xóa công trình thành công!");
-      
-      // Xóa cache và refetch dữ liệu mới
       queryClient.invalidateQueries({ queryKey: ["works", "my-works"] });
-      
-      // Bắt buộc refetch dữ liệu ngay lập tức
       setTimeout(() => {
         refetch();
       }, 100);
-      
       setDeleteDialogOpen(false);
     },
     onError: (error: Error) => {
@@ -196,25 +175,15 @@ export default function WorksPage() {
   const exportMutation = useMutation({
     mutationFn: exportWorks,
     onSuccess: (data) => {
-      // Tạo URL từ Blob
       const url = window.URL.createObjectURL(data);
-      
-      // Tạo thẻ a ẩn để tải file
       const link = document.createElement('a');
       link.href = url;
-      
-      // Tạo tên file với timestamp
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       link.download = `KeKhaiCongTrinh_${timestamp}.xlsx`;
-      
-      // Thêm link vào document, click và xóa
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
-      // Giải phóng URL
       window.URL.revokeObjectURL(url);
-      
       toast.success("Xuất Excel thành công!");
     },
     onError: (error: any) => {
@@ -224,10 +193,8 @@ export default function WorksPage() {
       if (error.message === "Bạn chưa đăng nhập") {
         errorMessage = "Vui lòng đăng nhập lại để tiếp tục";
       } else if (error.response?.data?.message) {
-        // Nếu có message từ API
         errorMessage = error.response.data.message;
       } else if (error.message) {
-        // Nếu có message từ axios
         errorMessage = error.message;
       }
       
@@ -238,44 +205,10 @@ export default function WorksPage() {
   // Hàm xử lý sự kiện xuất Excel
   const handleExport = async () => {
     try {
-      console.log("Bắt đầu xuất Excel");
       await exportMutation.mutateAsync();
     } catch (error) {
-      // Lỗi đã được xử lý trong onError của mutation
       console.error("Lỗi khi xuất Excel:", error);
     }
-  };
-
-  // Mở dialog bộ lọc
-  const handleOpenFilterDialog = () => {
-    setTempAcademicYearId(academicYearId);
-    setFilterDialogOpen(true);
-  };
-
-  // Đóng dialog bộ lọc
-  const handleCloseFilterDialog = () => {
-    setTempAcademicYearId(academicYearId);
-    setFilterDialogOpen(false);
-  };
-
-  // Xử lý thay đổi năm học
-  const handleAcademicYearChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    setTempAcademicYearId(event.target.value as string);
-  };
-
-  // Áp dụng bộ lọc
-  const handleApplyFilter = () => {
-    setAcademicYearId(tempAcademicYearId);
-    handleCloseFilterDialog();
-    refetch();
-  };
-
-  // Reset bộ lọc
-  const handleResetFilter = () => {
-    setAcademicYearId("");
-    setTempAcademicYearId("");
-    handleCloseFilterDialog();
-    refetch();
   };
 
   const columns: GridColDef[] = [
@@ -495,7 +428,6 @@ export default function WorksPage() {
         const author = params.row.authors && params.row.authors[0];
         const noteText = author?.note || "";
     
-        // Nếu không có ghi chú, hiển thị "-"
         if (!noteText) {
           return <div>-</div>;
         }
@@ -527,7 +459,6 @@ export default function WorksPage() {
       type: "string",
       width: 140,
       renderCell: (params: any) => {
-        // Lấy proofStatus từ author đầu tiên
         const author = params.row.authors && params.row.authors[0];
         const proofStatus = author ? author.proofStatus : undefined;
                 
@@ -535,7 +466,6 @@ export default function WorksPage() {
           return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
         }
         
-        // Kiểm tra giá trị và áp dụng trạng thái tương ứng
         if (proofStatus === ProofStatus.HopLe) {
           return (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -613,46 +543,11 @@ export default function WorksPage() {
   if (isLoadingWorks) return <CircularProgress />;
   if (worksError) return <p>Lỗi: {(worksError as Error).message}</p>;
 
-  // Tạo thông tin bộ lọc hiện tại để hiển thị
-  const getFilterInfo = () => {
-    if (!academicYearId) {
-      return null;
-    }
-    
-    const selectedYear = academicYearsData?.data?.find(year => year.id === academicYearId);
-    const filterInfo = `Năm học: ${selectedYear?.name || academicYearId}`;
-    
-    return (
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Typography variant="body1">
-          <strong>Bộ lọc hiện tại:</strong> {filterInfo}
-        </Typography>
-        <Button 
-          size="small" 
-          color="error" 
-          sx={{ ml: 2 }}
-          onClick={handleResetFilter}
-          startIcon={<RestartAltIcon />}
-        >
-          Xóa bộ lọc
-        </Button>
-      </Box>
-    );
-  };
-
   return (
     <Container maxWidth="xl">
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
         <Typography variant="h6">Danh sách công trình</Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button 
-            variant="outlined" 
-            color="primary" 
-            onClick={handleOpenFilterDialog}
-            startIcon={<FilterListIcon />}
-          >
-            Lọc
-          </Button>
           <Button 
             variant="contained" 
             color="primary" 
@@ -673,8 +568,6 @@ export default function WorksPage() {
           </Button>
         </Box>
       </Box>
-
-      {getFilterInfo()}
 
       {isLoadingWorks ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -700,55 +593,6 @@ export default function WorksPage() {
         scimagoFields={formData.scimagoFields}
         fields={formData.fields}
       />
-
-      {/* Dialog bộ lọc */}
-      <Dialog open={filterDialogOpen} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Lọc công trình</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel id="academic-year-label">Năm học</InputLabel>
-                <Select
-                  labelId="academic-year-label"
-                  value={tempAcademicYearId}
-                  onChange={handleAcademicYearChange}
-                  label="Năm học"
-                >
-                  <MenuItem value="">
-                    <em>-- Chọn năm học --</em>
-                  </MenuItem>
-                  {academicYearsData?.data?.map((year) => (
-                    <MenuItem key={year.id} value={year.id}>
-                      {year.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseFilterDialog} color="inherit">
-            Hủy
-          </Button>
-          <Button 
-            onClick={handleResetFilter} 
-            color="error"
-            startIcon={<RestartAltIcon />}
-          >
-            Xóa bộ lọc
-          </Button>
-          <Button 
-            onClick={handleApplyFilter} 
-            color="primary" 
-            variant="contained"
-            startIcon={<FilterListIcon />}
-          >
-            Áp dụng
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
