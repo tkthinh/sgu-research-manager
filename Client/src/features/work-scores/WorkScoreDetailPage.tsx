@@ -15,7 +15,7 @@ import {
   import { useNavigate, useParams } from "react-router-dom";
   import GenericTable from "../../app/shared/components/tables/DataTable";
   import { getUserById } from "../../lib/api/usersApi";
-  import { getWorksByUserId } from "../../lib/api/worksApi";
+  import { getWorksWithFilter } from "../../lib/api/worksApi";
   import { ProofStatus } from "../../lib/types/enums/ProofStatus";
   import { User } from "../../lib/types/models/User";
   import EditIcon from "@mui/icons-material/Edit";
@@ -31,6 +31,7 @@ import {
   import WorkNoteDialog from "../../app/shared/components/dialogs/WorkNoteDialog";
   import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDialog";
   import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
+  import { getCurrentAcademicYear } from "../../lib/api/academicYearApi";
   
   export default function WorkScoreDetailPage() {
     const { userId } = useParams<{ userId: string }>();
@@ -39,6 +40,12 @@ import {
   
     // Sử dụng hook để lấy dữ liệu form
     const formData = useWorkFormData();
+
+    // Fetch năm học hiện tại
+    const { data: currentAcademicYear } = useQuery({
+      queryKey: ["current-academic-year"],
+      queryFn: getCurrentAcademicYear,
+    });
   
     // Fetch user information
     const {
@@ -59,8 +66,15 @@ import {
       refetch: refetchWorks,
     } = useQuery({
       queryKey: ["works", "user", userId],
-      queryFn: () => getWorksByUserId(userId || ""),
-      enabled: !!userId,
+      queryFn: async () => {
+        const filter = {
+          userId: userId,
+          academicYearId: currentAcademicYear?.data?.id,
+          isCurrentUser: false
+        };
+        return getWorksWithFilter(filter);
+      },
+      enabled: !!userId && !!currentAcademicYear?.data?.id,
     });
   
     // Lấy thông tin đồng tác giả khi có dữ liệu công trình
@@ -527,7 +541,7 @@ import {
         </Box>
   
         {/* Sử dụng component dialog tái sử dụng */}
-        <WorkStatusDialog 
+        <WorkStatusDialog
           open={openStatusDialog}
           onClose={handleCloseStatusDialog}
           status={newStatus}
