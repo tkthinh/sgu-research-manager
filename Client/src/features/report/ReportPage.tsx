@@ -13,17 +13,12 @@ import {
   Checkbox,
   FormControlLabel,
   CircularProgress,
-  Table,
-  TableContainer,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
   Alert,
   SelectChangeEvent,
   Chip,
   Tooltip,
 } from '@mui/material';
+import { GridColDef } from '@mui/x-data-grid';
 import { Work } from '../../lib/types/models/Work';
 import { getAcademicYears } from '../../lib/api/academicYearApi';
 import { ProofStatus } from '../../lib/types/enums/ProofStatus';
@@ -36,6 +31,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import HistoryIcon from '@mui/icons-material/History';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import GenericTable from '../../app/shared/components/tables/DataTable';
 
 interface FilterParams {
   academicYearId?: string;
@@ -122,12 +118,6 @@ const ReportPage: React.FC = () => {
     });
   };
 
-  // Format date for display
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  };
-
   // Get source text
   const getSourceText = (source: number) => {
     switch (source) {
@@ -180,6 +170,80 @@ const ReportPage: React.FC = () => {
         return null;
     }
   };
+
+  const columns: GridColDef[] = [
+    {
+      field: "stt",
+      headerName: "STT",
+      width: 70,
+      renderCell: (params) => {
+        const rowIds = params.api.getAllRowIds();
+        const index = rowIds.indexOf(params.id);
+        return <div>{index + 1}</div>;
+      },
+    },
+    {
+      field: "title",
+      headerName: "Tên công trình",
+      type: "string",
+      width: 250,
+    },
+    {
+      field: "workTypeName",
+      headerName: "Loại công trình",
+      type: "string",
+      width: 170,
+    },
+    {
+      field: "workLevelName",
+      headerName: "Cấp công trình",
+      type: "string",
+      width: 150,
+    },
+    {
+      field: "source",
+      headerName: "Nguồn",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        return <div>{getSourceText(params.value)}</div>;
+      },
+    },
+    {
+      field: "academicYearName",
+      headerName: "Năm học",
+      type: "string",
+      width: 150,
+    },
+    {
+      field: "proofStatus",
+      headerName: "Trạng thái xác minh",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        return author ? getProofStatusChip(author.proofStatus) : null;
+      },
+    },
+    {
+      field: "isRegistered",
+      headerName: "Trạng thái đăng ký",
+      type: "string",
+      width: 150,
+      renderCell: (params: any) => {
+        const author = params.row.authors && params.row.authors[0];
+        const isRegistered = author?.authorRegistration != null;
+        
+        return (
+          <Chip
+            label={isRegistered ? "Đã đăng ký" : "Chưa đăng ký"}
+            color={isRegistered ? "success" : "default"}
+            size="small"
+          />
+        );
+      },
+    },
+  ];
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
@@ -315,34 +379,7 @@ const ReportPage: React.FC = () => {
             Không có công trình nào được tìm thấy. Vui lòng thay đổi bộ lọc hoặc thử lại.
           </Alert>
         ) : (
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>STT</TableCell>
-                  <TableCell>Công trình</TableCell>
-                  <TableCell>Loại công trình</TableCell>
-                  <TableCell>Năm học</TableCell>
-                  <TableCell>Trạng thái</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {works.map((work, index) => (
-                  <TableRow key={work.id} hover>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{work.title}</TableCell>
-                    <TableCell>{work.workTypeName || 'N/A'}</TableCell>
-                    <TableCell>{work.academicYearName || 'N/A'}</TableCell>
-                    <TableCell>
-                      {work.authors?.map(author => 
-                        author.userId === user?.id ? getProofStatusChip(author.proofStatus) : null
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <GenericTable columns={columns} data={works} />
         )}
       </Paper>
     </Container>

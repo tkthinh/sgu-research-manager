@@ -425,7 +425,7 @@ export default function WorkRegisterPage() {
     {
       field: "actions",
       headerName: "Thao tác",
-      width: 200,
+      width: 250,
       renderCell: (params: any) => {
         const work = params.row;
         const author = work.authors?.find((a: any) => a.userId === user?.id);
