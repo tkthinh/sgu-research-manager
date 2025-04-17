@@ -328,25 +328,14 @@ namespace Application.Works
             if (work is null)
                 throw new Exception(ErrorMessages.WorkNotFound);
 
-            _logger.LogInformation("UpdateWorkByAuthorAsync - Received request for workId {WorkId}", workId);
-
             // Lấy coAuthorUserIds từ WorkRequest
             List<Guid> coAuthorUserIds = request.WorkRequest?.CoAuthorUserIds ?? new List<Guid>();
-
-            _logger.LogInformation("Found CoAuthorUserIds in WorkRequest: {Count} ids - {CoAuthorUserIds}",
-                coAuthorUserIds.Count,
-                string.Join(", ", coAuthorUserIds));
 
             await ValidateSystemStateAsync(work, userId, cancellationToken);
 
             if (request.WorkRequest is not null)
             {
                 await UpdateWorkDetailsByAuthor(work, request.WorkRequest);
-
-                // Luôn gọi UpdateCoAuthorsAsync để cập nhật đúng danh sách đồng tác giả
-                // Ngay cả khi danh sách rỗng, việc này cũng đảm bảo xóa các đồng tác giả cũ nếu người dùng muốn
-                _logger.LogInformation("Updating CoAuthors with list: {Count} userIds - {UserIds}",
-                    coAuthorUserIds.Count, string.Join(", ", coAuthorUserIds));
                 await UpdateCoAuthorsAsync(work, coAuthorUserIds, userId, cancellationToken);
             }
 
@@ -355,16 +344,10 @@ namespace Application.Works
             // Lưu các thay đổi vào database
             await SaveChangesAsync(work, author, cancellationToken);
 
-            _logger.LogInformation("Changes saved successfully for workId {WorkId}", workId);
-
             // Ánh xạ sang DTO và điền thông tin đồng tác giả
             var workDto = _mapper.MapToDto(work);
 
-            _logger.LogInformation("WorkDto mapped. Filling CoAuthorUserIds...");
             await FillCoAuthorUserIdsAsync(workDto, cancellationToken);
-
-            _logger.LogInformation("UpdateWorkByAuthorAsync complete. Returning CoAuthorUserIds: {CoAuthorUserIds}",
-                string.Join(", ", workDto.CoAuthorUserIds));
 
             return workDto;
         }
@@ -573,7 +556,7 @@ namespace Application.Works
             work.Source = WorkSource.NguoiDungKeKhai; // Luôn đặt nguồn là NguoiDungKeKhai
             work.WorkTypeId = workRequest.WorkTypeId ?? work.WorkTypeId;
             work.WorkLevelId = workRequest.WorkLevelId ?? work.WorkLevelId;
-            // Không cập nhật SystemConfigId khi tác giả cập nhật công trình
+
             work.ExchangeDeadline = work.TimePublished.HasValue ? work.TimePublished.Value.AddMonths(18) : null;
             work.ModifiedDate = DateTime.UtcNow;
         }
