@@ -105,7 +105,7 @@ export default function FactorForm({ open, handleClose, data }: FactorFormProps)
 
   useEffect(() => {
     if (data) {
-      setValue("name", data.name);
+      setValue("name", data.name || "");
       setValue("workTypeId", data.workTypeId);
       setValue("workLevelId", data.workLevelId);
       setValue("purposeId", data.purposeId);

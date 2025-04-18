@@ -75,7 +75,6 @@ export default function AssignmentPage() {
   );
 
   const handleOpenForm = (manager: ManagerRow) => {
-    console.log(manager);
     setSelectedManager(manager);
     setOpenForm(true);
   };

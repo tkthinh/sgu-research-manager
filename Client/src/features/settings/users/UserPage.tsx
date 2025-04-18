@@ -54,7 +54,6 @@ export default function UserPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   const handleOpen = (user: User) => {
-    console.log(user);
     setSelectedUser(user);
     setOpen(true);
   };

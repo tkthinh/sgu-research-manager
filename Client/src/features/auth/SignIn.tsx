@@ -79,7 +79,7 @@ export default function SignIn() {
     shouldUnregister: true,
   });
 
-  const { setUser, refreshUserInfo } = useAuth();
+  const { refreshUserInfo } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

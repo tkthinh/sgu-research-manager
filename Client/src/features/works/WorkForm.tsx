@@ -638,7 +638,7 @@ export default function WorkForm({
               <Controller
                 name="coAuthorUserIds"
                 control={control}
-                render={({ field }) => (
+                render={() => (
                   <Autocomplete
                     multiple
                     id="coAuthorUserIds"

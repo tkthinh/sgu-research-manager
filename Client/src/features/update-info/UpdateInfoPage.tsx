@@ -58,7 +58,6 @@ export default function UpdateInfoPage() {
   const { setUser, refreshUserInfo } = useAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [fields, setFields] = useState<Field[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const {
     control,
@@ -116,7 +115,6 @@ export default function UpdateInfoPage() {
             : userData.data.specialization,
       });
     }
-    console.log("userData", userData);
   }, [userData, reset]);
 
   // Load departments and fields
@@ -162,7 +160,7 @@ export default function UpdateInfoPage() {
     }
   };
 
-  if (!userInfo || isUserLoading || loading) return <CircularProgress />;
+  if (!userInfo || isUserLoading ) return <CircularProgress />;
 
   return (
     <>

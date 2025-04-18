@@ -30,7 +30,7 @@ export default function App() {
   const [showTimeoutDialog, setShowTimeoutDialog] = useState(false);
   const [showProfileUpdateDialog, setShowProfileUpdateDialog] = useState(false);
 
-  const { user, loading, refreshUserInfo } = useAuth();
+  const { user, loading } = useAuth();
 
   const userRole = user?.role;
 

@@ -6,12 +6,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
-  Typography,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
+  Paper,
+  Select,
+  Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,9 +24,8 @@ import {
   getFactorsByWorkTypeId,
 } from "../../../lib/api/factorsApi";
 import { getWorkTypes } from "../../../lib/api/workTypesApi";
+import { getScoreLevelText } from "../../../lib/utils/scoreLevelUtils";
 import FactorForm from "./FactorForm";
-import { ScoreLevel } from "../../../lib/types/enums/ScoreLevel";
-import { getScoreLevelText } from '../../../lib/utils/scoreLevelUtils';
 
 export default function FactorPage() {
   const queryClient = useQueryClient();
@@ -39,17 +38,12 @@ export default function FactorPage() {
   });
 
   // Fetch factors with optional workTypeId filter
-  const {
-    data,
-    error,
-    isPending,
-    isSuccess,
-    dataUpdatedAt,
-  } = useQuery({
+  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
     queryKey: ["factors", selectedWorkTypeId],
-    queryFn: () => selectedWorkTypeId 
-      ? getFactorsByWorkTypeId(selectedWorkTypeId)
-      : getFactors(),
+    queryFn: () =>
+      selectedWorkTypeId
+        ? getFactorsByWorkTypeId(selectedWorkTypeId)
+        : getFactors(),
   });
 
   // Toast notifications
@@ -124,22 +118,51 @@ export default function FactorPage() {
       headerName: "STT",
       width: 70,
       renderCell: (params) => {
-        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(id => id === params.row.id);
+        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(
+          (id) => id === params.row.id,
+        );
         return <div>{rowIndex + 1}</div>;
       },
     },
-    { field: "workTypeName", headerName: "Loại công trình", type: "string", width: 180 },
-    { field: "workLevelName", headerName: "Cấp công trình", type: "string", width: 150 },
-    { field: "purposeName", headerName: "Mục đích quy đổi", type: "string", width: 150 },
-    { field: "name", headerName: "Tên hệ số", type: "string", width: 200 },
-    { 
-      field: "scoreLevel", 
-      headerName: "Mức điểm", 
-      width: 160,
-      renderCell: (params) => <div>{getScoreLevelText(params.row.scoreLevel)}</div>, 
+    {
+      field: "workTypeName",
+      headerName: "Loại công trình",
+      type: "string",
+      width: 180,
     },
-    { field: "convertHour", headerName: "Giờ quy đổi", type: "number", width: 120 },
-    { field: "maxAllowed", headerName: "Giới hạn đánh dấu", type: "number", width: 150 },
+    {
+      field: "workLevelName",
+      headerName: "Cấp công trình",
+      type: "string",
+      width: 150,
+    },
+    {
+      field: "purposeName",
+      headerName: "Mục đích quy đổi",
+      type: "string",
+      width: 150,
+    },
+    { field: "name", headerName: "Tên hệ số", type: "string", width: 200 },
+    {
+      field: "scoreLevel",
+      headerName: "Mức điểm",
+      width: 160,
+      renderCell: (params) => (
+        <div>{getScoreLevelText(params.row.scoreLevel)}</div>
+      ),
+    },
+    {
+      field: "convertHour",
+      headerName: "Giờ quy đổi",
+      type: "number",
+      width: 120,
+    },
+    {
+      field: "maxAllowed",
+      headerName: "Giới hạn đánh dấu",
+      type: "number",
+      width: 150,
+    },
     {
       field: "actions",
       headerName: "Thao tác",
@@ -182,10 +205,12 @@ export default function FactorPage() {
         sx={{ marginBottom: 2 }}
       >
         <Typography variant="h4">Quản lý hệ số quy đổi</Typography>
-        
+
         <Box display="flex" alignItems="center" gap={2}>
           <FormControl sx={{ minWidth: 220 }}>
-            <InputLabel id="work-type-filter-label">Lọc theo loại công trình</InputLabel>
+            <InputLabel id="work-type-filter-label">
+              Lọc theo loại công trình
+            </InputLabel>
             <Select
               labelId="work-type-filter-label"
               id="work-type-filter"
@@ -201,22 +226,18 @@ export default function FactorPage() {
               ))}
             </Select>
           </FormControl>
-          
+
           <Button variant="contained" onClick={() => handleOpen(null)}>
             Thêm hệ số quy đổi
           </Button>
         </Box>
       </Box>
-      
+
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
-      
-      <FactorForm
-        open={open}
-        handleClose={handleClose}
-        data={selectedData}
-      />
+
+      <FactorForm open={open} handleClose={handleClose} data={selectedData} />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
@@ -243,4 +264,4 @@ export default function FactorPage() {
       </Dialog>
     </>
   );
-} 
+}

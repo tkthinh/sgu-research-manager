@@ -14,6 +14,7 @@ import {
   Select,
   MenuItem,
   Grid,
+  SelectChangeEvent,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -259,7 +260,7 @@ export default function WorksPage() {
   };
 
   // Xử lý thay đổi năm học
-  const handleAcademicYearChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleAcademicYearChange = (event: SelectChangeEvent<string>) => {
     setTempAcademicYearId(event.target.value as string);
   };
 

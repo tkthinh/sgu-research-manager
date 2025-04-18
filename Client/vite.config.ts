@@ -1,12 +1,18 @@
 import react from "@vitejs/plugin-react-swc";
 import dotenv from "dotenv";
+import legacy from '@vitejs/plugin-legacy';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from "vite";
 
 // Load environment variables from .env files
 dotenv.config();
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    visualizer({ filename: 'dist/stats.html', open: false }),
+    legacy({ targets: ['defaults', 'not IE 11'] }),
+  ],
   server: {
     proxy: {
       "/api": {
@@ -16,4 +22,15 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    sourcemap: false,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) return 'vendor';
+        },
+      },
+    },
+  }
 });

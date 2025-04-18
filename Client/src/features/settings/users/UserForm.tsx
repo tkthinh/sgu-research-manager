@@ -113,7 +113,6 @@ export default function UserForm({ open, handleClose, data }: UserFormProps) {
   const mutation = useMutation({
     mutationFn: async (formData: Partial<User>) => {
       if (data?.id) {
-        console.log("Updating user with data:", formData);
         return adminUpdateUser(data.id, formData);
       }
     },

@@ -42,8 +42,7 @@ export default function ScimagoFieldPage() {
     error,
     isPending,
     isSuccess,
-    dataUpdatedAt,
-    refetch,
+    dataUpdatedAt
   } = useQuery({
     queryKey: ["scimagoFields", selectedWorkTypeId],
     queryFn: () => selectedWorkTypeId 

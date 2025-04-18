@@ -152,7 +152,7 @@ const SignUp: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleStepOneSubmit: SubmitHandler<StepOneFormValues> = (data) => {
+  const handleStepOneSubmit: SubmitHandler<StepOneFormValues> = () => {
     setStep(2);
   };
 
