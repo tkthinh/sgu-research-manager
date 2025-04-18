@@ -221,11 +221,10 @@ namespace Application.Works
                     var work = works.FirstOrDefault(w => w.Id == workDto.Id);
                     if (work == null) continue;
                     
-                    // Nếu người dùng là tác giả, chỉ hiển thị thông tin tác giả của họ
-                    var userAuthor = work.Authors?.FirstOrDefault(a => a.UserId == filter.UserId);
-                    if (userAuthor != null)
+                    // Trả về tất cả thông tin tác giả
+                    if (work.Authors != null)
                     {
-                        workDto.Authors = new List<AuthorDto> { _authorMapper.MapToDto(userAuthor) };
+                        workDto.Authors = work.Authors.Select(a => _authorMapper.MapToDto(a)).ToList();
                     }
                 }
                 

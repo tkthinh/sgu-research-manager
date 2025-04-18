@@ -34,7 +34,6 @@ namespace Application.Authors
                     AcademicYearId = entity.AuthorRegistration.AcademicYearId,
                     AuthorId = entity.AuthorRegistration.AuthorId,
                     AcademicYearName = entity.AuthorRegistration.AcademicYear?.Name,
-                    AuthorName = entity.AuthorRegistration.Author?.User?.FullName ?? "-"
                 } : null
             };
         }
