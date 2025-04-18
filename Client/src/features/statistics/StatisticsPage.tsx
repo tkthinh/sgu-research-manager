@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
   Container,
   Typography,
   Button,
@@ -16,7 +15,6 @@ import {
   Alert,
   SelectChangeEvent,
   Chip,
-  Tooltip,
   Divider,
   Stack,
 } from '@mui/material';
@@ -164,45 +162,45 @@ const StatisticsPage: React.FC = () => {
   };
 
   // Get proof status chip
-  const getProofStatusChip = (status: number) => {
-    switch (status) {
-      case ProofStatus.HopLe:
-        return (
-          <Tooltip title="Hợp lệ">
-            <Chip
-              icon={<CheckCircleIcon />}
-              label="Hợp lệ"
-              color="success"
-              size="small"
-            />
-          </Tooltip>
-        );
-      case ProofStatus.KhongHopLe:
-        return (
-          <Tooltip title="Không hợp lệ">
-            <Chip
-              icon={<CancelIcon />}
-              label="Không hợp lệ"
-              color="error"
-              size="small"
-            />
-          </Tooltip>
-        );
-      case ProofStatus.ChuaXuLy:
-        return (
-          <Tooltip title="Chưa xử lý">
-            <Chip
-              icon={<HistoryIcon />}
-              label="Chưa xử lý"
-              color="warning"
-              size="small"
-            />
-          </Tooltip>
-        );
-      default:
-        return null;
-    }
-  };
+  // const getProofStatusChip = (status: number) => {
+  //   switch (status) {
+  //     case ProofStatus.HopLe:
+  //       return (
+  //         <Tooltip title="Hợp lệ">
+  //           <Chip
+  //             icon={<CheckCircleIcon />}
+  //             label="Hợp lệ"
+  //             color="success"
+  //             size="small"
+  //           />
+  //         </Tooltip>
+  //       );
+  //     case ProofStatus.KhongHopLe:
+  //       return (
+  //         <Tooltip title="Không hợp lệ">
+  //           <Chip
+  //             icon={<CancelIcon />}
+  //             label="Không hợp lệ"
+  //             color="error"
+  //             size="small"
+  //           />
+  //         </Tooltip>
+  //       );
+  //     case ProofStatus.ChuaXuLy:
+  //       return (
+  //         <Tooltip title="Chưa xử lý">
+  //           <Chip
+  //             icon={<HistoryIcon />}
+  //             label="Chưa xử lý"
+  //             color="warning"
+  //             size="small"
+  //           />
+  //         </Tooltip>
+  //       );
+  //     default:
+  //       return null;
+  //   }
+  // };
 
   const columns: GridColDef[] = [
     {

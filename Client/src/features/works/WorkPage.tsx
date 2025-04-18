@@ -9,12 +9,6 @@ import {
   Typography,
   Tooltip,
   Container,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  SelectChangeEvent,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -173,92 +167,6 @@ export default function WorksPage() {
         // Lỗi đã được xử lý trong onError của mutation
       }
     }
-  };
-
-  // Thêm mutation cho việc xuất Excel
-  const exportMutation = useMutation({
-    mutationFn: exportWorks,
-    onSuccess: (data) => {
-      // Tạo URL từ Blob
-      const url = window.URL.createObjectURL(data);
-      
-      // Tạo thẻ a ẩn để tải file
-      const link = document.createElement('a');
-      link.href = url;
-      
-      // Tạo tên file với timestamp
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      link.download = `KeKhaiCongTrinh_${timestamp}.xlsx`;
-      
-      // Thêm link vào document, click và xóa
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Giải phóng URL
-      window.URL.revokeObjectURL(url);
-      
-      toast.success("Xuất Excel thành công!");
-    },
-    onError: (error: any) => {
-      console.error("Lỗi khi xuất Excel:", error);
-      let errorMessage = "Đã có lỗi xảy ra";
-      
-      if (error.message === "Bạn chưa đăng nhập") {
-        errorMessage = "Vui lòng đăng nhập lại để tiếp tục";
-      } else if (error.response?.data?.message) {
-        // Nếu có message từ API
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        // Nếu có message từ axios
-        errorMessage = error.message;
-      }
-      
-      toast.error(`Lỗi khi xuất Excel: ${errorMessage}`);
-    },
-  });
-
-  // Hàm xử lý sự kiện xuất Excel
-  const handleExport = async () => {
-    try {
-      console.log("Bắt đầu xuất Excel");
-      await exportMutation.mutateAsync();
-    } catch (error) {
-      // Lỗi đã được xử lý trong onError của mutation
-      console.error("Lỗi khi xuất Excel:", error);
-    }
-  };
-
-  // Mở dialog bộ lọc
-  const handleOpenFilterDialog = () => {
-    setTempAcademicYearId(academicYearId);
-    setFilterDialogOpen(true);
-  };
-
-  // Đóng dialog bộ lọc
-  const handleCloseFilterDialog = () => {
-    setTempAcademicYearId(academicYearId);
-    setFilterDialogOpen(false);
-  };
-
-  // Xử lý thay đổi năm học
-  const handleAcademicYearChange = (event: SelectChangeEvent<string>) => {
-    setTempAcademicYearId(event.target.value as string);
-  };
-
-  // Áp dụng bộ lọc
-  const handleApplyFilter = () => {
-    setAcademicYearId(tempAcademicYearId);
-    handleCloseFilterDialog();
-    refetch();
-  };
-
-  // Reset bộ lọc
-  const handleResetFilter = () => {
-    setAcademicYearId("");
-    setTempAcademicYearId("");
-    handleCloseFilterDialog();
-    refetch();
   };
 
   const columns: GridColDef[] = [

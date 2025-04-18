@@ -3,7 +3,6 @@ import { getSystemConfig } from '../lib/api/systemConfigApi';
 import { SystemConfig } from '../lib/types/models/SystemConfig';
 import { ApiResponse } from '../lib/types/common/ApiResponse';
 import { DateTime } from "luxon";
-import { ProofStatus } from '../lib/types/enums/ProofStatus';
 import { useMemo } from 'react';
 
 export function useSystemStatus() {
@@ -25,7 +24,7 @@ export function useSystemStatus() {
     return now >= openDateTime && now <= closeDateTime;
   }, [systemConfig]);
 
-  const canEditWork = (proofStatus: number | undefined, isLocked: boolean, hasOtherValidAuthors: boolean = false) => {
+  const canEditWork = (proofStatus: number | undefined, isLocked: boolean) => {
     // Nếu công trình đã bị khóa (có tác giả đã được chấm hợp lệ)
     if (isLocked) {
       // Nếu tác giả hiện tại đã được chấm hợp lệ thì không được sửa/xóa
