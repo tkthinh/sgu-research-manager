@@ -33,6 +33,7 @@ import UpdateInfoPage from "../../features/update-info/UpdateInfoPage";
 import WorkScorePage from "../../features/work-scores/WorkScorePage";
 import CachePage from "../../features/settings/caches/CachePage";
 import ReportPage from "../../features/report/ReportPage";
+import StatisticsPage from '../../features/statistics/StatisticsPage';
 
 export const router = createBrowserRouter([
   {
@@ -110,6 +111,14 @@ export const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute allowedRoles={["User", "Manager"]}>
                     <ReportPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: "/thong-ke",
+                element: (
+                  <ProtectedRoute allowedRoles={["Admin", "Manager"]}>
+                    <StatisticsPage />
                   </ProtectedRoute>
                 ),
               },

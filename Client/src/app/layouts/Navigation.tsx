@@ -8,6 +8,7 @@ import ManageHistoryIcon from '@mui/icons-material/ManageHistory';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import LibraryAddCheckIcon from '@mui/icons-material/LibraryAddCheck';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 // Navigation for "User" role
 export const NAVIGATION_USER: Navigation = [
@@ -70,6 +71,11 @@ export const NAVIGATION_MANAGER: Navigation = [
     icon: <LeaderboardIcon />,
   },
   {
+    segment: "thong-ke",
+    title: "Thống kê",
+    icon: <AssessmentIcon />,
+  },
+  {
     kind: "header",
     title: "Hệ thống",
   },
@@ -110,9 +116,9 @@ export const NAVIGATION_ADMIN: Navigation = [
     title: "Báo cáo",
   },
   {
-    segment: "bao-cao",
-    title: "Báo cáo",
-    icon: <LeaderboardIcon />,
+    segment: "thong-ke",
+    title: "Thống kê",
+    icon: <AssessmentIcon />,
   },
   {
     kind: "header",
