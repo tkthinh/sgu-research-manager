@@ -30,6 +30,11 @@ namespace Application.Authors
                 .Include(a => a.Purpose)
                 .Include(a => a.SCImagoField)
                 .Include(a => a.Field)
+                .Include(a => a.AuthorRegistration)
+                    .ThenInclude(ar => ar.AcademicYear)
+                .Include(a => a.AuthorRegistration)
+                    .ThenInclude(ar => ar.Author)
+                        .ThenInclude(a => a.User)
                 .Where(a => a.UserId == userId &&
                     a.Work != null &&
                     a.Work.ExchangeDeadline.HasValue &&

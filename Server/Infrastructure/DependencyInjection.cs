@@ -125,6 +125,10 @@ namespace Infrastructure
             services.AddScoped<IFactorService, FactorService>();
             services.AddScoped<IAuthorService, AuthorService>();
             services.AddScoped<IWorkService, WorkService>();
+            services.AddScoped<IWorkQueryService, WorkQueryService>();
+            services.AddScoped<IWorkExportService, WorkExportService>();
+            services.AddScoped<IWorkImportService, WorkImportService>();
+            services.AddScoped<IWorkCalculateService, WorkCalculateService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<ISCImagoFieldService, SCImagoFieldService>();

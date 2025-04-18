@@ -21,64 +21,52 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../app/shared/components/tables/DataTable";
-import { deleteWork, getMyWorks, getCurrentUserWorksByAcademicYearId } from "../../lib/api/worksApi";
+import { deleteWork, getWorksWithFilter } from "../../lib/api/worksApi";
 import { formatMonthYear } from "../../lib/utils/dateUtils";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import HistoryIcon from "@mui/icons-material/History";
 import AddIcon from "@mui/icons-material/Add";
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { getUserById } from "../../lib/api/usersApi";
 import { User } from "../../lib/types/models/User";
 import { useWorkFormData } from "../../hooks/useWorkData";
 import { useWorkDialogs } from "../../hooks/useWorkDialogs";
 import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDialog";
 import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
-import { exportWorks } from "../../lib/api/excelApi";
 import { useAuth } from "../../app/shared/contexts/AuthContext";
 import { useSystemStatus } from '../../hooks/useSystemStatus';
-import { getAcademicYears } from "../../lib/api/academicYearApi";
-import FilterListIcon from '@mui/icons-material/FilterList';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { getCurrentAcademicYear } from "../../lib/api/academicYearApi";
 
 export default function WorksPage() {
   const queryClient = useQueryClient();
   const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
   const { user } = useAuth();
-  const { isSystemOpen, canEditWork } = useSystemStatus();
+  const { isSystemOpen, canEditWork, canDeleteWork } = useSystemStatus();
 
-  // State cho bộ lọc
-  const [academicYearId, setAcademicYearId] = useState<string>("");
-  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
-  
-  // Thêm state mới để theo dõi tùy chọn đã chọn trước khi áp dụng
-  const [tempAcademicYearId, setTempAcademicYearId] = useState<string>("");
-
-  // Fetch danh sách năm học cho bộ lọc
-  const { data: academicYearsData } = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: getAcademicYears,
+  // Fetch năm học hiện tại
+  const { data: currentAcademicYear } = useQuery({
+    queryKey: ["current-academic-year"],
+    queryFn: getCurrentAcademicYear,
   });
 
-  // Fetch works dựa vào filter
+  // Fetch works dựa vào filter mặc định
   const { 
     data: worksData, 
     error: worksError, 
     isPending: isLoadingWorks, 
     refetch 
   } = useQuery({
-    queryKey: ["works", "my-works", academicYearId],
+    queryKey: ["works", "my-works"],
     queryFn: async () => {
-      if (!academicYearId) {
-        // Mặc định: Lấy tất cả công trình của user hiện tại
-        return getMyWorks();
-      } else {
-        // Lọc theo năm học
-        return getCurrentUserWorksByAcademicYearId(academicYearId);
-      }
+      const filter = {
+        academicYearId: currentAcademicYear?.data?.id,
+        isCurrentUser: true
+      };
+      return getWorksWithFilter(filter);
     },
-    staleTime: 0, // Luôn refetch khi cần
+    enabled: !!currentAcademicYear?.data?.id,
+    staleTime: 0,
   });
 
   // Sử dụng hook để lấy dữ liệu form
@@ -99,7 +87,7 @@ export default function WorksPage() {
     userId: user?.id ?? "",
     worksData,
     refetchWorks: refetch,
-    isAuthorPage: true, // Đặt là true vì đây là trang của tác giả
+    isAuthorPage: true,
   });
 
   // Lấy thông tin đồng tác giả khi có dữ liệu công trình
@@ -112,7 +100,6 @@ export default function WorksPage() {
           if (work.coAuthorUserIds && work.coAuthorUserIds.length > 0) {
             const coAuthors: User[] = [];
             
-            // Lấy thông tin từng đồng tác giả
             for (const userId of work.coAuthorUserIds) {
               try {
                 const response = await getUserById(userId);
@@ -167,15 +154,10 @@ export default function WorksPage() {
     mutationFn: (id: string) => deleteWork(id),
     onSuccess: () => {
       toast.success("Xóa công trình thành công!");
-      
-      // Xóa cache và refetch dữ liệu mới
       queryClient.invalidateQueries({ queryKey: ["works", "my-works"] });
-      
-      // Bắt buộc refetch dữ liệu ngay lập tức
       setTimeout(() => {
         refetch();
       }, 100);
-      
       setDeleteDialogOpen(false);
     },
     onError: (error: Error) => {
@@ -410,8 +392,9 @@ export default function WorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.authorRoleName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.authorRoleName : "-"}</div>;
       },
     },
     {
@@ -420,8 +403,9 @@ export default function WorksPage() {
       type: "string",
       width: 80,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.position !== undefined && author?.position !== null ? author.position : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor?.position !== undefined && currentAuthor?.position !== null ? currentAuthor.position : "-"}</div>;
       },
     },
     {
@@ -430,8 +414,9 @@ export default function WorksPage() {
       type: "string",
       width: 180,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.purposeName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.purposeName : "-"}</div>;
       },
     },
     {
@@ -440,8 +425,9 @@ export default function WorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.fieldName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.fieldName : "-"}</div>;
       },
     },
     {
@@ -450,8 +436,9 @@ export default function WorksPage() {
       type: "string",
       width: 180,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.scImagoFieldName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.scImagoFieldName : "-"}</div>;
       },
     },
     {
@@ -460,11 +447,12 @@ export default function WorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        if (!currentAuthor || currentAuthor.scoreLevel === undefined || currentAuthor.scoreLevel === null) {
           return <div>-</div>;
         }
-        return <div>{getScoreLevelText(author.scoreLevel)}</div>;
+        return <div>{getScoreLevelText(currentAuthor.scoreLevel)}</div>;
       },
     },
     {
@@ -473,8 +461,9 @@ export default function WorksPage() {
       type: "string",
       width: 120,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.workHour !== undefined && author?.workHour !== null ? author.workHour : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor?.workHour !== undefined && currentAuthor?.workHour !== null ? currentAuthor.workHour : "-"}</div>;
       },
     },
     {
@@ -483,8 +472,9 @@ export default function WorksPage() {
       type: "string",
       width: 120,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor?.authorHour !== undefined && currentAuthor?.authorHour !== null ? currentAuthor.authorHour : "-"}</div>;
       },
     },
     {
@@ -493,10 +483,10 @@ export default function WorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        const noteText = author?.note || "";
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const noteText = currentAuthor?.note || "";
     
-        // Nếu không có ghi chú, hiển thị "-"
         if (!noteText) {
           return <div>-</div>;
         }
@@ -528,15 +518,14 @@ export default function WorksPage() {
       type: "string",
       width: 140,
       renderCell: (params: any) => {
-        // Lấy proofStatus từ author đầu tiên
-        const author = params.row.authors && params.row.authors[0];
-        const proofStatus = author ? author.proofStatus : undefined;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const proofStatus = currentAuthor?.proofStatus;
                 
         if (proofStatus === undefined || proofStatus === null) {
           return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
         }
         
-        // Kiểm tra giá trị và áp dụng trạng thái tương ứng
         if (proofStatus === ProofStatus.HopLe) {
           return (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -569,9 +558,71 @@ export default function WorksPage() {
       width: 200,
       renderCell: (params: any) => {
         const work = params.row;
-        const author = work.authors && work.authors[0];
-        const proofStatus = author?.proofStatus;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const proofStatus = currentAuthor?.proofStatus;
+        const isLocked = work.isLocked;
+        
+        // Kiểm tra xem có tác giả khác đã được chấm hợp lệ không
+        const hasOtherValidAuthors = work.authors?.some(
+          author => author.userId !== user?.id && author.proofStatus === 0
+        );
 
+        // Nếu công trình đã bị khóa và tác giả hiện tại đã được chấm hợp lệ
+        if (isLocked && proofStatus === 0) {
+          return (
+            <Box>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={() => handleOpenUpdateDialog(work)}
+                disabled={true}
+                sx={{ mr: 1 }}
+              >
+                Sửa
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => handleDeleteClick(work.id)}
+                disabled={true}
+              >
+                Xóa
+              </Button>
+            </Box>
+          );
+        }
+
+        // Nếu công trình đã bị khóa và tác giả hiện tại chưa được chấm hoặc không hợp lệ
+        if (isLocked) {
+          return (
+            <Box>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={() => handleOpenUpdateDialog(work)}
+                disabled={false}
+                sx={{ mr: 1 }}
+              >
+                Sửa
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => handleDeleteClick(work.id)}
+                disabled={!canDeleteWork(proofStatus, isLocked, hasOtherValidAuthors)}
+              >
+                Xóa
+              </Button>
+            </Box>
+          );
+        }
+
+        // Nếu công trình chưa bị khóa
+        const canEdit = canEditWork(proofStatus, isLocked);
         return (
           <Box>
             <Button
@@ -579,14 +630,8 @@ export default function WorksPage() {
               color="primary"
               size="small"
               onClick={() => handleOpenUpdateDialog(work)}
-              disabled={!canEditWork(proofStatus)}
-              sx={{ 
-                marginRight: 1,
-                '&.Mui-disabled': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
-                  color: 'rgba(0, 0, 0, 0.26)'
-                }
-              }}
+              disabled={!canEdit}
+              sx={{ mr: 1 }}
             >
               Sửa
             </Button>
@@ -595,13 +640,7 @@ export default function WorksPage() {
               color="error"
               size="small"
               onClick={() => handleDeleteClick(work.id)}
-              disabled={!canEditWork(proofStatus)}
-              sx={{
-                '&.Mui-disabled': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
-                  color: 'rgba(0, 0, 0, 0.26)'
-                }
-              }}
+              disabled={!canDeleteWork(proofStatus, isLocked, hasOtherValidAuthors)}
             >
               Xóa
             </Button>
@@ -614,59 +653,15 @@ export default function WorksPage() {
   if (isLoadingWorks) return <CircularProgress />;
   if (worksError) return <p>Lỗi: {(worksError as Error).message}</p>;
 
-  // Tạo thông tin bộ lọc hiện tại để hiển thị
-  const getFilterInfo = () => {
-    if (!academicYearId) {
-      return null;
-    }
-    
-    const selectedYear = academicYearsData?.data?.find(year => year.id === academicYearId);
-    const filterInfo = `Năm học: ${selectedYear?.name || academicYearId}`;
-    
-    return (
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <Typography variant="body1">
-          <strong>Bộ lọc hiện tại:</strong> {filterInfo}
-        </Typography>
-        <Button 
-          size="small" 
-          color="error" 
-          sx={{ ml: 2 }}
-          onClick={handleResetFilter}
-          startIcon={<RestartAltIcon />}
-        >
-          Xóa bộ lọc
-        </Button>
-      </Box>
-    );
-  };
-
   return (
     <Container maxWidth="xl">
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
         <Typography variant="h6">Danh sách công trình</Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button 
-            variant="outlined" 
-            color="primary" 
-            onClick={handleOpenFilterDialog}
-            startIcon={<FilterListIcon />}
-          >
-            Lọc
-          </Button>
-          <Button 
             variant="contained" 
             color="primary" 
-            onClick={handleExport}
-            startIcon={<FileDownloadIcon />}
-            disabled={exportMutation.isPending}
-          >
-            {exportMutation.isPending ? <CircularProgress size={24} /> : "Xuất Excel"}
-          </Button>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={() => handleOpenUpdateDialog(undefined as any)} 
+            onClick={() => handleOpenUpdateDialog(undefined)} 
             startIcon={<AddIcon />}
             disabled={!isSystemOpen}
           >
@@ -674,8 +669,6 @@ export default function WorksPage() {
           </Button>
         </Box>
       </Box>
-
-      {getFilterInfo()}
 
       {isLoadingWorks ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -701,55 +694,6 @@ export default function WorksPage() {
         scimagoFields={formData.scimagoFields}
         fields={formData.fields}
       />
-
-      {/* Dialog bộ lọc */}
-      <Dialog open={filterDialogOpen} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Lọc công trình</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel id="academic-year-label">Năm học</InputLabel>
-                <Select
-                  labelId="academic-year-label"
-                  value={tempAcademicYearId}
-                  onChange={handleAcademicYearChange}
-                  label="Năm học"
-                >
-                  <MenuItem value="">
-                    <em>-- Chọn năm học --</em>
-                  </MenuItem>
-                  {academicYearsData?.data?.map((year) => (
-                    <MenuItem key={year.id} value={year.id}>
-                      {year.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseFilterDialog} color="inherit">
-            Hủy
-          </Button>
-          <Button 
-            onClick={handleResetFilter} 
-            color="error"
-            startIcon={<RestartAltIcon />}
-          >
-            Xóa bộ lọc
-          </Button>
-          <Button 
-            onClick={handleApplyFilter} 
-            color="primary" 
-            variant="contained"
-            startIcon={<FilterListIcon />}
-          >
-            Áp dụng
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>

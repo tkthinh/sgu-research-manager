@@ -15,7 +15,7 @@ import {
   import { useNavigate, useParams } from "react-router-dom";
   import GenericTable from "../../app/shared/components/tables/DataTable";
   import { getUserById } from "../../lib/api/usersApi";
-  import { getWorksByUserId } from "../../lib/api/worksApi";
+  import { getWorksWithFilter } from "../../lib/api/worksApi";
   import { ProofStatus } from "../../lib/types/enums/ProofStatus";
   import { User } from "../../lib/types/models/User";
   import EditIcon from "@mui/icons-material/Edit";
@@ -31,6 +31,7 @@ import {
   import WorkNoteDialog from "../../app/shared/components/dialogs/WorkNoteDialog";
   import WorkUpdateDialog from "../../app/shared/components/dialogs/WorkUpdateDialog";
   import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
+  import { getCurrentAcademicYear } from "../../lib/api/academicYearApi";
   
   export default function WorkScoreDetailPage() {
     const { userId } = useParams<{ userId: string }>();
@@ -39,6 +40,12 @@ import {
   
     // Sử dụng hook để lấy dữ liệu form
     const formData = useWorkFormData();
+
+    // Fetch năm học hiện tại
+    const { data: currentAcademicYear } = useQuery({
+      queryKey: ["current-academic-year"],
+      queryFn: getCurrentAcademicYear,
+    });
   
     // Fetch user information
     const {
@@ -59,8 +66,15 @@ import {
       refetch: refetchWorks,
     } = useQuery({
       queryKey: ["works", "user", userId],
-      queryFn: () => getWorksByUserId(userId || ""),
-      enabled: !!userId,
+      queryFn: async () => {
+        const filter = {
+          userId: userId,
+          academicYearId: currentAcademicYear?.data?.id,
+          isCurrentUser: false
+        };
+        return getWorksWithFilter(filter);
+      },
+      enabled: !!userId && !!currentAcademicYear?.data?.id,
     });
   
     // Lấy thông tin đồng tác giả khi có dữ liệu công trình
@@ -266,8 +280,9 @@ import {
         type: "string",
         width: 150,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          return <div>{author ? author.authorRoleName : "-"}</div>;
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          return <div>{currentAuthor ? currentAuthor.authorRoleName : "-"}</div>;
         },
       },
       {
@@ -276,8 +291,9 @@ import {
         type: "string",
         width: 80,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          return <div>{author?.position !== undefined && author?.position !== null ? author.position : "-"}</div>;
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          return <div>{currentAuthor?.position !== undefined && currentAuthor?.position !== null ? currentAuthor.position : "-"}</div>;
         },
       },
       {
@@ -286,8 +302,9 @@ import {
         type: "string",
         width: 180,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          return <div>{author ? author.purposeName : "-"}</div>;
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          return <div>{currentAuthor ? currentAuthor.purposeName : "-"}</div>;
         },
       },
       {
@@ -296,8 +313,9 @@ import {
         type: "string",
         width: 150,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          return <div>{author ? author.fieldName : "-"}</div>;
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          return <div>{currentAuthor ? currentAuthor.fieldName : "-"}</div>;
         },
       },
       {
@@ -306,8 +324,9 @@ import {
         type: "string",
         width: 180,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          return <div>{author ? author.scImagoFieldName : "-"}</div>;
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          return <div>{currentAuthor ? currentAuthor.scImagoFieldName : "-"}</div>;
         },
       },
       {
@@ -316,11 +335,12 @@ import {
         type: "string",
         width: 120,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          if (!currentAuthor || currentAuthor.scoreLevel === undefined || currentAuthor.scoreLevel === null) {
             return <div>-</div>;
           }
-          return <div>{getScoreLevelText(author.scoreLevel)}</div>;
+          return <div>{getScoreLevelText(currentAuthor.scoreLevel)}</div>;
         },
       },
       {
@@ -329,8 +349,9 @@ import {
         type: "string",
         width: 120,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          return <div>{author?.workHour !== undefined && author?.workHour !== null ? author.workHour : "-"}</div>;
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          return <div>{currentAuthor?.workHour !== undefined && currentAuthor?.workHour !== null ? currentAuthor.workHour : "-"}</div>;
         },
       },
       {
@@ -339,8 +360,9 @@ import {
         type: "string",
         width: 120,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          return <div>{currentAuthor?.authorHour !== undefined && currentAuthor?.authorHour !== null ? currentAuthor.authorHour : "-"}</div>;
         },
       },
       {
@@ -349,10 +371,10 @@ import {
         type: "string",
         width: 150,
         renderCell: (params: any) => {
-          const author = params.row.authors && params.row.authors[0];
-          const noteText = author?.note || "";
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          const noteText = currentAuthor?.note || "";
       
-          // Nếu không có ghi chú, hiển thị "-"
           if (!noteText) {
             return <div>-</div>;
           }
@@ -384,15 +406,14 @@ import {
         type: "string",
         width: 140,
         renderCell: (params: any) => {
-          // Lấy proofStatus từ author đầu tiên
-          const author = params.row.authors && params.row.authors[0];
-          const proofStatus = author ? author.proofStatus : undefined;
+          const work = params.row;
+          const currentAuthor = work.authors?.find(author => author.userId === userId);
+          const proofStatus = currentAuthor?.proofStatus;
                   
           if (proofStatus === undefined || proofStatus === null) {
             return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
           }
           
-          // Kiểm tra giá trị và áp dụng trạng thái tương ứng
           if (proofStatus === ProofStatus.HopLe) {
             return (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -527,7 +548,7 @@ import {
         </Box>
   
         {/* Sử dụng component dialog tái sử dụng */}
-        <WorkStatusDialog 
+        <WorkStatusDialog
           open={openStatusDialog}
           onClose={handleCloseStatusDialog}
           status={newStatus}

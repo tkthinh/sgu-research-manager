@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Application.AuthorRegistrations;
+using Domain.Entities;
 using Domain.Interfaces;
 
 namespace Application.Authors
@@ -27,6 +28,13 @@ namespace Application.Authors
                 WorkHour = entity.WorkHour,
                 ProofStatus = entity.ProofStatus,
                 Note = entity.Note,
+                AuthorRegistration = entity.AuthorRegistration != null ? new AuthorRegistrationDto
+                {
+                    Id = entity.AuthorRegistration.Id,
+                    AcademicYearId = entity.AuthorRegistration.AcademicYearId,
+                    AuthorId = entity.AuthorRegistration.AuthorId,
+                    AcademicYearName = entity.AuthorRegistration.AcademicYear?.Name,
+                } : null
             };
         }
 

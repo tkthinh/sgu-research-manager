@@ -3,6 +3,8 @@ using Application.Works;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Application.Shared.Services;
+using Domain.Enums;
+using System;
 
 namespace WebApi.Controllers
 {
@@ -11,18 +13,21 @@ namespace WebApi.Controllers
     [ApiController]
     public class ExcelController : ControllerBase
     {
-        private readonly IWorkService _workService;
+        private readonly IWorkExportService _workExportService;
+        private readonly IWorkImportService _workImportService;
         private readonly ILogger<WorksController> _logger;
         private readonly ICurrentUserService _currentUserService;
 
         public ExcelController(
-            IWorkService workService, 
+            IWorkExportService workExportService, 
             ILogger<WorksController> logger,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IWorkImportService workImportService)
         {
-            _workService = workService;
+            _workExportService = workExportService;
             _logger = logger;
             _currentUserService = currentUserService;
+            _workImportService = workImportService;
         }
 
         [HttpPost("import")]
@@ -39,21 +44,20 @@ namespace WebApi.Controllers
                 return BadRequest("Chỉ chấp nhận file Excel (.xlsx hoặc .xls)");
             }
 
-            await _workService.ImportAsync(file);
+            await _workImportService.ImportAsync(file);
             return Ok("Import thành công");
         }
 
         [HttpGet("export-by-user")]
-        public async Task<IActionResult> ExportWorksByUser()
+        public async Task<IActionResult> ExportWorksByUser(
+            [FromQuery] string? academicYearId,
+            [FromQuery] int? proofStatus,
+            [FromQuery] int? source,
+            [FromQuery] bool? onlyRegisteredWorks,
+            [FromQuery] bool? onlyRegisterableWorks)
         {
             try
             {
-                // Log tất cả claims để debug
-                foreach (var claim in User.Claims)
-                {
-                    _logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);
-                }
-
                 // Lấy userId từ service
                 var (isSuccess, userId, _) = _currentUserService.GetCurrentUser();
                 if (!isSuccess)
@@ -64,8 +68,19 @@ namespace WebApi.Controllers
 
                 _logger.LogInformation("Bắt đầu xuất Excel cho userId: {UserId}", userId);
 
-                // Lấy dữ liệu export
-                var exportData = await _workService.GetExportExcelDataAsync(userId);
+                // Tạo filter từ các tham số
+                var filter = new WorkFilter
+                {
+                    UserId = userId,
+                    AcademicYearId = academicYearId != null ? Guid.Parse(academicYearId) : (Guid?)null,
+                    ProofStatus = proofStatus.HasValue ? (ProofStatus)proofStatus.Value : (ProofStatus?)null,
+                    Source = source.HasValue ? (WorkSource)source.Value : (WorkSource?)null,
+                    OnlyRegisteredWorks = onlyRegisteredWorks ?? false,
+                    OnlyRegisterableWorks = onlyRegisterableWorks ?? false
+                };
+
+                // Lấy dữ liệu export với filter
+                var exportData = await _workExportService.GetExportExcelDataAsync(filter);
 
                 // Kiểm tra exportData có dữ liệu không
                 if (exportData == null || !exportData.Any())
@@ -75,7 +90,7 @@ namespace WebApi.Controllers
                 }
 
                 // Tạo file Excel từ WorkService
-                var fileBytes = await _workService.ExportWorksByUserAsync(exportData);
+                var fileBytes = await _workExportService.ExportWorksByUserAsync(exportData);
 
                 // Kiểm tra fileBytes có dữ liệu không
                 if (fileBytes == null || fileBytes.Length == 0)
@@ -83,9 +98,6 @@ namespace WebApi.Controllers
                     _logger.LogError("File Excel không được tạo thành công cho user {UserId}", userId);
                     return BadRequest(new ApiResponse<object>(false, "Không thể tạo file Excel"));
                 }
-
-                // Log kích thước file để kiểm tra
-                _logger.LogInformation("File Excel được tạo thành công, kích thước: {FileSize} bytes", fileBytes.Length);
 
                 // Tạo tên file với timestamp để tránh trùng lặp
                 var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
