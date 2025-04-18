@@ -36,7 +36,7 @@ export default function WorksPage() {
   const queryClient = useQueryClient();
   const [coAuthorsMap, setCoAuthorsMap] = useState<Record<string, User[]>>({});
   const { user } = useAuth();
-  const { isSystemOpen, canEditWork } = useSystemStatus();
+  const { isSystemOpen, canEditWork, canDeleteWork } = useSystemStatus();
 
   // Fetch năm học hiện tại
   const { data: currentAcademicYear } = useQuery({
@@ -300,8 +300,9 @@ export default function WorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.authorRoleName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.authorRoleName : "-"}</div>;
       },
     },
     {
@@ -310,8 +311,9 @@ export default function WorksPage() {
       type: "string",
       width: 80,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.position !== undefined && author?.position !== null ? author.position : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor?.position !== undefined && currentAuthor?.position !== null ? currentAuthor.position : "-"}</div>;
       },
     },
     {
@@ -320,8 +322,9 @@ export default function WorksPage() {
       type: "string",
       width: 180,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.purposeName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.purposeName : "-"}</div>;
       },
     },
     {
@@ -330,8 +333,9 @@ export default function WorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.fieldName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.fieldName : "-"}</div>;
       },
     },
     {
@@ -340,8 +344,9 @@ export default function WorksPage() {
       type: "string",
       width: 180,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.scImagoFieldName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.scImagoFieldName : "-"}</div>;
       },
     },
     {
@@ -350,11 +355,12 @@ export default function WorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        if (!currentAuthor || currentAuthor.scoreLevel === undefined || currentAuthor.scoreLevel === null) {
           return <div>-</div>;
         }
-        return <div>{getScoreLevelText(author.scoreLevel)}</div>;
+        return <div>{getScoreLevelText(currentAuthor.scoreLevel)}</div>;
       },
     },
     {
@@ -363,8 +369,9 @@ export default function WorksPage() {
       type: "string",
       width: 120,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.workHour !== undefined && author?.workHour !== null ? author.workHour : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor?.workHour !== undefined && currentAuthor?.workHour !== null ? currentAuthor.workHour : "-"}</div>;
       },
     },
     {
@@ -373,8 +380,9 @@ export default function WorksPage() {
       type: "string",
       width: 120,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor?.authorHour !== undefined && currentAuthor?.authorHour !== null ? currentAuthor.authorHour : "-"}</div>;
       },
     },
     {
@@ -383,8 +391,9 @@ export default function WorksPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        const noteText = author?.note || "";
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const noteText = currentAuthor?.note || "";
     
         if (!noteText) {
           return <div>-</div>;
@@ -417,8 +426,9 @@ export default function WorksPage() {
       type: "string",
       width: 140,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        const proofStatus = author ? author.proofStatus : undefined;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const proofStatus = currentAuthor?.proofStatus;
                 
         if (proofStatus === undefined || proofStatus === null) {
           return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
@@ -456,9 +466,71 @@ export default function WorksPage() {
       width: 200,
       renderCell: (params: any) => {
         const work = params.row;
-        const author = work.authors && work.authors[0];
-        const proofStatus = author?.proofStatus;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const proofStatus = currentAuthor?.proofStatus;
+        const isLocked = work.isLocked;
+        
+        // Kiểm tra xem có tác giả khác đã được chấm hợp lệ không
+        const hasOtherValidAuthors = work.authors?.some(
+          author => author.userId !== user?.id && author.proofStatus === 0
+        );
 
+        // Nếu công trình đã bị khóa và tác giả hiện tại đã được chấm hợp lệ
+        if (isLocked && proofStatus === 0) {
+          return (
+            <Box>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={() => handleOpenUpdateDialog(work)}
+                disabled={true}
+                sx={{ mr: 1 }}
+              >
+                Sửa
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => handleDeleteClick(work.id)}
+                disabled={true}
+              >
+                Xóa
+              </Button>
+            </Box>
+          );
+        }
+
+        // Nếu công trình đã bị khóa và tác giả hiện tại chưa được chấm hoặc không hợp lệ
+        if (isLocked) {
+          return (
+            <Box>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={() => handleOpenUpdateDialog(work)}
+                disabled={false}
+                sx={{ mr: 1 }}
+              >
+                Sửa
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => handleDeleteClick(work.id)}
+                disabled={!canDeleteWork(proofStatus, isLocked, hasOtherValidAuthors)}
+              >
+                Xóa
+              </Button>
+            </Box>
+          );
+        }
+
+        // Nếu công trình chưa bị khóa
+        const canEdit = canEditWork(proofStatus, isLocked);
         return (
           <Box>
             <Button
@@ -466,14 +538,8 @@ export default function WorksPage() {
               color="primary"
               size="small"
               onClick={() => handleOpenUpdateDialog(work)}
-              disabled={!canEditWork(proofStatus)}
-              sx={{ 
-                marginRight: 1,
-                '&.Mui-disabled': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
-                  color: 'rgba(0, 0, 0, 0.26)'
-                }
-              }}
+              disabled={!canEdit}
+              sx={{ mr: 1 }}
             >
               Sửa
             </Button>
@@ -482,13 +548,7 @@ export default function WorksPage() {
               color="error"
               size="small"
               onClick={() => handleDeleteClick(work.id)}
-              disabled={!canEditWork(proofStatus)}
-              sx={{
-                '&.Mui-disabled': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
-                  color: 'rgba(0, 0, 0, 0.26)'
-                }
-              }}
+              disabled={!canDeleteWork(proofStatus, isLocked, hasOtherValidAuthors)}
             >
               Xóa
             </Button>

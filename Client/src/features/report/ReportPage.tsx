@@ -225,8 +225,9 @@ const ReportPage: React.FC = () => {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return author ? getProofStatusChip(author.proofStatus) : null;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return currentAuthor ? getProofStatusChip(currentAuthor.proofStatus) : null;
       },
     },
     {
@@ -235,8 +236,9 @@ const ReportPage: React.FC = () => {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        const isRegistered = author?.authorRegistration != null;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const isRegistered = currentAuthor?.authorRegistration != null;
         
         return (
           <Chip

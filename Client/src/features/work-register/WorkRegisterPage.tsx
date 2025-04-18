@@ -336,8 +336,9 @@ export default function WorkRegisterPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.authorRoleName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.authorRoleName : "-"}</div>;
       },
     },
     {
@@ -346,8 +347,9 @@ export default function WorkRegisterPage() {
       type: "string",
       width: 80,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.position !== undefined && author?.position !== null ? author.position : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor?.position !== undefined && currentAuthor?.position !== null ? currentAuthor.position : "-"}</div>;
       },
     },
     {
@@ -356,8 +358,9 @@ export default function WorkRegisterPage() {
       type: "string",
       width: 180,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author ? author.purposeName : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor ? currentAuthor.purposeName : "-"}</div>;
       },
     },
     {
@@ -366,11 +369,12 @@ export default function WorkRegisterPage() {
       type: "string",
       width: 150,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        if (!author || author.scoreLevel === undefined || author.scoreLevel === null) {
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        if (!currentAuthor || currentAuthor.scoreLevel === undefined || currentAuthor.scoreLevel === null) {
           return <div>-</div>;
         }
-        return <div>{getScoreLevelText(author.scoreLevel)}</div>;
+        return <div>{getScoreLevelText(currentAuthor.scoreLevel)}</div>;
       },
     },
     {
@@ -379,8 +383,9 @@ export default function WorkRegisterPage() {
       type: "string",
       width: 120,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        return <div>{author?.authorHour !== undefined && author?.authorHour !== null ? author.authorHour : "-"}</div>;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        return <div>{currentAuthor?.authorHour !== undefined && currentAuthor?.authorHour !== null ? currentAuthor.authorHour : "-"}</div>;
       },
     },
     {
@@ -389,8 +394,9 @@ export default function WorkRegisterPage() {
       type: "string",
       width: 140,
       renderCell: (params: any) => {
-        const author = params.row.authors && params.row.authors[0];
-        const proofStatus = author ? author.proofStatus : undefined;
+        const work = params.row;
+        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const proofStatus = currentAuthor?.proofStatus;
                 
         if (proofStatus === undefined || proofStatus === null) {
           return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
