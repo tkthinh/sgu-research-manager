@@ -51,7 +51,7 @@ export const router = createBrowserRouter([
               {
                 path: "/cong-trinh",
                 element: (
-                  <ProtectedRoute allowedRoles={["User", "Manager", "Admin"]}>
+                  <ProtectedRoute allowedRoles={["User", "Manager"]}>
                     <WorkPage />
                   </ProtectedRoute>
                 ),

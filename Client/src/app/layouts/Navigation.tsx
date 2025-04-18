@@ -97,11 +97,6 @@ export const NAVIGATION_ADMIN: Navigation = [
     icon: <DashboardIcon />,
   },
   {
-    segment: "cong-trinh",
-    title: "Công trình",
-    icon: <ConstructionIcon />,
-  },
-  {
     segment: "cham-diem",
     title: "Chấm điểm công trình",
     icon: <RateReviewIcon />,
