@@ -1,50 +1,83 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  Autocomplete,
   Button,
-  TextField,
+  Chip,
+  CircularProgress,
   Grid,
   MenuItem,
-  CircularProgress,
-  Autocomplete,
-  Chip,
+  TextField,
 } from "@mui/material";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { useQuery } from "@tanstack/react-query";
 import { vi } from "date-fns/locale";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
-import { Work } from "../../lib/types/models/Work";
-import { WorkSource } from "../../lib/types/enums/WorkSource";
-import { getWorkLevelsByWorkTypeId } from "../../lib/api/workLevelsApi";
+import { useAuth } from "../../app/shared/contexts/AuthContext";
+import { useWorkFormData } from "../../hooks/useWorkData";
 import { getAuthorRolesByWorkTypeId } from "../../lib/api/authorRolesApi";
 import { getPurposesByWorkTypeId } from "../../lib/api/purposesApi";
 import { getScimagoFieldsByWorkTypeId } from "../../lib/api/scimagoFieldsApi";
-import { searchUsers, getUserById } from "../../lib/api/usersApi";
-import { User } from "../../lib/types/models/User";
-import { useQuery } from "@tanstack/react-query";
 import { getScoreLevelsByFilters } from "../../lib/api/scoreLevelsApi";
-import { getScoreLevelFullDescription } from '../../lib/utils/scoreLevelUtils';
-import { __unsafe_useEmotionCache } from "@emotion/react";
+import { getUserById, searchUsers } from "../../lib/api/usersApi";
+import { getWorkLevelsByWorkTypeId } from "../../lib/api/workLevelsApi";
+import { WorkSource } from "../../lib/types/enums/WorkSource";
+import { User } from "../../lib/types/models/User";
+import { Work } from "../../lib/types/models/Work";
+import { getScoreLevelFullDescription } from "../../lib/utils/scoreLevelUtils";
+import { FieldDef, workDetailsConfig } from "../../lib/utils/workDetailsConfig";
 
 // Define validation schema
 const schema = z.object({
   title: z.string().min(2, "Tên công trình phải có ít nhất 2 ký tự"),
   timePublished: z.any().optional().nullable(),
-  totalAuthors: z.coerce.number().min(1, "Số tác giả phải lớn hơn 0").optional().nullable(),
-  totalMainAuthors: z.coerce.number().min(1, "Số tác giả chính phải lớn hơn 0").optional().nullable(),
+  totalAuthors: z.coerce
+    .number()
+    .min(1, "Số tác giả phải lớn hơn 0")
+    .optional()
+    .nullable(),
+  totalMainAuthors: z.coerce
+    .number()
+    .min(1, "Số tác giả chính phải lớn hơn 0")
+    .optional()
+    .nullable(),
   details: z.any().optional(),
   source: z.number(),
   workTypeId: z.string().uuid("ID loại công trình không hợp lệ"),
-  workLevelId: z.string().uuid("ID cấp độ công trình không hợp lệ").optional().nullable(),
-  coAuthorUserIds: z.array(z.string().uuid("ID đồng tác giả không hợp lệ")).optional().default([]),
+  workLevelId: z
+    .string()
+    .uuid("ID cấp độ công trình không hợp lệ")
+    .optional()
+    .nullable(),
+  coAuthorUserIds: z
+    .array(z.string().uuid("ID đồng tác giả không hợp lệ"))
+    .optional()
+    .default([]),
   author: z.object({
-    authorRoleId: z.string().uuid("ID vai trò tác giả không hợp lệ").optional().nullable(),
+    authorRoleId: z
+      .string()
+      .uuid("ID vai trò tác giả không hợp lệ")
+      .optional()
+      .nullable(),
     purposeId: z.string().uuid("ID mục đích không hợp lệ"),
-    position: z.number().min(1, "Vị trí tác giả phải lớn hơn 0").optional().nullable(),
-    scoreLevel: z.number().min(0, "Mức điểm không hợp lệ").optional().nullable(),
-    sCImagoFieldId: z.string().uuid("ID lĩnh vực SCImago không hợp lệ").optional().nullable(),
+    position: z
+      .number()
+      .min(1, "Vị trí tác giả phải lớn hơn 0")
+      .optional()
+      .nullable(),
+    scoreLevel: z
+      .number()
+      .min(0, "Mức điểm không hợp lệ")
+      .optional()
+      .nullable(),
+    sCImagoFieldId: z
+      .string()
+      .uuid("ID lĩnh vực SCImago không hợp lệ")
+      .optional()
+      .nullable(),
     fieldId: z.string().uuid("ID lĩnh vực không hợp lệ").optional().nullable(),
   }),
 });
@@ -62,6 +95,7 @@ interface WorkFormProps {
   scimagoFields: Array<{ id: string; name: string }>;
   fields: Array<{ id: string; name: string }>;
   activeTab: number;
+  setActiveTab: (index: number) => void;
 }
 
 export default function WorkForm({
@@ -71,16 +105,21 @@ export default function WorkForm({
   workTypes,
   fields,
   activeTab,
+  setActiveTab,
 }: WorkFormProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCoAuthors, setSelectedCoAuthors] = useState<User[]>([]);
-  const [detailsFields, setDetailsFields] = useState<Record<string, string>>({});
+  const [detailsFields, setDetailsFields] = useState<Record<string, string>>(
+    {},
+  );
   const [isLoadingCoAuthors, setIsLoadingCoAuthors] = useState(false);
   const [visibleScoreLevels, setVisibleScoreLevels] = useState<number[]>([]);
-  
+
+  const { user } = useAuth();
+
   // Lấy userId từ localStorage hoặc context auth nếu có
   // Trong ứng dụng thực tế, bạn nên sử dụng hook auth chính thức
-  const currentUserId = localStorage.getItem("userId") || "current-user-id";
+  const currentUserId = user?.id;
 
   const {
     control,
@@ -89,16 +128,21 @@ export default function WorkForm({
     reset,
     setValue,
     watch,
-    getValues,
   } = useForm<WorkFormData>({
     resolver: zodResolver(schema),
-    defaultValues: initialData 
+    mode: "onSubmit",
+    defaultValues: initialData
       ? {
           ...initialData,
-          timePublished: initialData.timePublished ? new Date(initialData.timePublished) : null,
+          timePublished: initialData.timePublished
+            ? new Date(initialData.timePublished)
+            : null,
           details: initialData.details || {},
           source: initialData.source,
-          coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
+          coAuthorUserIds:
+            initialData.coAuthorUserIds?.filter(
+              (id) => id.toString() !== currentUserId,
+            ) || [],
           author: {
             authorRoleId: initialData.author?.authorRoleId || null,
             purposeId: initialData.author?.purposeId || "",
@@ -129,6 +173,8 @@ export default function WorkForm({
         },
   });
 
+  const { workTypes: formWorkTypes, workLevels: formWorkLevels } =
+    useWorkFormData();
   // Watch workTypeId để lấy dữ liệu phù hợp
   const workTypeId = watch("workTypeId");
   const workLevelId = watch("workLevelId");
@@ -145,141 +191,22 @@ export default function WorkForm({
   }, [initialData]);
 
   // Xác định các trường details cần hiển thị dựa trên loại công trình và cấp công trình
-  const getDetailsFieldsConfig = () => {
-    if (!workTypeId) return [];
+  const workTypeName = useMemo(
+    () => formWorkTypes.find((t) => t.id === workTypeId)?.name,
+    [workTypeId, formWorkTypes],
+  );
+  const workLevelName = useMemo(
+    () => formWorkLevels.find((l) => l.id === workLevelId)?.name,
+    [workLevelId, formWorkLevels],
+  );
 
-    // Bài báo khoa học
-    if (workTypeId === "2732c858-77dc-471d-bd9a-464a3142530a") {
-      // Cấp WoS
-      if (workLevelId === "0b031a2d-4ac5-48fb-9759-f7a2fe2f7290") {
-        return [
-          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
-          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
-          { key: "Số trang", label: "Số trang", required: false },
-          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
-          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
-          { key: "Loại WoS", label: "Loại WoS", required: true },
-          { key: "Xếp hạng tạp chí", label: "Xếp hạng tạp chí", required: false },
-        ];
-      }
-      // Cấp Scopus
-      else if (workLevelId === "34f94668-7151-457d-aa06-4bf4e2b27df3") {
-        return [
-          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
-          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
-          { key: "Số trang", label: "Số trang", required: false },
-          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
-          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
-          { key: "Xếp hạng tạp chí", label: "Xếp hạng tạp chí", required: false },
-        ];
-      }
-      // Các cấp khác: Trường, bộ/ngành, quốc tế
-      else {
-        return [
-          { key: "Tên tạp chí khoa học", label: "Tên tạp chí khoa học", required: true },
-          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
-          { key: "Số trang", label: "Số trang", required: false },
-          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
-          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
-        ];
-      }
-    }
-    // Báo cáo khoa học
-    else if (workTypeId === "03412ca7-8ccf-4903-9018-457768060ab4") {
-      // Cấp WoS
-      if (workLevelId === "f81c134b-fd83-4e25-9590-cf7ecfc5b203") {
-        return [
-          { key: "Tên ấn phẩm", label: "Tên ấn phẩm", required: true },
-          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
-          { key: "Số trang", label: "Số trang", required: false },
-          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
-          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
-          { key: "Loại WoS", label: "Loại WoS", required: true },
-          { key: "Xếp hạng tạp chí", label: "Xếp hạng tạp chí", required: false },
-        ];
-      }
-      // Cấp Scopus
-      else if (workLevelId === "f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9") {
-        return [
-          { key: "Tên ấn phẩm", label: "Tên ấn phẩm", required: true },
-          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
-          { key: "Số trang", label: "Số trang", required: false },
-          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
-          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
-          { key: "Xếp hạng tạp chí", label: "Xếp hạng tạp chí", required: false },
-        ];
-      }
-      // Các cấp khác: Trường, bộ/ngành, quốc tế, quốc gia
-      else {
-        return [
-          { key: "Tên ấn phẩm", label: "Tên ấn phẩm", required: true },
-          { key: "Tập, số phát hành", label: "Tập, số phát hành", required: false },
-          { key: "Số trang", label: "Số trang", required: false },
-          { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: false },
-          { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: false },
-        ];
-      }
-    }
-    // Chương sách, chuyên khảo, giáo trình - sách, tài liệu hướng dẫn, tham khảo
-    else if (["3bbfc66a-3144-4edf-959b-e049d7e33d97", "61bbbecc-038a-43b7-aafa-a95e25a93f38", 
-              "628a119e-324f-42b8-8ff4-e29ee5c643a9", "84a14a8b-eae8-4720-bc7c-e1f93b35a256", 
-              "8aaf0a8a-35ed-4768-8fd4-44fc4a561cd0", "1ff8d087-e0c3-45df-befc-662c0a80c10c"].includes(workTypeId)) {
-      return [
-        { key: "Tập, số phát hành", label: "Tập, số phát hành", required: true },
-        { key: "Số trang", label: "Số trang", required: true },
-        { key: "Chỉ số xuất bản", label: "Chỉ số xuất bản", required: true },
-        { key: "Cơ quản xuất bản", label: "Cơ quan xuất bản", required: true },        
-        { key: "Dạng tài liệu", label: "Dạng tài liệu", required: true }
-
-      ];
-    }
-    // Đề tài
-    else if (["49cf7589-fb84-4934-be8e-991c6319a348"].includes(workTypeId)) {
-      return [
-        { key: "Mã số đề tài", label: "Mã số đề tài", required: true },
-        { key: "Sản phẩm thuộc đề tài", label: "Sản phẩm thuộc đề tài", required: true },
-        { key: "Xếp loại", label: "Xếp loại", required: false },
-      ];
-    }
-    // Giáo trình
-    else if (["323371c0-26c7-4549-90f2-11c881be402d"].includes(workTypeId)) {
-      return [
-        { key: "Mã số giáo trình", label: "Mã số giáo trình", required: true },
-        { key: "Xếp loại", label: "Xếp loại", required: false },
-      ];
-    }
-    // Tài liệu giảng dạy
-    else if (["9787de81-78f2-4797-b810-0f5ec411125b"].includes(workTypeId)) {
-      return [
-        { key: "Mã số tài liệu", label: "Mã số tài liệu", required: true },
-        { key: "Xếp loại", label: "Xếp loại", required: false },
-      ];
-    }
-    // Hội thảo, hội nghị 
-    else if (["140a3e34-ded1-4bfa-8633-fbea545cbdaa"].includes(workTypeId)) {
-      return [
-        { key: "Chi tiết", label: "Chi tiết", required: true },
-      ];
-    }
-    // Hướng dẫn SV NCKH
-    else if (["e2f7974c-47c3-478e-9b53-74093f6c621f"].includes(workTypeId)) {
-      return [
-        { key: "Mã số đề tài của sinh viên", label: "Mã số đề tài của sinh viên", required: true },
-      ];
-    }
-    // Khác
-    else if (["1ff8d087-e0c3-45df-befc-662c0a80c10c"].includes(workTypeId)) {
-      return [
-        { key: "Chi tiết", label: "Chi tiết", required: true },
-      ];
-    }
-    
-    // Mặc định trả về mảng rỗng
-    return [];
-  };
-
-  
-  const detailsConfig = getDetailsFieldsConfig();
+  const detailsConfig: FieldDef[] = useMemo(() => {
+    if (!workTypeName) return [];
+    const cfg = workDetailsConfig[workTypeName.toLowerCase()];
+    if (!cfg) return [];
+    // if there's a specific level override, use it, otherwise default
+    return cfg[workLevelName!] || cfg.default;
+  }, [workTypeName, workLevelName]);
 
   // Cập nhật details khi người dùng nhập vào các trường
   const handleDetailsFieldChange = (key: string, value: string) => {
@@ -327,7 +254,7 @@ export default function WorkForm({
   // Lọc ra người dùng hiện tại khỏi kết quả tìm kiếm
   const filteredUsers = useMemo(() => {
     if (!usersData?.data) return [];
-    return usersData.data.filter(user => user.id !== currentUserId);
+    return usersData.data.filter((user) => user.id !== currentUserId);
   }, [usersData?.data, currentUserId]);
 
   // Load dữ liệu từ initialData khi nó thay đổi
@@ -335,14 +262,19 @@ export default function WorkForm({
     if (initialData) {
       console.log("initialData đã thay đổi:", initialData);
       console.log("coAuthorUserIds:", initialData.coAuthorUserIds);
-      
+
       // Reset form với dữ liệu từ initialData
       reset({
         ...initialData,
-        timePublished: initialData.timePublished ? new Date(initialData.timePublished) : null,
+        timePublished: initialData.timePublished
+          ? new Date(initialData.timePublished)
+          : null,
         details: initialData.details || {},
         source: initialData.source,
-        coAuthorUserIds: initialData.coAuthorUserIds?.filter(id => id.toString() !== currentUserId) || [],
+        coAuthorUserIds:
+          initialData.coAuthorUserIds?.filter(
+            (id) => id.toString() !== currentUserId,
+          ) || [],
         author: {
           authorRoleId: initialData.author?.authorRoleId || null,
           purposeId: initialData.author?.purposeId || "",
@@ -352,10 +284,13 @@ export default function WorkForm({
           fieldId: initialData.author?.fieldId || null,
         },
       });
-  
+
       // Tải dữ liệu đồng tác giả
       const loadCoAuthors = async () => {
-        if (initialData.coAuthorUserIds && initialData.coAuthorUserIds.length > 0) {
+        if (
+          initialData.coAuthorUserIds &&
+          initialData.coAuthorUserIds.length > 0
+        ) {
           setIsLoadingCoAuthors(true);
           try {
             const coAuthorsData: User[] = [];
@@ -377,7 +312,7 @@ export default function WorkForm({
           setSelectedCoAuthors([]);
         }
       };
-      
+
       loadCoAuthors();
     }
   }, [initialData, reset, currentUserId]);
@@ -396,12 +331,12 @@ export default function WorkForm({
           workTypeId,
           workLevelId || undefined,
           authorRoleId || undefined,
-          purposeId || undefined
+          purposeId || undefined,
         );
-        
+
         console.log("Đã lấy được danh sách mức điểm:", scoreLevels);
         setVisibleScoreLevels(scoreLevels);
-        
+
         // Nếu không có mức điểm nào, reset giá trị scoreLevel về null
         if (scoreLevels.length === 0) {
           setValue("author.scoreLevel", null);
@@ -412,7 +347,7 @@ export default function WorkForm({
         setValue("author.scoreLevel", null);
       }
     };
-    
+
     fetchScoreLevels();
   }, [workTypeId, workLevelId, authorRoleId, purposeId, setValue]);
 
@@ -425,7 +360,7 @@ export default function WorkForm({
       // Kiểm tra xem có dữ liệu workLevels không
       if (workLevelsData?.data && Array.isArray(workLevelsData.data)) {
         setHasWorkLevels(workLevelsData.data.length > 0);
-        
+
         // Nếu không có cấp công trình, đặt workLevelId thành null
         if (workLevelsData.data.length === 0) {
           setValue("workLevelId", null);
@@ -452,27 +387,23 @@ export default function WorkForm({
     if (!selectedCoAuthors) return;
 
     console.log("Cập nhật coAuthorUserIds với:", selectedCoAuthors);
-    const coAuthorIds = selectedCoAuthors.map(user => user.id);
+    const coAuthorIds = selectedCoAuthors.map((user) => user.id);
     console.log("Danh sách ID đồng tác giả cập nhật:", coAuthorIds);
-    
+
     // Đảm bảo cập nhật giá trị vào form
-    setValue(
-      "coAuthorUserIds",
-      coAuthorIds,
-      { shouldValidate: true }
-    );
+    setValue("coAuthorUserIds", coAuthorIds, { shouldValidate: true });
   }, [selectedCoAuthors, setValue]);
 
   // Xử lý chuyển đổi giá trị dạng chuỗi sang số
   useEffect(() => {
     const totalAuthors = watch("totalAuthors");
     const totalMainAuthors = watch("totalMainAuthors");
-    
+
     // Kiểm tra nếu giá trị là chuỗi, chuyển thành số
     if (totalAuthors !== null && typeof totalAuthors === "string") {
       setValue("totalAuthors", Number(totalAuthors));
     }
-    
+
     if (totalMainAuthors !== null && typeof totalMainAuthors === "string") {
       setValue("totalMainAuthors", Number(totalMainAuthors));
     }
@@ -494,38 +425,67 @@ export default function WorkForm({
   }, [initialData]);
 
   // Xử lý khi người dùng nhập chi tiết
-  const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      const jsonValue = JSON.parse(e.target.value);
-      setDetailsFields(jsonValue);
-      setValue("details", jsonValue);
-    } catch (error) {
-      console.error("Lỗi khi parse JSON:", error);
-    }
-  };
+  // const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   try {
+  //     const jsonValue = JSON.parse(e.target.value);
+  //     setDetailsFields(jsonValue);
+  //     setValue("details", jsonValue);
+  //   } catch (error) {
+  //     console.error("Lỗi khi parse JSON:", error);
+  //   }
+  // };
 
   // Xử lý khi đồng tác giả thay đổi
   const handleCoAuthorChange = (_: any, newValue: User[]) => {
     console.log("Đã chọn đồng tác giả:", newValue);
-    
+
     // Đảm bảo không có người dùng hiện tại trong danh sách đồng tác giả
-    const filteredCoAuthors = newValue.filter(user => user.id !== currentUserId);
-    
-    setSelectedCoAuthors(filteredCoAuthors);
-    
-    // Cập nhật giá trị trong form - chỉ lưu trữ IDs
-    const coAuthorIds = filteredCoAuthors.map(user => user.id);
-    console.log("Danh sách ID đồng tác giả cập nhật:", coAuthorIds);
-    
-    setValue(
-      "coAuthorUserIds",
-      coAuthorIds,
-      { shouldValidate: true }
+    const filteredCoAuthors = newValue.filter(
+      (user) => user.id !== currentUserId,
     );
+
+    setSelectedCoAuthors(filteredCoAuthors);
+
+    // Cập nhật giá trị trong form - chỉ lưu trữ IDs
+    const coAuthorIds = filteredCoAuthors.map((user) => user.id);
+    console.log("Danh sách ID đồng tác giả cập nhật:", coAuthorIds);
+
+    setValue("coAuthorUserIds", coAuthorIds, { shouldValidate: true });
+  };
+
+  const handleFormErrors = (formErrors) => {
+    console.warn("Validation failed:", formErrors);
+
+    const tab1Fields = [
+      "title",
+      "timePublished",
+      "totalAuthors",
+      "totalMainAuthors",
+      "workTypeId",
+      "workLevelId",
+      "coAuthorUserIds",
+      "details",
+    ];
+    const tab2Fields = ["author"];
+
+    const hasTab1Error = Object.keys(formErrors).some((field) =>
+      tab1Fields.includes(field),
+    );
+    const hasTab2Error = Object.keys(formErrors).some((field) =>
+      tab2Fields.includes(field),
+    );
+
+    if (hasTab1Error && activeTab !== 0) {
+      alert("Có lỗi ở tab Thông tin công trình. Vui lòng kiểm tra lại.");
+      setActiveTab(0);
+    } else if (hasTab2Error && activeTab !== 1) {
+      alert("Có lỗi ở tab Tác giả. Vui lòng kiểm tra lại.");
+      setActiveTab(1);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit, handleFormErrors)}>
       <Grid container spacing={2}>
         {activeTab === 0 && (
           // Tab thông tin công trình
@@ -552,21 +512,24 @@ export default function WorkForm({
                 name="timePublished"
                 control={control}
                 render={({ field }) => (
-                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={vi}>
-                  <DatePicker
-                    label="Thời gian xuất bản"
-                    value={field.value ? new Date(field.value) : null}
-                    onChange={(date) => field.onChange(date)}
-                    disabled={initialData?.isLocked}
-                    slotProps={{
-                      textField: {
-                        fullWidth: true,
-                        error: !!errors.timePublished,
-                        helperText: errors.timePublished?.message?.toString(),
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
+                  <LocalizationProvider
+                    dateAdapter={AdapterDateFns}
+                    adapterLocale={vi}
+                  >
+                    <DatePicker
+                      label="Thời gian xuất bản"
+                      value={field.value ? new Date(field.value) : null}
+                      onChange={(date) => field.onChange(date)}
+                      disabled={initialData?.isLocked}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          error: !!errors.timePublished,
+                          helperText: errors.timePublished?.message?.toString(),
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
                 )}
               />
             </Grid>
@@ -576,21 +539,21 @@ export default function WorkForm({
                 name="workTypeId"
                 control={control}
                 render={({ field }) => (
-                <TextField
-                  {...field}
-                  select
-                  label="Loại công trình"
-                  fullWidth
-                  error={!!errors.workTypeId}
-                  helperText={errors.workTypeId?.message?.toString()}
-                  disabled={initialData?.isLocked}
-                >
-                  {workTypes.map((type) => (
-                    <MenuItem key={type.id} value={type.id}>
-                      {type.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  <TextField
+                    {...field}
+                    select
+                    label="Loại công trình"
+                    fullWidth
+                    error={!!errors.workTypeId}
+                    helperText={errors.workTypeId?.message?.toString()}
+                    disabled={initialData?.isLocked}
+                  >
+                    {workTypes.map((type) => (
+                      <MenuItem key={type.id} value={type.id}>
+                        {type.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 )}
               />
             </Grid>
@@ -600,21 +563,23 @@ export default function WorkForm({
                 name="workLevelId"
                 control={control}
                 render={({ field }) => (
-                <TextField
-                  {...field}
-                  select
-                  label="Cấp công trình"
-                  fullWidth
-                  error={!!errors.workLevelId}
-                  helperText={errors.workLevelId?.message?.toString()}
-                  disabled={!workTypeId || !hasWorkLevels || initialData?.isLocked}
-                >
-                  {workLevelsData?.data?.map((level) => (
-                    <MenuItem key={level.id} value={level.id}>
-                      {level.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  <TextField
+                    {...field}
+                    select
+                    label="Cấp công trình"
+                    fullWidth
+                    error={!!errors.workLevelId}
+                    helperText={errors.workLevelId?.message?.toString()}
+                    disabled={
+                      !workTypeId || !hasWorkLevels || initialData?.isLocked
+                    }
+                  >
+                    {workLevelsData?.data?.map((level) => (
+                      <MenuItem key={level.id} value={level.id}>
+                        {level.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 )}
               />
             </Grid>
@@ -624,22 +589,22 @@ export default function WorkForm({
                 name="totalAuthors"
                 control={control}
                 render={({ field: { value, onChange, onBlur, ...field } }) => (
-                <TextField
-                  {...field}
-                  label="Tổng số tác giả"
-                  type="number"
-                  inputProps={{ min: 1, step: 1 }}
-                  fullWidth
-                  error={!!errors.totalAuthors}
-                  helperText={errors.totalAuthors?.message?.toString()}
-                  value={value === null ? "" : value}
-                  onChange={(e) => {
-                    const inputValue = e.target.value;
-                    onChange(inputValue === "" ? null : Number(inputValue));
-                  }}
-                  onBlur={onBlur}
-                  disabled={initialData?.isLocked}
-                />
+                  <TextField
+                    {...field}
+                    label="Tổng số tác giả"
+                    type="number"
+                    inputProps={{ min: 1, step: 1 }}
+                    fullWidth
+                    error={!!errors.totalAuthors}
+                    helperText={errors.totalAuthors?.message?.toString()}
+                    value={value === null ? "" : value}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      onChange(inputValue === "" ? null : Number(inputValue));
+                    }}
+                    onBlur={onBlur}
+                    disabled={initialData?.isLocked}
+                  />
                 )}
               />
             </Grid>
@@ -649,22 +614,22 @@ export default function WorkForm({
                 name="totalMainAuthors"
                 control={control}
                 render={({ field: { value, onChange, onBlur, ...field } }) => (
-                <TextField
-                  {...field}
-                  label="Số tác giả chính"
-                  type="number"
-                  inputProps={{ min: 1, step: 1 }}
-                  fullWidth
-                  error={!!errors.totalMainAuthors}
-                  helperText={errors.totalMainAuthors?.message?.toString()}
-                  value={value === null ? "" : value}
-                  onChange={(e) => {
-                    const inputValue = e.target.value;
-                    onChange(inputValue === "" ? null : Number(inputValue));
-                  }}
-                  onBlur={onBlur}
-                  disabled={initialData?.isLocked}
-                />
+                  <TextField
+                    {...field}
+                    label="Số tác giả chính"
+                    type="number"
+                    inputProps={{ min: 1, step: 1 }}
+                    fullWidth
+                    error={!!errors.totalMainAuthors}
+                    helperText={errors.totalMainAuthors?.message?.toString()}
+                    value={value === null ? "" : value}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      onChange(inputValue === "" ? null : Number(inputValue));
+                    }}
+                    onBlur={onBlur}
+                    disabled={initialData?.isLocked}
+                  />
                 )}
               />
             </Grid>
@@ -674,52 +639,59 @@ export default function WorkForm({
                 name="coAuthorUserIds"
                 control={control}
                 render={({ field }) => (
-                <Autocomplete
-                  multiple
-                  id="coAuthorUserIds"
-                  options={filteredUsers}
-                  getOptionLabel={(option) => {
-                    if (typeof option === 'string') return option;
-                    return `${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ''}`;
-                  }}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  value={selectedCoAuthors}
-                  onChange={handleCoAuthorChange}
-                  loading={isLoadingUsers || isLoadingCoAuthors}
-                  disabled={initialData?.isLocked}
-                  renderTags={(value, getTagProps) =>
-                    value.map((option, index) => {
-                      const props = getTagProps({ index });
-                      return (
-                        <Chip
-                          {...props}
-                          label={`${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ''}`}
-                          size="medium"
-                        />
-                      );
-                    })
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Đồng tác giả"
-                      variant="outlined"
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Tìm kiếm đồng tác giả"
-                      error={!!errors.coAuthorUserIds}
-                      helperText={errors.coAuthorUserIds?.message || "Thêm các đồng tác giả (không bao gồm bạn)"}
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {(isLoadingUsers || isLoadingCoAuthors) ? <CircularProgress color="inherit" size={20} /> : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
+                  <Autocomplete
+                    multiple
+                    id="coAuthorUserIds"
+                    options={filteredUsers}
+                    getOptionLabel={(option) => {
+                      if (typeof option === "string") return option;
+                      return `${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ""}`;
+                    }}
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value.id
+                    }
+                    value={selectedCoAuthors}
+                    onChange={handleCoAuthorChange}
+                    loading={isLoadingUsers || isLoadingCoAuthors}
+                    disabled={initialData?.isLocked}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => {
+                        const props = getTagProps({ index });
+                        return (
+                          <Chip
+                            {...props}
+                            label={`${option.fullName} - ${option.userName}${option.departmentName ? ` - ${option.departmentName}` : ""}`}
+                            size="medium"
+                          />
+                        );
+                      })
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Đồng tác giả"
+                        variant="outlined"
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Tìm kiếm đồng tác giả"
+                        error={!!errors.coAuthorUserIds}
+                        helperText={
+                          errors.coAuthorUserIds?.message ||
+                          "Thêm các đồng tác giả (không bao gồm bạn)"
+                        }
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {isLoadingUsers || isLoadingCoAuthors ? (
+                                <CircularProgress color="inherit" size={20} />
+                              ) : null}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                  />
                 )}
               />
             </Grid>
@@ -728,18 +700,28 @@ export default function WorkForm({
             {detailsConfig.length > 0 && (
               <Grid item xs={12}>
                 <Grid container spacing={2}>
-                  {detailsConfig.map(field => (
+                  {detailsConfig.map((field) => (
                     <Grid item xs={12} sm={6} key={field.key}>
                       <TextField
                         label={field.label}
                         fullWidth
                         value={detailsFields[field.key] || ""}
-                        onChange={(e) => handleDetailsFieldChange(field.key, e.target.value)}
+                        onChange={(e) =>
+                          handleDetailsFieldChange(field.key, e.target.value)
+                        }
                         required={field.required}
-                        error={field.required && (!detailsFields[field.key] || detailsFields[field.key].trim() === "")}
-                        helperText={field.required && (!detailsFields[field.key] || detailsFields[field.key].trim() === "") 
-                          ? "Trường này là bắt buộc" 
-                          : ""}
+                        error={
+                          field.required &&
+                          (!detailsFields[field.key] ||
+                            detailsFields[field.key].trim() === "")
+                        }
+                        helperText={
+                          field.required &&
+                          (!detailsFields[field.key] ||
+                            detailsFields[field.key].trim() === "")
+                            ? "Trường này là bắt buộc"
+                            : ""
+                        }
                         disabled={initialData?.isLocked}
                       />
                     </Grid>
@@ -768,7 +750,8 @@ export default function WorkForm({
                     disabled={!workTypeId}
                     value={value ?? ""}
                     onChange={(e) => {
-                      const newValue = e.target.value === "" ? null : e.target.value;
+                      const newValue =
+                        e.target.value === "" ? null : e.target.value;
                       onChange(newValue);
                     }}
                   >
@@ -844,7 +827,8 @@ export default function WorkForm({
                     disabled={visibleScoreLevels.length === 0}
                     value={value ?? ""}
                     onChange={(e) => {
-                      const newValue = e.target.value === "" ? null : Number(e.target.value);
+                      const newValue =
+                        e.target.value === "" ? null : Number(e.target.value);
                       onChange(newValue);
                     }}
                   >
@@ -874,7 +858,8 @@ export default function WorkForm({
                     disabled={!workTypeId}
                     value={value ?? ""}
                     onChange={(e) => {
-                      const newValue = e.target.value === "" ? null : e.target.value;
+                      const newValue =
+                        e.target.value === "" ? null : e.target.value;
                       onChange(newValue);
                     }}
                   >
@@ -903,7 +888,8 @@ export default function WorkForm({
                     helperText={errors.author?.fieldId?.message?.toString()}
                     value={value ?? ""}
                     onChange={(e) => {
-                      const newValue = e.target.value === "" ? null : e.target.value;
+                      const newValue =
+                        e.target.value === "" ? null : e.target.value;
                       onChange(newValue);
                     }}
                     disabled={false}
@@ -920,19 +906,25 @@ export default function WorkForm({
             </Grid>
           </>
         )}
-        
+
         <Grid item xs={12} sx={{ mt: 2 }}>
-        <Button
+          <Button
             type="submit"
-          variant="contained"
-          color="primary"
+            variant="contained"
+            color="primary"
             fullWidth
             disabled={isLoading}
-        >
-            {isLoading ? <CircularProgress size={24} /> : (initialData ? "Cập nhật" : "Thêm mới")}
-        </Button>
+          >
+            {isLoading ? (
+              <CircularProgress size={24} />
+            ) : initialData ? (
+              "Cập nhật"
+            ) : (
+              "Thêm mới"
+            )}
+          </Button>
         </Grid>
       </Grid>
     </form>
   );
-} 
+}

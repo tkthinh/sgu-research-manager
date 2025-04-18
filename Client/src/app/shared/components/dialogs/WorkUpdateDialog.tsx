@@ -75,6 +75,7 @@ export default function WorkUpdateDialog({
             scimagoFields={scimagoFields}
             fields={fields}
             activeTab={activeTab}
+            setActiveTab={setActiveTab}
           />
         ) : (
           <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
