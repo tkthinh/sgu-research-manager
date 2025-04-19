@@ -45,31 +45,6 @@ namespace WebApi.Controllers
             ));
         }
 
-        [HttpGet("work-type/{workTypeId}")]
-        public async Task<ActionResult<ApiResponse<IEnumerable<SCImagoFieldDto>>>> GetSCImagoFieldsByWorkTypeId([FromRoute] Guid workTypeId)
-        {
-            if (workTypeId == Guid.Empty)
-            {
-                return BadRequest(new ApiResponse<IEnumerable<SCImagoFieldDto>>(false, "WorkTypeId không hợp lệ"));
-            }
-
-            var scImagoFields = await scImagoFieldService.GetSCImagoFieldsByWorkTypeIdAsync(workTypeId);
-            if (scImagoFields == null || !scImagoFields.Any())
-            {
-                return Ok(new ApiResponse<IEnumerable<SCImagoFieldDto>>(
-                    true,
-                    "Không tìm thấy lĩnh vực SCImago cho loại công trình này",
-                    Enumerable.Empty<SCImagoFieldDto>()
-                ));
-            }
-
-            return Ok(new ApiResponse<IEnumerable<SCImagoFieldDto>>(
-                true,
-                "Lấy dữ liệu lĩnh vực SCImago theo loại công trình thành công",
-                scImagoFields
-            ));
-        }
-
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<SCImagoFieldDto>>> CreateSCImagoField([FromBody] CreateSCImagoFieldRequestDto request)
@@ -78,8 +53,7 @@ namespace WebApi.Controllers
             {
                 var dto = new SCImagoFieldDto
                 {
-                    Name = request.Name,
-                    WorkTypeId = request.WorkTypeId
+                    Name = request.Name
                 };
 
                 var field = await scImagoFieldService.CreateAsync(dto);
@@ -105,7 +79,6 @@ namespace WebApi.Controllers
                     return NotFound(new ApiResponse<object>(false, "Không tìm thấy ngành SCImago"));
                 }
                 existingField.Name = request.Name;
-                existingField.WorkTypeId = request.WorkTypeId;
                 await scImagoFieldService.UpdateAsync(existingField);
                 return Ok(new ApiResponse<object>(true, "Cập nhật ngành SCImago thành công"));
             }
