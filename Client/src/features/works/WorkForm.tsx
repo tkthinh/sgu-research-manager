@@ -30,8 +30,8 @@ import { Work } from "../../lib/types/models/Work";
 import { getScoreLevelFullDescription } from "../../lib/utils/scoreLevelUtils";
 import { FieldDef, workDetailsConfig } from "../../lib/utils/workDetailsConfig";
 
-// Define validation schema
-const schema = z.object({
+// Schema cho trường hợp tạo mới
+const createSchema = z.object({
   title: z.string().min(2, "Tên công trình phải có ít nhất 2 ký tự"),
   timePublished: z.any().optional().nullable(),
   totalAuthors: z.coerce
@@ -44,7 +44,19 @@ const schema = z.object({
     .min(1, "Số tác giả chính phải lớn hơn 0")
     .optional()
     .nullable(),
-  details: z.any().optional(),
+  details: z.record(z.string()).refine(
+    (val) => {
+      // Kiểm tra xem có phải đang tạo mới không bằng cách kiểm tra workTypeId
+      const isCreating = !val || Object.keys(val).length === 0;
+      if (isCreating) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Thông tin chi tiết là bắt buộc",
+    }
+  ),
   source: z.number(),
   workTypeId: z.string().uuid("ID loại công trình không hợp lệ"),
   workLevelId: z
@@ -82,7 +94,59 @@ const schema = z.object({
   }),
 });
 
-type WorkFormData = z.infer<typeof schema>;
+// Schema cho trường hợp cập nhật
+const updateSchema = z.object({
+  title: z.string().min(2, "Tên công trình phải có ít nhất 2 ký tự"),
+  timePublished: z.any().optional().nullable(),
+  totalAuthors: z.coerce
+    .number()
+    .min(1, "Số tác giả phải lớn hơn 0")
+    .optional()
+    .nullable(),
+  totalMainAuthors: z.coerce
+    .number()
+    .min(1, "Số tác giả chính phải lớn hơn 0")
+    .optional()
+    .nullable(),
+  details: z.record(z.string()).optional(),
+  source: z.number(),
+  workTypeId: z.string().uuid("ID loại công trình không hợp lệ"),
+  workLevelId: z
+    .string()
+    .uuid("ID cấp độ công trình không hợp lệ")
+    .optional()
+    .nullable(),
+  coAuthorUserIds: z
+    .array(z.string().uuid("ID đồng tác giả không hợp lệ"))
+    .optional()
+    .default([]),
+  author: z.object({
+    authorRoleId: z
+      .string()
+      .uuid("ID vai trò tác giả không hợp lệ")
+      .optional()
+      .nullable(),
+    purposeId: z.string().uuid("ID mục đích không hợp lệ"),
+    position: z
+      .number()
+      .min(1, "Vị trí tác giả phải lớn hơn 0")
+      .optional()
+      .nullable(),
+    scoreLevel: z
+      .number()
+      .min(0, "Mức điểm không hợp lệ")
+      .optional()
+      .nullable(),
+    sCImagoFieldId: z
+      .string()
+      .uuid("ID lĩnh vực SCImago không hợp lệ")
+      .optional()
+      .nullable(),
+    fieldId: z.string().uuid("ID lĩnh vực không hợp lệ").optional().nullable(),
+  }),
+});
+
+type WorkFormData = z.infer<typeof createSchema>;
 
 interface WorkFormProps {
   initialData?: Work | null;
@@ -129,7 +193,7 @@ export default function WorkForm({
     setValue,
     watch,
   } = useForm<WorkFormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(createSchema),
     mode: "onSubmit",
     defaultValues: initialData
       ? {
@@ -490,8 +554,20 @@ export default function WorkForm({
     }
   };
 
+  // Xử lý khi form được submit
+  const handleFormSubmit = (formData: WorkFormData) => {
+    // Chuyển đổi thời gian thành ISO string mà không thay đổi múi giờ
+    const processedData = {
+      ...formData,
+      timePublished: formData.timePublished
+        ? new Date(formData.timePublished).toISOString()
+        : null,
+    };
+    onSubmit(processedData);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit, handleFormErrors)}>
+    <form onSubmit={handleSubmit(handleFormSubmit)}>
       <Grid container spacing={2}>
         {activeTab === 0 && (
           // Tab thông tin công trình
@@ -517,16 +593,12 @@ export default function WorkForm({
               <Controller
                 name="timePublished"
                 control={control}
-                render={({ field }) => (
-                  <LocalizationProvider
-                    dateAdapter={AdapterDateFns}
-                    adapterLocale={vi}
-                  >
+                render={({ field: { value, onChange, ...restField } }) => (
+                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={vi}>
                     <DatePicker
                       label="Thời gian xuất bản"
-                      value={field.value ? new Date(field.value) : null}
-                      onChange={(date) => field.onChange(date)}
-                      disabled={initialData?.isLocked}
+                      value={value ? new Date(value) : null}
+                      onChange={(date) => onChange(date)}
                       slotProps={{
                         textField: {
                           fullWidth: true,

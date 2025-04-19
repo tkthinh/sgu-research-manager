@@ -38,7 +38,7 @@ const schema = z
     openDate: z.string().min(1, "Ngày mở là bắt buộc"),
     closeTime: z.string().min(1, "Thời gian đóng là bắt buộc"),
     closeDate: z.string().min(1, "Ngày đóng là bắt buộc"),
-    // We still define academicYearId for validation but we’re going to force it later.
+    // We still define academicYearId for validation but we're going to force it later.
     academicYearId: z.string(),
   })
   .refine(
@@ -101,9 +101,9 @@ export default function SystemConfigForm({
   // Setup form values on load or when editing
   useEffect(() => {
     if (data) {
-      // Parse the stored UTC ISO strings and convert them to Asia/Saigon time.
-      const dtOpen = DateTime.fromISO(data.openTime, { zone: "utc" }).setZone("Asia/Saigon");
-      const dtClose = DateTime.fromISO(data.closeTime, { zone: "utc" }).setZone("Asia/Saigon");
+      // Parse the ISO strings directly without timezone conversion
+      const dtOpen = DateTime.fromISO(data.openTime);
+      const dtClose = DateTime.fromISO(data.closeTime);
   
       // Set the form fields using formatted values.
       setValue("name", data.name);
@@ -281,11 +281,7 @@ export default function SystemConfigForm({
 }
 
 const toISOStringWithOffset = (dateString: string, timeString: string): string => {
-  // Combine the date and time assuming they’re in Asia/Saigon,
-  // then convert them to a UTC ISO string.
-  return DateTime.fromFormat(`${dateString} ${timeString}`, "yyyy-LL-dd HH:mm", {
-    zone: "Asia/Saigon",
-  })
-    .toUTC()
+  // Combine the date and time and return as ISO string
+  return DateTime.fromFormat(`${dateString} ${timeString}`, "yyyy-LL-dd HH:mm")
     .toISO();
 };
