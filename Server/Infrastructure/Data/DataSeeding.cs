@@ -1630,6 +1630,150 @@ namespace Infrastructure.Data.Seeding
 
                 new Factor
                 {
+                    Id = Guid.Parse("aa95d339-ea61-4442-8975-533a7c8432d2"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("3c21b247-16ce-40a9-a921-abef0e1bba56"),   // Cấp Trường
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Trường được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("05a85289-1c41-419f-b8c8-a680833a532d"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("3c21b247-16ce-40a9-a921-abef0e1bba56"),   // Cấp Trường
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Trường được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("9007980a-5ba4-497f-a7f7-ecee5310c146"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("e78fab66-8637-431d-a2f8-a8d3d81f7124"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),   // Cấp Bộ/Ngành
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Bộ/Ngành được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("371136aa-c37c-4f80-88b9-916273b3484d"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),   // Cấp Quốc gia
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Quốc gia được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("83d5e873-4216-4e5e-969d-88cb7aa596b9"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("740e8212-f47b-4080-b57a-839b8b90056c"),   // Cấp Quốc gia
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Quốc gia được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("65a1f78b-0de9-415e-91e9-40c03fb25275"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Quốc tế được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("85b73b4f-079c-4e77-b04b-9f4c0c913d79"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("db324190-d1ed-4712-b3db-94a6e043bf1e"),   // Cấp Quốc tế
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Quốc tế được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                }, 
+                new Factor
+                {
+                    Id = Guid.Parse("e2ad03e5-11d4-42e4-9626-49db6350bf9a"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp Scopus được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("2c5a2f69-f5c6-493e-968b-3e844154ea0b"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f0dcb91e-04b1-46c5-a05d-bbcaf7ef89f9"),   // Cấp Scopus
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp Scopus được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("d203dfe4-b44a-4c37-a17b-726fbacbdd47"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),   // Cấp WoS
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("b92d7fc9-687d-4fdd-9ddf-c4c7b50ae4c5"),  // Tác giả chính
+                    Name = "Báo cáo khoa học cấp WoS được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("e5105b69-738c-493d-8a8d-a2a10f282546"),
+                    WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
+                    WorkLevelId = Guid.Parse("f81c134b-fd83-4e25-9590-cf7ecfc5b203"),   // Cấp WoS
+                    PurposeId = Guid.Parse("be2cb497-02ac-4f5c-ae8a-062876730a2b"),     // Sản phẩm thuộc đề tài
+                    AuthorRoleId = Guid.Parse("ee9dc844-73d7-458f-9f6d-ae535824c8ca"),  // Thành viên
+                    Name = "Báo cáo khoa học cấp WoS được đăng toàn văn",
+                    ScoreLevel = null,
+                    MaxAllowed = null,
+                    ConvertHour = 0
+                },
+                new Factor
+                {
                     Id = Guid.Parse("1d749956-707f-4e55-ae63-7e8ad787d716"),
                     WorkTypeId = Guid.Parse("03412ca7-8ccf-4903-9018-457768060ab4"),    // Báo cáo
                     WorkLevelId = Guid.Parse("250662c1-1c69-4ef0-a21d-7077cafd1d06"),   // Cấp Bộ/Ngành
@@ -1676,7 +1820,6 @@ namespace Infrastructure.Data.Seeding
                     MaxAllowed = 1,
                     ConvertHour = 54
                 },
-
                 new Factor
                 {
                     Id = Guid.Parse("d70faba4-e61e-4dae-b683-2e46e73d4578"),
@@ -1845,6 +1988,7 @@ namespace Infrastructure.Data.Seeding
                     MaxAllowed = 2,
                     ConvertHour = 200
                 },
+
                 new Factor
                 {
                     Id = Guid.Parse("57b568a1-5447-4bb8-bc39-7bc870f86560"),
@@ -1869,6 +2013,8 @@ namespace Infrastructure.Data.Seeding
                     MaxAllowed = 2,
                     ConvertHour = 120
                 },
+
+
 
                 // Tài liệu giảng dạy
                 new Factor
@@ -2725,8 +2871,6 @@ namespace Infrastructure.Data.Seeding
                     ConvertHour = 240
                 },
 
-
-
                 // Giáo trình - Sách
                 new Factor
                 {
@@ -2734,7 +2878,31 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("84a14a8b-eae8-4720-bc7c-e1f93b35a256"),
                     WorkLevelId = null,
                     PurposeId = Guid.Parse("1e9aa201-0e1b-4214-9dbb-2c9eb59a428a"),
-                    AuthorRoleId = null,
+                    AuthorRoleId = Guid.Parse("be6b03da-7853-48ab-93b3-81da27c3271e"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("9e99441e-be5b-44dc-b0ca-d75bb9797aa1"),
+                    WorkTypeId = Guid.Parse("84a14a8b-eae8-4720-bc7c-e1f93b35a256"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("1e9aa201-0e1b-4214-9dbb-2c9eb59a428a"),
+                    AuthorRoleId = Guid.Parse("8560f2b2-7b9b-4f28-b79a-f5ea21f76e97"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("2971a6c0-9bfa-4c62-91db-e290a9008856"),
+                    WorkTypeId = Guid.Parse("84a14a8b-eae8-4720-bc7c-e1f93b35a256"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("1e9aa201-0e1b-4214-9dbb-2c9eb59a428a"),
+                    AuthorRoleId = Guid.Parse("8bac0cd7-b553-42cc-af1a-5d50d32a6fac"),
                     Name = "Sách",
                     ScoreLevel = ScoreLevel.Sach,
                     MaxAllowed = null,
@@ -2748,7 +2916,31 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("3bbfc66a-3144-4edf-959b-e049d7e33d97"),
                     WorkLevelId = null,
                     PurposeId = Guid.Parse("494e049e-0972-4ff0-a786-6e00880955fc"),
-                    AuthorRoleId = null,
+                    AuthorRoleId = Guid.Parse("6304f87f-439a-477d-b989-31df3b6e06b6"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("5eb303f2-4a38-4ecb-a053-6fa2670186fb"),
+                    WorkTypeId = Guid.Parse("3bbfc66a-3144-4edf-959b-e049d7e33d97"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("494e049e-0972-4ff0-a786-6e00880955fc"),
+                    AuthorRoleId = Guid.Parse("3f0d8b5e-99da-4702-bc34-1b36c99cbdaa"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("cd282c91-bc19-4bac-b0e4-6321cf917221"),
+                    WorkTypeId = Guid.Parse("3bbfc66a-3144-4edf-959b-e049d7e33d97"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("494e049e-0972-4ff0-a786-6e00880955fc"),
+                    AuthorRoleId = Guid.Parse("98b05ce5-af6e-4953-be9b-45f97e711c86"),
                     Name = "Sách",
                     ScoreLevel = ScoreLevel.Sach,
                     MaxAllowed = null,
@@ -2762,7 +2954,31 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("628a119e-324f-42b8-8ff4-e29ee5c643a9"),
                     WorkLevelId = null,
                     PurposeId = Guid.Parse("3da2c117-b32f-4687-89b8-ba9544920f35"),
-                    AuthorRoleId = null,
+                    AuthorRoleId = Guid.Parse("11eea600-4495-486c-985d-57de08b8b5da"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("9eff21e2-bf66-4ff1-a67f-32700c84c412"),
+                    WorkTypeId = Guid.Parse("628a119e-324f-42b8-8ff4-e29ee5c643a9"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("3da2c117-b32f-4687-89b8-ba9544920f35"),
+                    AuthorRoleId = Guid.Parse("77daab84-939d-4d0d-957d-27be75bb79b4"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("3be58f79-b3c8-4ae2-b761-1d020c064584"),
+                    WorkTypeId = Guid.Parse("628a119e-324f-42b8-8ff4-e29ee5c643a9"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("3da2c117-b32f-4687-89b8-ba9544920f35"),
+                    AuthorRoleId = Guid.Parse("b0923868-3ce3-4653-97fa-d6925771ce64"),
                     Name = "Sách",
                     ScoreLevel = ScoreLevel.Sach,
                     MaxAllowed = null,
@@ -2776,7 +2992,31 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("61bbbecc-038a-43b7-aafa-a95e25a93f38"),
                     WorkLevelId = null,
                     PurposeId = Guid.Parse("32cce5b8-24aa-4a3e-9326-c853e5c50fd7"),
-                    AuthorRoleId = null,
+                    AuthorRoleId = Guid.Parse("5f65dffc-5e3a-46a8-9bc6-1bacce9ef3fa"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("61502bfe-fba5-47d4-9aa9-c1ec01d7fb0f"),
+                    WorkTypeId = Guid.Parse("61bbbecc-038a-43b7-aafa-a95e25a93f38"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("32cce5b8-24aa-4a3e-9326-c853e5c50fd7"),
+                    AuthorRoleId = Guid.Parse("4a85d698-7809-4912-923f-18c3f0a2e676"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("53b25eec-2419-4cee-a256-c22767dc3a12"),
+                    WorkTypeId = Guid.Parse("61bbbecc-038a-43b7-aafa-a95e25a93f38"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("32cce5b8-24aa-4a3e-9326-c853e5c50fd7"),
+                    AuthorRoleId = Guid.Parse("3dfd761c-256e-442f-99fb-136d27b4cea5"),
                     Name = "Sách",
                     ScoreLevel = ScoreLevel.Sach,
                     MaxAllowed = null,
@@ -2790,7 +3030,31 @@ namespace Infrastructure.Data.Seeding
                     WorkTypeId = Guid.Parse("8aaf0a8a-35ed-4768-8fd4-44fc4a561cd0"),
                     WorkLevelId = null,
                     PurposeId = Guid.Parse("fc948f99-b569-4265-b1c9-ba5aa31d730b"),
-                    AuthorRoleId = null,
+                    AuthorRoleId = Guid.Parse("d8d1af53-3354-4af3-a18f-85c6ee46e750"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("90115bb8-51db-4080-a43e-3383f24a6e8c"),
+                    WorkTypeId = Guid.Parse("8aaf0a8a-35ed-4768-8fd4-44fc4a561cd0"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("fc948f99-b569-4265-b1c9-ba5aa31d730b"),
+                    AuthorRoleId = Guid.Parse("ed76e468-43ee-47c3-8148-e6f63406a98d"),
+                    Name = "Sách",
+                    ScoreLevel = ScoreLevel.Sach,
+                    MaxAllowed = null,
+                    ConvertHour = 240
+                },
+                new Factor
+                {
+                    Id = Guid.Parse("a09df10c-a3cd-45d2-ab09-7f7a7a36aeed"),
+                    WorkTypeId = Guid.Parse("8aaf0a8a-35ed-4768-8fd4-44fc4a561cd0"),
+                    WorkLevelId = null,
+                    PurposeId = Guid.Parse("fc948f99-b569-4265-b1c9-ba5aa31d730b"),
+                    AuthorRoleId = Guid.Parse("3016bf69-e8d1-4852-a717-b5924a7bb7b2"),
                     Name = "Sách",
                     ScoreLevel = ScoreLevel.Sach,
                     MaxAllowed = null,
