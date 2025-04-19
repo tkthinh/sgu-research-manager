@@ -20,7 +20,7 @@ import { useAuth } from "../../app/shared/contexts/AuthContext";
 import { useWorkFormData } from "../../hooks/useWorkData";
 import { getAuthorRolesByWorkTypeId } from "../../lib/api/authorRolesApi";
 import { getPurposesByWorkTypeId } from "../../lib/api/purposesApi";
-import { getScimagoFieldsByWorkTypeId } from "../../lib/api/scimagoFieldsApi";
+import { getScimagoFields } from "../../lib/api/scimagoFieldsApi";
 import { getScoreLevelsByFilters } from "../../lib/api/scoreLevelsApi";
 import { getUserById, searchUsers } from "../../lib/api/usersApi";
 import { getWorkLevelsByWorkTypeId } from "../../lib/api/workLevelsApi";
@@ -234,11 +234,17 @@ export default function WorkForm({
     enabled: !!workTypeId,
   });
 
-  const { data: scimagoFieldsData } = useQuery({
-    queryKey: ["scimagoFields", workTypeId],
-    queryFn: () => getScimagoFieldsByWorkTypeId(workTypeId),
-    enabled: !!workTypeId,
+  const { data: scimagoFieldsData, isLoading: isLoadingScimagoFields } = useQuery({
+    queryKey: ["scimagoFields"],
+    queryFn: getScimagoFields,
+    enabled: !!workTypeId
   });
+
+  // Lọc scimagoFields dựa trên workTypeId
+  const filteredScimagoFields = useMemo(() => {
+    if (!scimagoFieldsData?.data) return [];
+    return scimagoFieldsData.data;
+  }, [scimagoFieldsData?.data]);
 
   // Tìm kiếm người dùng
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
@@ -864,7 +870,7 @@ export default function WorkForm({
                     }}
                   >
                     <MenuItem value="">Chọn ngành SCImago</MenuItem>
-                    {scimagoFieldsData?.data?.map((field) => (
+                    {filteredScimagoFields.map((field) => (
                       <MenuItem key={field.id} value={field.id}>
                         {field.name}
                       </MenuItem>
