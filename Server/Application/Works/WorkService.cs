@@ -51,7 +51,7 @@ namespace Application.Works
         public async Task<WorkDto> CreateWorkWithAuthorAsync(CreateWorkRequestDto request, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
-            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.UtcNow, cancellationToken))
                 throw new Exception(ErrorMessages.SystemClosedNewWork);
 
             var existingWork = await _unitOfWork.Repository<Work>()
@@ -176,7 +176,7 @@ namespace Application.Works
             if (work is null)
                 throw new Exception(ErrorMessages.WorkNotFound);
 
-            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.UtcNow, cancellationToken))
                 throw new Exception(ErrorMessages.SystemClosedDeleteWork);
 
             // Xóa các tác giả liên quan
@@ -195,7 +195,7 @@ namespace Application.Works
         public async Task RegisterWorkByAuthorAsync(Guid authorId, bool registered, CancellationToken cancellationToken = default)
         {
             // Kiểm tra trạng thái hệ thống
-            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.UtcNow, cancellationToken))
                 throw new Exception(ErrorMessages.SystemClosedMarkingWork);
 
             // Lấy thông tin tác giả và công trình
@@ -535,7 +535,7 @@ namespace Application.Works
             var currentAuthor = await _unitOfWork.Repository<Author>()
                 .FirstOrDefaultAsync(a => a.WorkId == work.Id && a.UserId == userId, cancellationToken);
 
-            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.Now, cancellationToken))
+            if (!await _systemConfigService.IsSystemOpenAsync(DateTime.UtcNow, cancellationToken))
             {
                 if (currentAuthor is null || currentAuthor.ProofStatus != ProofStatus.KhongHopLe)
                     throw new Exception(ErrorMessages.SystemClosedEditWork);
