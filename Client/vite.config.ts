@@ -23,6 +23,7 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: "../Server/WebApi/wwwroot",
     sourcemap: false,
     emptyOutDir: true,
     chunkSizeWarningLimit: 1500,
