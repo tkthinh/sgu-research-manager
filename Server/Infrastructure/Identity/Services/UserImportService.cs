@@ -47,6 +47,14 @@ namespace Infrastructure.Identity.Services
                 // Loop through rows (assuming first row is header)
                 for (int row = 2; row <= rowCount; row++)
                 {
+                    bool isEmptyRow = Enumerable.Range(1, 5)
+                                        .All(col => string.IsNullOrWhiteSpace(
+                                            worksheet.Cells[row, col]
+                                            .GetValue<string>()));
+
+                    if (isEmptyRow)
+                        continue;
+
                     // Read cells:
                     var username = worksheet.Cells[row, 1].GetValue<string>()?.Trim();
                     var fullName = worksheet.Cells[row, 2].GetValue<string>()?.Trim();

@@ -1,38 +1,39 @@
+using System.Text;
+using Application.AcademicYears;
+using Application.Assignments;
+using Application.Auth;
+using Application.AuthorRegistrations;
+using Application.AuthorRoles;
+using Application.Authors;
+using Application.Caches;
 using Application.Departments;
+using Application.Factors;
 using Application.Fields;
+using Application.Notifications;
 using Application.Purposes;
+using Application.SCImagoFields;
+using Application.ScoreLevels;
+using Application.Shared.Services;
+using Application.SystemConfigs;
+using Application.Users;
 using Application.WorkLevels;
+using Application.Works;
+using Application.WorkTypes;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Data;
+using Infrastructure.Data.Repositories;
 using Infrastructure.Data.UnitOfWork;
-using Microsoft.EntityFrameworkCore;
+using Infrastructure.Identity;
+using Infrastructure.Identity.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Infrastructure.Identity;
-using Application.WorkTypes;
-using Application.AuthorRoles;
-using Application.Assignments;
-using Application.Factors;
-using Application.Authors;
-using Application.Works;
-using Application.SCImagoFields;
-using Infrastructure.Data.Repositories;
-using Application.Users;
-using Application.SystemConfigs;
-using Application.Caches;
 using StackExchange.Redis;
-using Application.ScoreLevels;
-using Infrastructure.Identity.Services;
-using Application.Auth;
-using Application.AcademicYears;
-using Application.AuthorRegistrations;
-using Application.Shared.Services;
-using Application.Notifications;
 
 namespace Infrastructure
 {
@@ -62,9 +63,28 @@ namespace Infrastructure
             });
 
             // Cấu hình Redis Cache
-            services.AddStackExchangeRedisCache(options =>
+            var redisOpts = ConfigurationOptions.Parse(configuration.GetConnectionString("Redis")!);
+            redisOpts.AbortOnConnectFail = false;
+            redisOpts.ConnectRetry = 3;
+            redisOpts.ConnectTimeout = 5000;
+
+            services.AddStackExchangeRedisCache(opts =>
             {
-                options.Configuration = configuration.GetConnectionString("Redis");
+                opts.ConfigurationOptions = redisOpts;
+            });
+
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                try
+                {
+                    return ConnectionMultiplexer.Connect(redisOpts);
+                }
+                catch (Exception ex)
+                {
+                    var log = sp.GetRequiredService<ILogger>();
+                    log.LogWarning(ex, "RedisMultiplexer failed to connect—cache disabled for now");
+                    return null!;
+                }
             });
 
             // Đăng ký Identity

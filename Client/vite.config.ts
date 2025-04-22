@@ -23,6 +23,7 @@ export default defineConfig({
     },
   },
   build: {
+    // delete outDir if use Dockerfile
     outDir: "../Server/WebApi/wwwroot",
     sourcemap: false,
     emptyOutDir: true,
