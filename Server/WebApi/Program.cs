@@ -39,14 +39,17 @@ builder.Services.AddHealthChecks();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowDev",
-        policy => policy.WithOrigins("http://localhost:5173")
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials()
-    );
+    options.AddPolicy("CorsPolicy", policy =>
+    {
+        policy.WithOrigins(allowedOrigins!)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
@@ -76,17 +79,21 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
-app.UseCors("AllowDev");
+app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseResponseCompression();
 
 app.MapHealthChecks("/health");
 
-app.MapHub<NotificationHub>("notification-hub");
 app.MapControllers();
+app.MapHub<NotificationHub>("notification-hub");
+app.MapFallbackToController("Index", "Fallback");
 
 await AuthDbInitializer.SeedDataAsync(app.Services);
 

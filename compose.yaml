@@ -1,5 +1,3 @@
-version: '0.1'
-
 include:
   - infra.yaml
 
@@ -15,9 +13,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - HTTP_PORTS=80
       - HTTPS_PORTS=
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=Research;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=true
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Research;User Id=sa;Password=Your_strong_password123;TrustServerCertificate=true
       - ConnectionStrings__Redis=redis:6379,connectTimeout=500,syncTimeout=500,responseTimeout=500,abortConnect=false
-
   frontend:
     build: ./Client
     ports:
