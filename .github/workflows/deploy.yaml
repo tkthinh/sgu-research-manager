@@ -66,16 +66,16 @@ jobs:
         working-directory: ${{ env.WEBAPI_PATH }}
         run: dotnet publish -c Release -o publish
 
-      - name: Zip publish folder
-        working-directory: ${{ env.WEBAPI_PATH }}
+      - name: Zip publish output
         run: |
-          zip -r ../app.zip .
+          cd ${{ env.WEBAPI_PATH }}/publish
+          zip -r ../../app.zip .  
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-zip
-          path: ${{ env.WEBAPI_PATH }}/app.zip
+          path: app.zip
 
   deploy-to-eb:
     needs: build-and-publish
