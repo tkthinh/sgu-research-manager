@@ -79,8 +79,9 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 const stepOneSchema = z
   .object({
     username: z
-      .string()
-      .regex(/^\d{8}$/, "Mã số giảng viên phải gồm 8 chữ số"),
+        .string()
+        .min(8, "Mã số giảng viên là bắt buộc")
+        .max(9, "Mã số giảng viên không hợp lệ"),
     password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
     confirmPassword: z.string().min(6, "Vui lòng xác nhận mật khẩu"),
   })
