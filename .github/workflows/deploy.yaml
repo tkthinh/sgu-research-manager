@@ -64,12 +64,12 @@ jobs:
 
       - name: Publish WebApi
         working-directory: ${{ env.WEBAPI_PATH }}
-        run: dotnet publish -c Release -o publish
+        run: dotnet publish -c Release -o ./publish
 
       - name: Zip publish folder
-        working-directory: ${{ env.WEBAPI_PATH }}
+        working-directory: ${{ env.WEBAPI_PATH }}/publish
         run: |
-          zip -r app.zip publish
+          zip -r ../app.zip .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
