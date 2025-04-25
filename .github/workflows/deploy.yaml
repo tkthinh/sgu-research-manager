@@ -69,13 +69,13 @@ jobs:
       - name: Zip publish folder
         working-directory: ${{ env.WEBAPI_PATH }}
         run: |
-          zip -r app.zip .
+          zip -r app.zip publish
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-zip
-          path: app.zip
+          path: ${{ env.WEBAPI_PATH }}/app.zip
 
   deploy-to-eb:
     needs: build-and-publish
