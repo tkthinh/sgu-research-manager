@@ -11,8 +11,6 @@ namespace Application.SCImagoFields
             {
                 Id = entity.Id,
                 Name = entity.Name,
-                WorkTypeId = entity.WorkTypeId,
-                WorkTypeName = entity.WorkType?.Name,
                 CreatedDate = entity.CreatedDate,
                 ModifiedDate = entity.ModifiedDate
             };
@@ -24,7 +22,6 @@ namespace Application.SCImagoFields
             {
                 Id = dto.Id,
                 Name = dto.Name,
-                WorkTypeId = dto.WorkTypeId,
                 CreatedDate = dto.CreatedDate,
                 ModifiedDate = dto.ModifiedDate
             };

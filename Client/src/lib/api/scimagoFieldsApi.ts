@@ -26,8 +26,3 @@ export const deleteScimagoField = async (id: string): Promise<ApiResponse<boolea
   const response = await apiClient.delete<ApiResponse<boolean>>(`/scimagofields/${id}`);
   return response.data;
 };
-
-export const getScimagoFieldsByWorkTypeId = async (workTypeId: string): Promise<ApiResponse<ScimagoField[]>> => {
-  const response = await apiClient.get<ApiResponse<ScimagoField[]>>(`/scimagofields/work-type/${workTypeId}`);
-  return response.data;
-};

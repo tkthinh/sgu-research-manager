@@ -6,22 +6,19 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-  MenuItem,
   CircularProgress,
 } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import * as z from "zod";
 import { createScimagoField, updateScimagoField } from "../../../lib/api/scimagoFieldsApi";
-import { getWorkTypes } from "../../../lib/api/workTypesApi";
 import { ScimagoField } from "../../../lib/types/models/ScimagoField";
 
 // Define validation schema
 const schema = z.object({
   name: z.string().min(2, "Tên ngành SCImago phải có ít nhất 2 ký tự"),
-  workTypeId: z.string().uuid("Vui lòng chọn loại công trình"),
 });
 
 interface ScimagoFieldFormProps {
@@ -33,12 +30,6 @@ interface ScimagoFieldFormProps {
 export default function ScimagoFieldForm({ open, handleClose, data }: ScimagoFieldFormProps) {
   const queryClient = useQueryClient();
 
-  // Fetch work types
-  const { data: workTypesData, isLoading: isLoadingWorkTypes } = useQuery({
-    queryKey: ["workTypes"],
-    queryFn: getWorkTypes,
-  });
-
   const {
     register,
     handleSubmit,
@@ -49,14 +40,12 @@ export default function ScimagoFieldForm({ open, handleClose, data }: ScimagoFie
     resolver: zodResolver(schema),
     defaultValues: { 
       name: "",
-      workTypeId: "",
     },
   });
 
   useEffect(() => {
     if (data) {
       setValue("name", data.name);
-      setValue("workTypeId", data.workTypeId || "");
     } else {
       reset();
     }
@@ -100,27 +89,6 @@ export default function ScimagoFieldForm({ open, handleClose, data }: ScimagoFie
           margin="dense"
           disabled={isSubmitting}
         />
-
-        <TextField
-          select
-          label="Loại công trình"
-          {...register("workTypeId")}
-          error={!!errors.workTypeId}
-          helperText={errors.workTypeId?.message}
-          fullWidth
-          margin="dense"
-          disabled={isSubmitting || isLoadingWorkTypes}
-        >
-          {isLoadingWorkTypes ? (
-            <MenuItem disabled>Đang tải...</MenuItem>
-          ) : (
-            workTypesData?.data?.map((workType) => (
-              <MenuItem key={workType.id} value={workType.id}>
-                {workType.name}
-              </MenuItem>
-            ))
-          )}
-        </TextField>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} disabled={isSubmitting}>
@@ -130,7 +98,7 @@ export default function ScimagoFieldForm({ open, handleClose, data }: ScimagoFie
           onClick={handleSubmit(onSubmit)}
           variant="contained"
           color="primary"
-          disabled={isSubmitting || isLoadingWorkTypes}
+          disabled={isSubmitting}
         >
           {isSubmitting ? <CircularProgress size={24} /> : (data ? "Cập nhật" : "Thêm mới")}
         </Button>

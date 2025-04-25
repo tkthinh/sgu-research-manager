@@ -8,10 +8,6 @@ import {
   DialogTitle,
   Paper,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,22 +17,13 @@ import GenericTable from "../../../app/shared/components/tables/DataTable";
 import {
   deleteScimagoField,
   getScimagoFields,
-  getScimagoFieldsByWorkTypeId,
 } from "../../../lib/api/scimagoFieldsApi";
-import { getWorkTypes } from "../../../lib/api/workTypesApi";
 import ScimagoFieldForm from "./ScimagoFieldForm";
 
 export default function ScimagoFieldPage() {
   const queryClient = useQueryClient();
-  const [selectedWorkTypeId, setSelectedWorkTypeId] = useState<string>("");
 
-  // Fetch work types for filter
-  const { data: workTypesData, isLoading: isLoadingWorkTypes } = useQuery({
-    queryKey: ["workTypes"],
-    queryFn: getWorkTypes,
-  });
-
-  // Fetch SCImago fields with optional workTypeId filter
+  // Fetch SCImago fields
   const {
     data,
     error,
@@ -44,10 +31,8 @@ export default function ScimagoFieldPage() {
     isSuccess,
     dataUpdatedAt
   } = useQuery({
-    queryKey: ["scimagoFields", selectedWorkTypeId],
-    queryFn: () => selectedWorkTypeId 
-      ? getScimagoFieldsByWorkTypeId(selectedWorkTypeId)
-      : getScimagoFields(),
+    queryKey: ["scimagoFields"],
+    queryFn: getScimagoFields,
   });
 
   // Toast notifications
@@ -62,11 +47,6 @@ export default function ScimagoFieldPage() {
       toast.error("Có lỗi đã xảy ra: " + (error as Error).message);
     }
   }, [error]);
-
-  // Handle workType filter change
-  const handleWorkTypeChange = (event: any) => {
-    setSelectedWorkTypeId(event.target.value as string);
-  };
 
   // Handle form dialog
   const [open, setOpen] = useState(false);
@@ -127,7 +107,6 @@ export default function ScimagoFieldPage() {
       },
     },
     { field: "name", headerName: "Tên ngành SCImago", type: "string", width: 400 },
-    { field: "workTypeName", headerName: "Loại công trình", type: "string", width: 400 },
     {
       field: "actions",
       headerName: "Thao tác",
@@ -158,7 +137,7 @@ export default function ScimagoFieldPage() {
     },
   ];
 
-  if (isPending && isLoadingWorkTypes) return <CircularProgress />;
+  if (isPending) return <CircularProgress />;
   if (error) return <p>Lỗi: {(error as Error).message}</p>;
 
   return (
@@ -172,24 +151,6 @@ export default function ScimagoFieldPage() {
         <Typography variant="h4">Quản lý ngành SCImago</Typography>
         
         <Box display="flex" alignItems="center" gap={2}>
-          <FormControl sx={{ minWidth: 220 }}>
-            <InputLabel id="work-type-filter-label">Lọc theo loại công trình</InputLabel>
-            <Select
-              labelId="work-type-filter-label"
-              id="work-type-filter"
-              value={selectedWorkTypeId}
-              onChange={handleWorkTypeChange}
-              label="Lọc theo loại công trình"
-            >
-              <MenuItem value="">Tất cả</MenuItem>
-              {workTypesData?.data?.map((workType) => (
-                <MenuItem key={workType.id} value={workType.id}>
-                  {workType.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          
           <Button variant="contained" onClick={() => handleOpen(null)}>
             Thêm ngành SCImago
           </Button>
