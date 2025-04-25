@@ -25,7 +25,7 @@ import { signIn } from "../../lib/api/authApi";
 const schema = z.object({
   username: z
     .string()
-    .min(8, "Mã số giảng viên là bắt buộc")
+    .min(0, "Mã số giảng viên là bắt buộc")
     .max(9, "Mã số giảng viên không hợp lệ"),
   password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
 });
