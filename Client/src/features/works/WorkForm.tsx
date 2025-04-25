@@ -94,57 +94,57 @@ const createSchema = z.object({
   }),
 });
 
-// Schema cho trường hợp cập nhật
-const updateSchema = z.object({
-  title: z.string().min(2, "Tên công trình phải có ít nhất 2 ký tự"),
-  timePublished: z.any().optional().nullable(),
-  totalAuthors: z.coerce
-    .number()
-    .min(1, "Số tác giả phải lớn hơn 0")
-    .optional()
-    .nullable(),
-  totalMainAuthors: z.coerce
-    .number()
-    .min(1, "Số tác giả chính phải lớn hơn 0")
-    .optional()
-    .nullable(),
-  details: z.record(z.string()).optional(),
-  source: z.number(),
-  workTypeId: z.string().uuid("ID loại công trình không hợp lệ"),
-  workLevelId: z
-    .string()
-    .uuid("ID cấp độ công trình không hợp lệ")
-    .optional()
-    .nullable(),
-  coAuthorUserIds: z
-    .array(z.string().uuid("ID đồng tác giả không hợp lệ"))
-    .optional()
-    .default([]),
-  author: z.object({
-    authorRoleId: z
-      .string()
-      .uuid("ID vai trò tác giả không hợp lệ")
-      .optional()
-      .nullable(),
-    purposeId: z.string().uuid("ID mục đích không hợp lệ"),
-    position: z
-      .number()
-      .min(1, "Vị trí tác giả phải lớn hơn 0")
-      .optional()
-      .nullable(),
-    scoreLevel: z
-      .number()
-      .min(0, "Mức điểm không hợp lệ")
-      .optional()
-      .nullable(),
-    sCImagoFieldId: z
-      .string()
-      .uuid("ID lĩnh vực SCImago không hợp lệ")
-      .optional()
-      .nullable(),
-    fieldId: z.string().uuid("ID lĩnh vực không hợp lệ").optional().nullable(),
-  }),
-});
+// // Schema cho trường hợp cập nhật
+// const updateSchema = z.object({
+//   title: z.string().min(2, "Tên công trình phải có ít nhất 2 ký tự"),
+//   timePublished: z.any().optional().nullable(),
+//   totalAuthors: z.coerce
+//     .number()
+//     .min(1, "Số tác giả phải lớn hơn 0")
+//     .optional()
+//     .nullable(),
+//   totalMainAuthors: z.coerce
+//     .number()
+//     .min(1, "Số tác giả chính phải lớn hơn 0")
+//     .optional()
+//     .nullable(),
+//   details: z.record(z.string()).optional(),
+//   source: z.number(),
+//   workTypeId: z.string().uuid("ID loại công trình không hợp lệ"),
+//   workLevelId: z
+//     .string()
+//     .uuid("ID cấp độ công trình không hợp lệ")
+//     .optional()
+//     .nullable(),
+//   coAuthorUserIds: z
+//     .array(z.string().uuid("ID đồng tác giả không hợp lệ"))
+//     .optional()
+//     .default([]),
+//   author: z.object({
+//     authorRoleId: z
+//       .string()
+//       .uuid("ID vai trò tác giả không hợp lệ")
+//       .optional()
+//       .nullable(),
+//     purposeId: z.string().uuid("ID mục đích không hợp lệ"),
+//     position: z
+//       .number()
+//       .min(1, "Vị trí tác giả phải lớn hơn 0")
+//       .optional()
+//       .nullable(),
+//     scoreLevel: z
+//       .number()
+//       .min(0, "Mức điểm không hợp lệ")
+//       .optional()
+//       .nullable(),
+//     sCImagoFieldId: z
+//       .string()
+//       .uuid("ID lĩnh vực SCImago không hợp lệ")
+//       .optional()
+//       .nullable(),
+//     fieldId: z.string().uuid("ID lĩnh vực không hợp lệ").optional().nullable(),
+//   }),
+// });
 
 type WorkFormData = z.infer<typeof createSchema>;
 
@@ -169,7 +169,7 @@ export default function WorkForm({
   workTypes,
   fields,
   activeTab,
-  setActiveTab,
+  // setActiveTab,
 }: WorkFormProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCoAuthors, setSelectedCoAuthors] = useState<User[]>([]);
@@ -298,7 +298,7 @@ export default function WorkForm({
     enabled: !!workTypeId,
   });
 
-  const { data: scimagoFieldsData, isLoading: isLoadingScimagoFields } = useQuery({
+  const { data: scimagoFieldsData } = useQuery({
     queryKey: ["scimagoFields"],
     queryFn: getScimagoFields,
     enabled: !!workTypeId
@@ -523,36 +523,36 @@ export default function WorkForm({
     setValue("coAuthorUserIds", coAuthorIds, { shouldValidate: true });
   };
 
-  const handleFormErrors = (formErrors) => {
-    console.warn("Validation failed:", formErrors);
+  // const handleFormErrors = (formErrors) => {
+  //   console.warn("Validation failed:", formErrors);
 
-    const tab1Fields = [
-      "title",
-      "timePublished",
-      "totalAuthors",
-      "totalMainAuthors",
-      "workTypeId",
-      "workLevelId",
-      "coAuthorUserIds",
-      "details",
-    ];
-    const tab2Fields = ["author"];
+  //   const tab1Fields = [
+  //     "title",
+  //     "timePublished",
+  //     "totalAuthors",
+  //     "totalMainAuthors",
+  //     "workTypeId",
+  //     "workLevelId",
+  //     "coAuthorUserIds",
+  //     "details",
+  //   ];
+  //   const tab2Fields = ["author"];
 
-    const hasTab1Error = Object.keys(formErrors).some((field) =>
-      tab1Fields.includes(field),
-    );
-    const hasTab2Error = Object.keys(formErrors).some((field) =>
-      tab2Fields.includes(field),
-    );
+  //   const hasTab1Error = Object.keys(formErrors).some((field) =>
+  //     tab1Fields.includes(field),
+  //   );
+  //   const hasTab2Error = Object.keys(formErrors).some((field) =>
+  //     tab2Fields.includes(field),
+  //   );
 
-    if (hasTab1Error && activeTab !== 0) {
-      alert("Có lỗi ở tab Thông tin công trình. Vui lòng kiểm tra lại.");
-      setActiveTab(0);
-    } else if (hasTab2Error && activeTab !== 1) {
-      alert("Có lỗi ở tab Tác giả. Vui lòng kiểm tra lại.");
-      setActiveTab(1);
-    }
-  };
+  //   if (hasTab1Error && activeTab !== 0) {
+  //     alert("Có lỗi ở tab Thông tin công trình. Vui lòng kiểm tra lại.");
+  //     setActiveTab(0);
+  //   } else if (hasTab2Error && activeTab !== 1) {
+  //     alert("Có lỗi ở tab Tác giả. Vui lòng kiểm tra lại.");
+  //     setActiveTab(1);
+  //   }
+  // };
 
   // Xử lý khi form được submit
   const handleFormSubmit = (formData: WorkFormData) => {
@@ -593,7 +593,7 @@ export default function WorkForm({
               <Controller
                 name="timePublished"
                 control={control}
-                render={({ field: { value, onChange, ...restField } }) => (
+                render={({ field: { value, onChange } }) => (
                   <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={vi}>
                     <DatePicker
                       label="Thời gian xuất bản"
