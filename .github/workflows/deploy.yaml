@@ -1,0 +1,112 @@
+name: 🔥 .NET + React CI/CD
+
+# trigger on pushes & PRs to main
+on:
+    push:
+        branches: ['main']
+    pull_request:
+        branches: ['main']
+
+jobs:
+    build-and-publish:
+        runs-on: ubuntu-latest
+        env:
+            DOTNET_VERSION: '9.0.x'
+            NODE_VERSION: '20.x'
+            WEBAPI_PATH: 'Server/WebApi'
+            CLIENT_PATH: 'Client'
+            WWWROOT: '${{ env.WEBAPI_PATH }}/wwwroot'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            # —— Node & React build
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+
+            - name: Cache npm deps
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ${{ env.CLIENT_PATH }}/node_modules
+                  key: ${{ runner.os }}-node-${{ hashFiles(env.CLIENT_PATH + '/package-lock.json') }}
+
+            - name: Install & build React
+              working-directory: ${{ env.CLIENT_PATH }}
+              run: |
+                  npm ci
+                  npm run build
+
+            # —— .NET build & publish
+            - name: Setup .NET SDK
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: ${{ env.DOTNET_VERSION }}
+
+            - name: Cache NuGet packages
+              uses: actions/cache@v3
+              with:
+                  path: ~/.nuget/packages
+                  key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+
+            - name: Restore & Build WebApi
+              working-directory: ${{ env.WEBAPI_PATH }}
+              run: |
+                  dotnet restore
+                  dotnet build --no-restore --configuration Release
+
+            - name: Publish WebApi
+              working-directory: ${{ env.WEBAPI_PATH }}
+              run: dotnet publish -c Release -o ./publish
+
+            - name: Zip publish folder
+              working-directory: ${{ env.WEBAPI_PATH }}
+              run: |
+                  cd publish
+                  zip -r ../app.zip .
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: app-zip
+                  path: ${{ env.WEBAPI_PATH }}/app.zip
+
+    deploy-to-eb:
+        needs: build-and-publish
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Download artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: app-zip
+                  path: ./artifact
+
+            - name: Configure AWS creds
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-region: ${{ secrets.AWS_REGION }}
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+            - name: Deploy to Elastic Beanstalk
+              run: |
+                  # 1) upload artifact zip to S3
+                  aws s3 cp artifact/app.zip s3://${{ secrets.EB_BUCKET }}/app-${{ github.run_id }}.zip
+
+                  # 2) create a new app version
+                  aws elasticbeanstalk create-application-version \
+                    --application-name ${{ secrets.EB_APP_NAME }} \
+                    --version-label ${{ github.run_id }} \
+                    --source-bundle S3Bucket=${{ secrets.EB_BUCKET }},S3Key=app-${{ github.run_id }}.zip
+
+                  # 3) update environment to new version
+                  aws elasticbeanstalk update-environment \
+                    --environment-name ${{ secrets.EB_ENV_NAME }} \
+                    --version-label ${{ github.run_id }}
+
+                  # 4) wait until deploy finishes
+                  aws elasticbeanstalk wait environment-updated \
+                    --environment-name ${{ secrets.EB_ENV_NAME }}
