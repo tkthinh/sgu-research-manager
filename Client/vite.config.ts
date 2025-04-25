@@ -24,7 +24,7 @@ export default defineConfig({
   },
   build: {
     // delete outDir if use Dockerfile
-    outDir: "../Server/WebApi/wwwroot",
+    // outDir: "../Server/WebApi/wwwroot",
     sourcemap: false,
     emptyOutDir: true,
     chunkSizeWarningLimit: 1500,
