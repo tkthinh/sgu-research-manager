@@ -115,5 +115,44 @@ namespace WebApi.Controllers
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
+
+        [HttpGet("export-by-admin")]
+        public async Task<IActionResult> ExportWorksByAdmin(
+            [FromQuery] Guid userId,
+            [FromQuery] string? academicYearId,
+            [FromQuery] int? proofStatus)
+        {
+            try
+            {
+                _logger.LogInformation("Bắt đầu xuất Excel cho userId: {UserId}", userId);
+
+                // Tạo filter từ các tham số
+                var filter = new WorkFilter
+                {
+                    UserId = userId,
+                    AcademicYearId = academicYearId != null ? Guid.Parse(academicYearId) : (Guid?)null,
+                    ProofStatus = proofStatus.HasValue ? (ProofStatus)proofStatus.Value : (ProofStatus?)null,
+                    Source = WorkSource.NguoiDungKeKhai
+                };
+
+                // Lấy dữ liệu export với filter
+                var exportData = await _workExportService.GetExportExcelDataAsync(filter);
+
+                // Xuất file Excel
+                var excelBytes = await _workExportService.ExportWorksByAdminAsync(exportData, userId);
+
+                // Trả về file Excel
+                return File(
+                    excelBytes,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"export_by_admin_{userId}_{DateTime.Now:yyyyMMddHHmmss}.xlsx"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi xuất Excel cho userId: {UserId}", userId);
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
     }
 }
