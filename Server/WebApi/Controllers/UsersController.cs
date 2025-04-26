@@ -5,6 +5,7 @@ using Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Application.Shared.Services;
 
 namespace WebApi.Controllers
 {
@@ -17,13 +18,15 @@ namespace WebApi.Controllers
         private readonly ILogger<UsersController> logger;
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly UserManager<ApplicationUser> userManager;
+        private readonly ICurrentUserService currentUserService;
 
         public UsersController(
             IUserService userService,
             IUserImportService userImportService,
             ILogger<UsersController> logger,
             IHttpContextAccessor httpContextAccessor,
-            UserManager<ApplicationUser> userManager
+            UserManager<ApplicationUser> userManager,
+            ICurrentUserService currentUserService
             )
         {
             this.userService = userService;
@@ -31,6 +34,7 @@ namespace WebApi.Controllers
             this.logger = logger;
             this.httpContextAccessor = httpContextAccessor;
             this.userManager = userManager;
+            this.currentUserService = currentUserService;
         }
 
         [HttpGet]
@@ -241,40 +245,64 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("conversionresult/{userId}")]
+        [Authorize]
         public async Task<ActionResult<ApiResponse<UserConversionResultRequestDto>>> GetUserConversionResult([FromRoute] Guid userId)
         {
-            if (userId == Guid.Empty)
+            try
             {
-                return BadRequest(new ApiResponse<UserConversionResultRequestDto>(false, "UserId không hợp lệ"));
-            }
+                if (userId == Guid.Empty)
+                {
+                    return BadRequest(new ApiResponse<UserConversionResultRequestDto>(false, "UserId không hợp lệ"));
+                }
 
-            var result = await userService.GetUserConversionResultAsync(userId);
-            if (result == null)
-            {
+                var (isSuccess, currentUserId, _) = currentUserService.GetCurrentUser();
+                if (!isSuccess)
+                {
+                    return Unauthorized(new ApiResponse<UserConversionResultRequestDto>(false, "Không có quyền truy cập"));
+                }
+
+                // Kiểm tra quyền truy cập
+                var isAdmin = httpContextAccessor.HttpContext?.User.IsInRole("Admin") ?? false;
+                
+                // Nếu không phải admin và không phải chính người dùng đó thì không cho phép truy cập
+                if (!isAdmin && currentUserId != userId)
+                {
+                    return Unauthorized(new ApiResponse<UserConversionResultRequestDto>(false, "Không có quyền truy cập thông tin của người dùng khác"));
+                }
+
+                var result = await userService.GetUserConversionResultAsync(userId);
+                if (result == null)
+                {
+                    return Ok(new ApiResponse<UserConversionResultRequestDto>(
+                        true,
+                        "Không tìm thấy kết quả quy đổi cho người dùng này",
+                        new UserConversionResultRequestDto
+                        {
+                            UserId = userId,
+                            UserName = "Unknown",
+                            ConversionResults = new ConversionDetailsRequestDto
+                            {
+                                DutyHourConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
+                                OverLimitConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
+                                ResearchProductConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
+                                TotalWorks = 0,
+                                TotalCalculatedHours = 0
+                            }
+                        }
+                    ));
+                }
+
                 return Ok(new ApiResponse<UserConversionResultRequestDto>(
                     true,
-                    "Không tìm thấy kết quả quy đổi cho người dùng này",
-                    new UserConversionResultRequestDto
-                    {
-                        UserId = userId,
-                        UserName = "Unknown",
-                        ConversionResults = new ConversionDetailsRequestDto
-                        {
-                            DutyHourConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
-                            OverLimitConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
-                            ResearchProductConversion = new ConversionItemRequestDto { TotalWorks = 0, TotalConvertedHours = 0, TotalCalculatedHours = 0 },
-                            TotalWorks = 0,
-                            TotalCalculatedHours = 0
-                        }
-                    }
+                    "Lấy kết quả quy đổi thành công",
+                    result
                 ));
             }
-
-            return Ok(new ApiResponse<UserConversionResultRequestDto>(
-                true,
-                "Lấy kết quả quy đổi thành công",
-                result
-            ));
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Lỗi khi lấy kết quả quy đổi cho người dùng {UserId}", userId);
+                return BadRequest(new ApiResponse<UserConversionResultRequestDto>(false, "Có lỗi xảy ra trong quá trình thực hiện"));
+            }
         }
 
         [HttpGet("search")]

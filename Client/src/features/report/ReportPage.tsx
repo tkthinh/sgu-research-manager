@@ -25,6 +25,12 @@ import {
   Stack,
   Tooltip,
   Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import React, { useEffect, useState } from "react";
@@ -37,6 +43,7 @@ import { ProofStatus } from "../../lib/types/enums/ProofStatus";
 import { WorkSource } from "../../lib/types/enums/WorkSource";
 import { AcademicYear } from "../../lib/types/models/AcademicYear";
 import { Work } from "../../lib/types/models/Work";
+import { getUserConversionResult } from '../../lib/api/usersApi';
 
 interface FilterParams {
   academicYearId?: string;
@@ -45,6 +52,30 @@ interface FilterParams {
   onlyRegisteredWorks: boolean;
   onlyRegisterableWorks: boolean;
   isCurrentUser: boolean;
+}
+
+interface ConversionResult {
+  userId: string;
+  userName: string;
+  conversionResults: {
+    dutyHourConversion: {
+      totalWorks: number;
+      totalConvertedHours: number;
+      totalCalculatedHours: number;
+    };
+    overLimitConversion: {
+      totalWorks: number;
+      totalConvertedHours: number;
+      totalCalculatedHours: number;
+    };
+    researchProductConversion: {
+      totalWorks: number;
+      totalConvertedHours: number;
+      totalCalculatedHours: number;
+    };
+    totalWorks: number;
+    totalCalculatedHours: number;
+  };
 }
 
 const ReportPage: React.FC = () => {
@@ -64,6 +95,9 @@ const ReportPage: React.FC = () => {
     onlyRegisterableWorks: false,
     isCurrentUser: true,
   });
+
+  const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
+  const [loadingConversion, setLoadingConversion] = useState<boolean>(false);
 
   // Load initial data
   useEffect(() => {
@@ -293,6 +327,28 @@ const ReportPage: React.FC = () => {
     }
   };
 
+  // Thêm hàm lấy kết quả quy đổi
+  const fetchConversionResult = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoadingConversion(true);
+      const response = await getUserConversionResult(user.id);
+      if (response.success) {
+        setConversionResult(response.data);
+      }
+    } catch (error) {
+      console.error('Lỗi khi lấy kết quả quy đổi:', error);
+    } finally {
+      setLoadingConversion(false);
+    }
+  };
+
+  // Gọi API khi component mount và khi user thay đổi
+  useEffect(() => {
+    fetchConversionResult();
+  }, [user?.id]);
+
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       {/* Filter Panel */}
@@ -429,13 +485,8 @@ const ReportPage: React.FC = () => {
       </Paper>
 
       {/* Results Panel */}
-      <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
-        >
+      <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3, mb: 4 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h6" display="flex" alignItems="center">
             <span>Kết quả ({works.length} công trình)</span>
             {loading && <CircularProgress size={24} sx={{ ml: 2 }} />}
@@ -464,6 +515,61 @@ const ReportPage: React.FC = () => {
           </Alert>
         ) : (
           <GenericTable columns={columns} data={works} />
+        )}
+      </Paper>
+
+      {/* Conversion Results Panel */}
+      <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h6" display="flex" alignItems="center">
+            <span>Kết quả quy đổi</span>
+            {loadingConversion && <CircularProgress size={24} sx={{ ml: 2 }} />}
+          </Typography>
+        </Stack>
+
+        {conversionResult ? (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Loại quy đổi</TableCell>
+                  <TableCell align="right">Số lượng công trình</TableCell>
+                  <TableCell align="right">Tổng giờ quy đổi</TableCell>
+                  <TableCell align="right">Tổng giờ tính</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>Quy đổi giờ nghĩa vụ</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.dutyHourConversion.totalWorks}</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.dutyHourConversion.totalConvertedHours}</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.dutyHourConversion.totalCalculatedHours}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Quy đổi vượt định mức</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.overLimitConversion.totalWorks}</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.overLimitConversion.totalConvertedHours}</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.overLimitConversion.totalCalculatedHours}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Sản phẩm NCKH</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.researchProductConversion.totalWorks}</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.researchProductConversion.totalConvertedHours}</TableCell>
+                  <TableCell align="right">{conversionResult.conversionResults.researchProductConversion.totalCalculatedHours}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell><strong>Tổng cộng</strong></TableCell>
+                  <TableCell align="right"><strong>{conversionResult.conversionResults.totalWorks}</strong></TableCell>
+                  <TableCell align="right">-</TableCell>
+                  <TableCell align="right"><strong>{conversionResult.conversionResults.totalCalculatedHours}</strong></TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        ) : (
+          <Alert severity="info">
+            Không có dữ liệu kết quả quy đổi
+          </Alert>
         )}
       </Paper>
     </Container>
