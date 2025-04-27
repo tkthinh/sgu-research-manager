@@ -21,6 +21,31 @@ import {
   Select,
   SelectChangeEvent,
   Stack,
+  Box,
+} from '@mui/material';
+import { GridColDef } from '@mui/x-data-grid';
+import { Work } from '../../lib/types/models/Work';
+import { getAcademicYears, getCurrentAcademicYear } from '../../lib/api/academicYearApi';
+import { ProofStatus } from '../../lib/types/enums/ProofStatus';
+import { WorkSource } from '../../lib/types/enums/WorkSource';
+import { getWorksWithFilter } from '../../lib/api/worksApi';
+import { useAuth } from '../../app/shared/contexts/AuthContext';
+import { AcademicYear } from '../../lib/types/models/AcademicYear';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import HistoryIcon from '@mui/icons-material/History';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import GenericTable from '../../app/shared/components/tables/DataTable';
+import { getDepartments, getDepartmentsByManagerId } from '../../lib/api/departmentsApi';
+import { Department } from '../../lib/types/models/Department';
+import { getUsersByDepartmentId } from '../../lib/api/usersApi';
+import { User } from '../../lib/types/models/User';
+import { useQuery } from '@tanstack/react-query';
+import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
+import { format } from "date-fns";
+import { exportAllWorks } from "../../lib/api/excelApi";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
   Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
@@ -70,6 +95,8 @@ const StatisticsPage: React.FC = () => {
     source: undefined,
     onlyRegisteredWorks: false,
   });
+
+  const [isExporting, setIsExporting] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -463,8 +490,67 @@ const StatisticsPage: React.FC = () => {
     },
   ];
 
+  // Fetch năm học hiện tại
+  const { data: currentAcademicYear } = useQuery({
+    queryKey: ["current-academic-year"],
+    queryFn: getCurrentAcademicYear,
+  });
+
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await exportAllWorks(
+        currentAcademicYear?.data?.id,
+        undefined,
+        undefined
+      );
+      
+      // Tạo URL từ blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Tạo thẻ a để tải file
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `export_all_works_${format(new Date(), 'yyyyMMddHHmmss')}.xlsx`;
+      
+      // Thêm vào DOM và click
+      document.body.appendChild(link);
+      link.click();
+      
+      // Xóa thẻ a và URL
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('Lỗi khi xuất Excel:', error);
+      // Hiển thị thông báo lỗi cho người dùng
+      if (error.response?.status === 400) {
+        alert(error.response.data.message || 'Không có dữ liệu để xuất Excel');
+      } else if (error.response?.status === 401) {
+        alert('Bạn không có quyền xuất Excel. Vui lòng liên hệ quản trị viên.');
+      } else {
+        alert('Có lỗi xảy ra khi xuất Excel. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <Typography variant="h4">Thống kê công trình</Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<FileDownloadIcon />}
+          onClick={handleExportExcel}
+          disabled={isExporting}
+          sx={{ ml: 'auto' }}
+        >
+          {isExporting ? 'Đang xuất...' : 'Xuất Excel'}
+        </Button>
+      </Box>
+
       {/* Filter Panel */}
       <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: 3 }}>
         <Stack

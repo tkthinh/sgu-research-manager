@@ -154,5 +154,55 @@ namespace WebApi.Controllers
                 return BadRequest(new ApiResponse<object>(false, ex.Message));
             }
         }
+
+        [HttpGet("export-all-works")]
+        [Authorize(Roles = "Admin, Manager")]
+        public async Task<IActionResult> ExportAllWorks(
+            [FromQuery] string? academicYearId)
+        {
+            try
+            {
+                _logger.LogInformation("Bắt đầu xuất Excel tất cả công trình");
+
+                // Kiểm tra quyền truy cập
+                var (isSuccess, currentUserId, _) = _currentUserService.GetCurrentUser();
+                if (!isSuccess)
+                {
+                    _logger.LogError("Không thể xác định người dùng từ token");
+                    return BadRequest(new ApiResponse<object>(false, "Không thể xác định người dùng"));
+                }
+
+                // Tạo filter chỉ với năm học
+                var filter = new WorkFilter
+                {
+                    AcademicYearId = academicYearId != null ? Guid.Parse(academicYearId) : (Guid?)null
+                };
+
+                // Lấy dữ liệu export với filter
+                var exportData = await _workExportService.GetExportExcelDataAsync(filter);
+
+                // Kiểm tra exportData có dữ liệu không
+                if (exportData == null || !exportData.Any())
+                {
+                    _logger.LogWarning("Không có dữ liệu để export");
+                    return BadRequest(new ApiResponse<object>(false, "Không có dữ liệu để export"));
+                }
+
+                // Xuất file Excel
+                var excelBytes = await _workExportService.ExportAllWorksAsync(exportData);
+
+                // Trả về file Excel
+                return File(
+                    excelBytes,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"export_all_works_{DateTime.Now:yyyyMMddHHmmss}.xlsx"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi xuất Excel tất cả công trình");
+                return BadRequest(new ApiResponse<object>(false, ex.Message));
+            }
+        }
     }
 }

@@ -163,7 +163,16 @@ namespace Application.Works
             // Nếu là đề tài, tạo bài báo khoa học tự động
             if (work.WorkTypeId == Guid.Parse("49cf7589-fb84-4934-be8e-991c6319a348"))
             {
-                await CreateScientificArticleFromProjectAsync(work, userId, cancellationToken);
+                try
+                {
+                    await CreateScientificArticleFromProjectAsync(work, userId, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Lỗi khi tạo bài báo khoa học tự động từ đề tài {ProjectId}", work.Id);
+                    // Không throw exception ở đây để không ảnh hưởng đến việc tạo đề tài
+                    // Thay vào đó, ghi log lỗi và tiếp tục
+                }
             }
 
             return workDto;
@@ -772,8 +781,12 @@ namespace Application.Works
         {
             try
             {
+                _logger.LogInformation("Bắt đầu tạo bài báo khoa học tự động từ đề tài {ProjectId}", project.Id);
+                
                 // Lấy nội dung sản phẩm từ details của đề tài
                 var productDetails = project.Details?.GetValueOrDefault("Sản phẩm thuộc đề tài");
+                _logger.LogInformation("Thông tin sản phẩm từ đề tài: {ProductDetails}", productDetails);
+                
                 if (string.IsNullOrEmpty(productDetails))
                 {
                     _logger.LogWarning("Không tìm thấy thông tin sản phẩm trong details của đề tài {ProjectId}", project.Id);
@@ -799,9 +812,11 @@ namespace Application.Works
                     Source = WorkSource.NguoiDungKeKhai,
                     WorkTypeId = Guid.Parse("2732c858-77dc-471d-bd9a-464a3142530a"), // ID của Bài báo khoa học
                     WorkLevelId = null,
+                    AcademicYearId = project.AcademicYearId,
                     CreatedDate = DateTime.UtcNow
                 };
 
+                _logger.LogInformation("Đang tạo bài báo khoa học với ID: {ArticleId}", scientificArticle.Id);
                 await _unitOfWork.Repository<Work>().CreateAsync(scientificArticle);
 
                 // Tạo thông tin tác giả
@@ -821,6 +836,7 @@ namespace Application.Works
                     CreatedDate = DateTime.UtcNow
                 };
 
+                _logger.LogInformation("Đang tạo thông tin tác giả cho bài báo với ID: {AuthorId}", author.Id);
                 await _unitOfWork.Repository<Author>().CreateAsync(author);
 
                 // Thêm tác giả vào WorkAuthor
@@ -830,14 +846,15 @@ namespace Application.Works
                     WorkId = scientificArticle.Id,
                     UserId = userId
                 };
+                _logger.LogInformation("Đang tạo WorkAuthor với ID: {WorkAuthorId}", workAuthor.Id);
                 await _unitOfWork.Repository<WorkAuthor>().CreateAsync(workAuthor);
 
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                _logger.LogInformation("Đã tạo bài báo khoa học tự động từ đề tài {ProjectId}", project.Id);
+                _logger.LogInformation("Đã tạo bài báo khoa học tự động từ đề tài {ProjectId} thành công", project.Id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tạo bài báo khoa học từ đề tài {ProjectId}", project.Id);
+                _logger.LogError(ex, "Lỗi khi tạo bài báo khoa học từ đề tài {ProjectId}: {ErrorMessage}", project.Id, ex.Message);
                 throw;
             }
         }
