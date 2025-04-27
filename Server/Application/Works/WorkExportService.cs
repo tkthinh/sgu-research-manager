@@ -235,19 +235,7 @@ namespace Application.Works
 
         public async Task<List<ExportExcelDto>> GetExportExcelDataAsync(WorkFilter filter, CancellationToken cancellationToken = default)
         {
-            if (filter.UserId == null)
-            {
-                throw new Exception(ErrorMessages.UserNotFound);
-            }
-
-            // Lấy thông tin cá nhân của user với đầy đủ details
-            var user = await _userRepository.GetUserByIdWithDetailsAsync(filter.UserId.Value);
-            if (user is null)
-            {
-                throw new Exception(ErrorMessages.UserNotFound);
-            }
-
-            // Lấy danh sách công trình của user với filter
+            // Lấy danh sách công trình với filter
             var works = await _workQueryService.GetWorksAsync(filter, cancellationToken);
 
             // Lấy thông tin đồng tác giả với đầy đủ details
@@ -262,17 +250,20 @@ namespace Application.Works
                 var coAuthorNames = string.Join(", ", w.CoAuthorUserIds
                     .Select(uid => filteredCoAuthors.FirstOrDefault(u => u.Id == uid)?.FullName ?? "Không xác định"));
 
+                // Lấy thông tin người dùng từ author
+                var user = author != null ? coAuthors.FirstOrDefault(u => u.Id == author.UserId) : null;
+
                 return new ExportExcelDto
                 {
-                    UserName = user.UserName ?? "Không xác định",
-                    FullName = user.FullName ?? "Không xác định",
-                    Email = user.Email ?? "Không xác định",
-                    AcademicTitle = user.AcademicTitle.ToString() ?? "Không xác định",
-                    OfficerRank = user.OfficerRank.ToString() ?? "Không xác định",
-                    DepartmentName = user.Department?.Name ?? "Không xác định",
+                    UserName = user?.UserName ?? "Không xác định",
+                    FullName = user?.FullName ?? "Không xác định",
+                    Email = user?.Email ?? "Không xác định",
+                    AcademicTitle = user?.AcademicTitle.ToString() ?? "Không xác định",
+                    OfficerRank = user?.OfficerRank.ToString() ?? "Không xác định",
+                    DepartmentName = user?.Department?.Name ?? "Không xác định",
                     FieldName = author?.FieldName ?? "Không xác định",
-                    Specialization = user.Specialization ?? "Không xác định",
-                    PhoneNumber = user.PhoneNumber ?? "Không xác định",
+                    Specialization = user?.Specialization ?? "Không xác định",
+                    PhoneNumber = user?.PhoneNumber ?? "Không xác định",
                     Title = w.Title ?? "Không xác định",
                     WorkTypeName = w.WorkTypeName ?? "Không xác định",
                     WorkLevelName = w.WorkLevelName,
@@ -427,6 +418,67 @@ namespace Application.Works
 
             worksheet.Cells[currentRow, 1].Value = "Tổng số giờ viên chức được quy đổi:";
             worksheet.Cells[currentRow, 3].Value = conv?.TotalCalculatedHours ?? 0;
+
+            return package.GetAsByteArray();
+        }
+
+        public async Task<byte[]> ExportAllWorksAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
+        {
+            // Thử tìm file template ở các vị trí khác nhau
+            string[] possiblePaths = new[]
+            {
+                // Đường dẫn từ thư mục bin của WebApi
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "ExportAllWorksTemplate.xlsx"),
+                
+                // Đường dẫn từ thư mục gốc của Server project
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "ExportAllWorksTemplate.xlsx")),
+                
+                // Đường dẫn từ thư mục gốc của solution
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "ExportAllWorksTemplate.xlsx"))
+            };
+
+            string templatePath = possiblePaths.FirstOrDefault(File.Exists);
+            if (templatePath == null)
+            {
+                throw new FileNotFoundException("Không tìm thấy file template ExportAllWorksTemplate.xlsx");
+            }
+
+            using var package = new ExcelPackage(new FileInfo(templatePath));
+            var worksheet = package.Workbook.Worksheets[0];
+
+            // Điền dữ liệu công trình vào bảng
+            int startRow = 2; // Dòng bắt đầu của dữ liệu
+            int currentRow = startRow;
+
+            // Điền thông tin từng công trình
+            for (int i = 0; i < exportData.Count; i++)
+            {
+                var work = exportData[i];
+
+                worksheet.Cells[currentRow, 1].Value = work.DepartmentName;
+                worksheet.Cells[currentRow, 2].Value = work.UserName;
+                worksheet.Cells[currentRow, 3].Value = work.FullName;
+                worksheet.Cells[currentRow, 4].Value = work.Title;
+                worksheet.Cells[currentRow, 5].Value = work.WorkTypeName;
+                worksheet.Cells[currentRow, 6].Value = work.WorkLevelName ?? "";
+                worksheet.Cells[currentRow, 7].Value = work.TimePublished.HasValue ?
+                    $"{work.TimePublished.Value.Month:D2}/{work.TimePublished.Value.Year}" :
+                    "";
+                worksheet.Cells[currentRow, 8].Value = work.Position.HasValue ? work.Position.Value : "";
+                worksheet.Cells[currentRow, 9].Value = work.TotalAuthors.HasValue ? work.TotalAuthors.Value : "";
+                worksheet.Cells[currentRow, 10].Value = work.AuthorRoleName ?? "";
+                worksheet.Cells[currentRow, 11].Value = work.CoAuthorNames ?? "";
+                worksheet.Cells[currentRow, 12].Value = work.Details != null && work.Details.Any() ?
+                    string.Join("; ", work.Details.Select(kv => $"{kv.Key}: {kv.Value}")) :
+                    "";
+                worksheet.Cells[currentRow, 13].Value = work.PurposeName ?? "";
+                worksheet.Cells[currentRow, 14].Value = work.ScoringFieldName ?? "";
+                worksheet.Cells[currentRow, 15].Value = work.ScoreLevel.HasValue ? GetScoreLevelText(work.ScoreLevel.Value) : "";
+                worksheet.Cells[currentRow, 16].Value = work.AuthorHour.HasValue ? work.AuthorHour.Value : "";
+                worksheet.Cells[currentRow, 17].Value = work.Note ?? "";
+
+                currentRow++;
+            }
 
             return package.GetAsByteArray();
         }

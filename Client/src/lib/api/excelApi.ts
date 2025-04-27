@@ -17,29 +17,25 @@ export const exportWorks = async (filter: WorkFilter): Promise<Blob> => {
 };
 
 export const exportWorksByAdmin = async (userId: string, academicYearId?: string, proofStatus?: number): Promise<Blob> => {
-    try {
-        console.log('Gọi API exportWorksByAdmin với params:', { userId, academicYearId, proofStatus });
-        
-        const response = await apiClient.get(`/excel/export-by-admin`, {
-            params: {
-                userId,
-                academicYearId,
-                proofStatus
-            },
-            responseType: 'blob',
-            timeout: 30000 // Tăng timeout lên 30 giây
-        });
+    const params = new URLSearchParams();
+    params.append('userId', userId);
+    if (academicYearId) params.append('academicYearId', academicYearId);
+    if (proofStatus !== undefined) params.append('proofStatus', proofStatus.toString());
 
-        if (!response.data) {
-            throw new Error('Không nhận được dữ liệu từ server');
-        }
+    const response = await apiClient.get(`/excel/export-by-admin?${params.toString()}`, {
+        responseType: 'blob'
+    });
+    return response.data;
+};
 
-        return response.data;
-    } catch (error: any) {
-        console.error('Lỗi khi gọi API exportWorksByAdmin:', error);
-        if (error.code === 'ECONNABORTED') {
-            throw new Error('Yêu cầu xuất Excel bị timeout. Vui lòng thử lại sau.');
-        }
-        throw error;
-    }
+export const exportAllWorks = async (academicYearId?: string, proofStatus?: number, source?: number): Promise<Blob> => {
+    const params = new URLSearchParams();
+    if (academicYearId) params.append('academicYearId', academicYearId);
+    if (proofStatus !== undefined) params.append('proofStatus', proofStatus.toString());
+    if (source !== undefined) params.append('source', source.toString());
+
+    const response = await apiClient.get(`/excel/export-all-works?${params.toString()}`, {
+        responseType: 'blob'
+    });
+    return response.data;
 };
