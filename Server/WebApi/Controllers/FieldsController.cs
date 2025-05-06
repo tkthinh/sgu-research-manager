@@ -23,10 +23,11 @@ namespace WebApi.Controllers
         public async Task<ActionResult<ApiResponse<IEnumerable<FieldDto>>>> GetFields()
         {
             var fields = await fieldService.GetAllAsync();
+
             return Ok(new ApiResponse<IEnumerable<FieldDto>>(
                 true,
                 "Lấy dữ liệu ngành thành công",
-                fields
+                fields.OrderBy(f => f.Name)
             ));
         }
 
