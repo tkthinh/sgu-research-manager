@@ -21,6 +21,7 @@ namespace Infrastructure.Data.Repositories
             .Include(wt => wt.Factors)
             .Include(wt => wt.SCImagoFields)
             .OrderBy(wt => wt.Name)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
       }
    }

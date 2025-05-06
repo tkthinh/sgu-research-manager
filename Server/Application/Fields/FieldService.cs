@@ -8,7 +8,9 @@ namespace Application.Fields
 {
    public class FieldService : GenericCachedService<FieldDto, Field>, IFieldService
    {
-      public FieldService(
+        protected override TimeSpan defaultCacheTime => TimeSpan.FromHours(24);
+
+        public FieldService(
          IUnitOfWork unitOfWork,
          IGenericMapper<FieldDto, Field> mapper,
          IDistributedCache cache,

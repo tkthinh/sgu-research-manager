@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Paper,
+  Stack,
   Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
@@ -127,19 +128,30 @@ export default function DepartmentPage() {
 
   return (
     <>
-      <Box
-        display="flex"
-        flexDirection="column-reverse"
-        alignItems="flex-end"
-        sx={{ marginBottom: 2 }}
+      <Stack
+        direction={{ xs: "column-reverse", sm: "row" }}
+        justifyContent="flex-end"
+        alignItems="center"
+        spacing={2}
+        sx={{ mb: 2, width: "100%" }}
       >
-        <Button variant="contained" onClick={() => handleOpen(null)}>
+        <Button
+          variant="contained"
+          onClick={() => handleOpen(null)}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
           Thêm đơn vị
         </Button>
-      </Box>
-      <Paper sx={{ width: 1010, marginX: "auto" }}>
+      </Stack>
+
+      {/* Bảng dữ liệu */}
+      <Paper
+        sx={{ width: { xs: "100%", sm: 1010 }, mx: "auto", overflow: "hidden" }}
+      >
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
+
+      {/* Form Thêm / Sửa đơn vị */}
       <DepartmentForm
         open={open}
         handleClose={handleClose}

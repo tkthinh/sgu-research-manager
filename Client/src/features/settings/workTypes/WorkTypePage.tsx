@@ -7,15 +7,19 @@ import {
   DialogContent,
   DialogTitle,
   Paper,
-  Typography,
+  Stack,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import GenericTable from "../../../app/shared/components/tables/DataTable";
-import { deleteWorkType, getWorkTypesWithDetails } from "../../../lib/api/workTypesApi";
+import {
+  deleteWorkType,
+  getWorkTypesWithDetails,
+} from "../../../lib/api/workTypesApi";
 import WorkTypeForm from "./WorkTypeForm";
 
 export default function WorkTypePage() {
@@ -29,12 +33,15 @@ export default function WorkTypePage() {
       if (result?.data) {
         console.log("WorkTypes with details:", result.data);
         // Log chi tiết về Scimago fields
-        result.data.forEach(wt => {
-          console.log(`WorkType ${wt.name} has ${wt.scImagoFieldCount} Scimago fields:`, wt.scImagoFields);
+        result.data.forEach((wt) => {
+          console.log(
+            `WorkType ${wt.name} has ${wt.scImagoFieldCount} Scimago fields:`,
+            wt.scImagoFields,
+          );
         });
       }
       return result;
-    }
+    },
   });
 
   // Toast notifications
@@ -108,21 +115,21 @@ export default function WorkTypePage() {
     if (!workLevels || workLevels.length === 0) {
       return "Không có cấp công trình nào";
     }
-    return workLevels.map(level => level.name).join("; ");
+    return workLevels.map((level) => level.name).join("; ");
   };
 
   const getPurposeTooltip = (purposes) => {
     if (!purposes || purposes.length === 0) {
       return "Không có mục đích quy đổi nào";
     }
-    return purposes.map(purpose => purpose.name).join("; ");
+    return purposes.map((purpose) => purpose.name).join("; ");
   };
 
   const getAuthorRoleTooltip = (authorRoles) => {
     if (!authorRoles || authorRoles.length === 0) {
       return "Không có vai trò tác giả nào";
     }
-    return authorRoles.map(role => role.name).join("; ");
+    return authorRoles.map((role) => role.name).join("; ");
   };
 
   const columns: GridColDef[] = [
@@ -131,7 +138,9 @@ export default function WorkTypePage() {
       headerName: "STT",
       width: 70,
       renderCell: (params) => {
-        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(id => id === params.row.id);
+        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(
+          (id) => id === params.row.id,
+        );
         return <div>{rowIndex + 1}</div>;
       },
     },
@@ -186,9 +195,7 @@ export default function WorkTypePage() {
       width: 140,
       renderCell: (params) => {
         const count = params.row.factorCount || 0;
-        return (
-          <span>{formatWithSuffix(count, "hệ số")}</span>
-        );
+        return <span>{formatWithSuffix(count, "hệ số")}</span>;
       },
     },
     {
@@ -197,9 +204,7 @@ export default function WorkTypePage() {
       width: 140,
       renderCell: (params) => {
         const count = params.row.scImagoFieldCount || 0;
-        return (
-            <span>{formatWithSuffix(count, "ngành")}</span>
-        );
+        return <span>{formatWithSuffix(count, "ngành")}</span>;
       },
     },
     {
@@ -237,30 +242,36 @@ export default function WorkTypePage() {
 
   return (
     <>
-      <Box
-        display="flex"
-        justifyContent="space-between"
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="flex-end"
         alignItems="center"
-        sx={{ marginBottom: 2 }}
+        spacing={2}
+        sx={{ mb: 2 }}
       >
-        <Typography variant="h4">Quản lý loại công trình</Typography>
-        
-        <Button variant="contained" onClick={() => handleOpen(null)}>
+        <Button
+          variant="contained"
+          onClick={() => handleOpen(null)}
+        >
           Thêm loại công trình
         </Button>
-      </Box>
-      
+      </Stack>
+
+      {/* Bảng dữ liệu */}
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
-      
+
+      {/* Form thêm / sửa loại công trình */}
       <WorkTypeForm open={open} handleClose={handleClose} data={selectedData} />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa loại công trình này?</Typography>
+          <Typography>
+            Bạn có chắc chắn muốn xóa loại công trình này?
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button

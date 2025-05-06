@@ -1,43 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import HistoryIcon from "@mui/icons-material/History";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import SearchIcon from "@mui/icons-material/Search";
 import {
-  Container,
-  Typography,
-  Button,
-  Grid,
-  Paper,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  CircularProgress,
   Alert,
-  SelectChangeEvent,
+  Button,
+  Checkbox,
   Chip,
+  CircularProgress,
+  Container,
   Divider,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  SelectChangeEvent,
   Stack,
-} from '@mui/material';
-import { GridColDef } from '@mui/x-data-grid';
-import { Work } from '../../lib/types/models/Work';
-import { getAcademicYears } from '../../lib/api/academicYearApi';
-import { ProofStatus } from '../../lib/types/enums/ProofStatus';
-import { WorkSource } from '../../lib/types/enums/WorkSource';
-import { getWorksWithFilter } from '../../lib/api/worksApi';
-import { useAuth } from '../../app/shared/contexts/AuthContext';
-import { AcademicYear } from '../../lib/types/models/AcademicYear';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import HistoryIcon from '@mui/icons-material/History';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import GenericTable from '../../app/shared/components/tables/DataTable';
-import { getDepartments, getDepartmentsByManagerId } from '../../lib/api/departmentsApi';
-import { Department } from '../../lib/types/models/Department';
-import { getUsersByDepartmentId } from '../../lib/api/usersApi';
-import { User } from '../../lib/types/models/User';
-import { useQuery } from '@tanstack/react-query';
-import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
+  Typography,
+} from "@mui/material";
+import { GridColDef } from "@mui/x-data-grid";
+import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
+import GenericTable from "../../app/shared/components/tables/DataTable";
+import { useAuth } from "../../app/shared/contexts/AuthContext";
+import { getAcademicYears } from "../../lib/api/academicYearApi";
+import {
+  getDepartments,
+  getDepartmentsByManagerId,
+} from "../../lib/api/departmentsApi";
+import { getUsersByDepartmentId } from "../../lib/api/usersApi";
+import { getWorksWithFilter } from "../../lib/api/worksApi";
+import { ProofStatus } from "../../lib/types/enums/ProofStatus";
+import { WorkSource } from "../../lib/types/enums/WorkSource";
+import { AcademicYear } from "../../lib/types/models/AcademicYear";
+import { Department } from "../../lib/types/models/Department";
+import { User } from "../../lib/types/models/User";
+import { Work } from "../../lib/types/models/Work";
+import { getScoreLevelText } from "../../lib/utils/scoreLevelUtils";
 
 interface FilterParams {
   academicYearId?: string;
@@ -56,12 +60,12 @@ const StatisticsPage: React.FC = () => {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const { user } = useAuth();
-  
+
   // Filter state
   const [filter, setFilter] = useState<FilterParams>({
-    academicYearId: '',
-    departmentId: '',
-    userId: '',
+    academicYearId: "",
+    departmentId: "",
+    userId: "",
     proofStatus: undefined,
     source: undefined,
     onlyRegisteredWorks: false,
@@ -73,26 +77,26 @@ const StatisticsPage: React.FC = () => {
       try {
         const [academicYearsResponse, departmentsResponse] = await Promise.all([
           getAcademicYears(),
-          user?.role === 'Manager' 
+          user?.role === "Manager"
             ? getDepartmentsByManagerId(user.id)
-            : getDepartments()
+            : getDepartments(),
         ]);
-        
+
         setAcademicYears(academicYearsResponse.data || []);
         setDepartments(departmentsResponse.data || []);
       } catch (error) {
-        setError('Lỗi khi tải dữ liệu ban đầu');
-        console.error('Error fetching initial data:', error);
+        setError("Lỗi khi tải dữ liệu ban đầu");
+        console.error("Error fetching initial data:", error);
       }
     };
-    
+
     fetchData();
   }, [user]);
 
   // Lấy danh sách người dùng theo phòng ban
   const { data: usersData } = useQuery({
-    queryKey: ['users', 'department', filter.departmentId],
-    queryFn: () => getUsersByDepartmentId(filter.departmentId || ''),
+    queryKey: ["users", "department", filter.departmentId],
+    queryFn: () => getUsersByDepartmentId(filter.departmentId || ""),
     enabled: !!filter.departmentId,
   });
 
@@ -100,21 +104,24 @@ const StatisticsPage: React.FC = () => {
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFilter(prev => ({ ...prev, [name]: checked }));
+    setFilter((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleSelectChange = (e: SelectChangeEvent<string | number>) => {
     const { name, value } = e.target;
-    
-    if (name === 'proofStatus' || name === 'source') {
-      setFilter(prev => ({ ...prev, [name]: value === '' ? undefined : Number(value) }));
+
+    if (name === "proofStatus" || name === "source") {
+      setFilter((prev) => ({
+        ...prev,
+        [name]: value === "" ? undefined : Number(value),
+      }));
     } else {
-      setFilter(prev => ({ ...prev, [name as string]: value }));
+      setFilter((prev) => ({ ...prev, [name as string]: value }));
     }
 
     // Reset userId khi thay đổi department
-    if (name === 'departmentId') {
-      setFilter(prev => ({ ...prev, userId: '' }));
+    if (name === "departmentId") {
+      setFilter((prev) => ({ ...prev, userId: "" }));
     }
   };
 
@@ -122,7 +129,7 @@ const StatisticsPage: React.FC = () => {
   const fetchWorks = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await getWorksWithFilter({
         ...filter,
@@ -130,8 +137,8 @@ const StatisticsPage: React.FC = () => {
       });
       setWorks(response.data || []);
     } catch (error) {
-      console.error('Error fetching works:', error);
-      setError('Lỗi khi tải danh sách công trình');
+      console.error("Error fetching works:", error);
+      setError("Lỗi khi tải danh sách công trình");
     } finally {
       setLoading(false);
     }
@@ -140,9 +147,9 @@ const StatisticsPage: React.FC = () => {
   // Reset filter
   const handleResetFilter = () => {
     setFilter({
-      academicYearId: '',
-      departmentId: '',
-      userId: '',
+      academicYearId: "",
+      departmentId: "",
+      userId: "",
       proofStatus: undefined,
       source: undefined,
       onlyRegisteredWorks: false,
@@ -153,11 +160,11 @@ const StatisticsPage: React.FC = () => {
   const getSourceText = (source: number) => {
     switch (source) {
       case WorkSource.NguoiDungKeKhai:
-        return 'Người dùng kê khai';
+        return "Người dùng kê khai";
       case WorkSource.QuanLyNhap:
-        return 'Quản lý nhập';
+        return "Quản lý nhập";
       default:
-        return 'N/A';
+        return "N/A";
     }
   };
 
@@ -259,7 +266,9 @@ const StatisticsPage: React.FC = () => {
       width: 150,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
         return <div>{currentAuthor ? currentAuthor.authorRoleName : "-"}</div>;
       },
     },
@@ -270,8 +279,17 @@ const StatisticsPage: React.FC = () => {
       width: 80,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
-        return <div>{currentAuthor?.position !== undefined && currentAuthor?.position !== null ? currentAuthor.position : "-"}</div>;
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
+        return (
+          <div>
+            {currentAuthor?.position !== undefined &&
+            currentAuthor?.position !== null
+              ? currentAuthor.position
+              : "-"}
+          </div>
+        );
       },
     },
     {
@@ -281,7 +299,9 @@ const StatisticsPage: React.FC = () => {
       width: 180,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
         return <div>{currentAuthor ? currentAuthor.purposeName : "-"}</div>;
       },
     },
@@ -292,7 +312,9 @@ const StatisticsPage: React.FC = () => {
       width: 150,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
         return <div>{currentAuthor ? currentAuthor.fieldName : "-"}</div>;
       },
     },
@@ -303,8 +325,12 @@ const StatisticsPage: React.FC = () => {
       width: 180,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
-        return <div>{currentAuthor ? currentAuthor.scImagoFieldName : "-"}</div>;
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
+        return (
+          <div>{currentAuthor ? currentAuthor.scImagoFieldName : "-"}</div>
+        );
       },
     },
     {
@@ -314,8 +340,14 @@ const StatisticsPage: React.FC = () => {
       width: 150,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
-        if (!currentAuthor || currentAuthor.scoreLevel === undefined || currentAuthor.scoreLevel === null) {
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
+        if (
+          !currentAuthor ||
+          currentAuthor.scoreLevel === undefined ||
+          currentAuthor.scoreLevel === null
+        ) {
           return <div>-</div>;
         }
         return <div>{getScoreLevelText(currentAuthor.scoreLevel)}</div>;
@@ -328,8 +360,17 @@ const StatisticsPage: React.FC = () => {
       width: 120,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
-        return <div>{currentAuthor?.workHour !== undefined && currentAuthor?.workHour !== null ? currentAuthor.workHour : "-"}</div>;
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
+        return (
+          <div>
+            {currentAuthor?.workHour !== undefined &&
+            currentAuthor?.workHour !== null
+              ? currentAuthor.workHour
+              : "-"}
+          </div>
+        );
       },
     },
     {
@@ -339,8 +380,17 @@ const StatisticsPage: React.FC = () => {
       width: 120,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
-        return <div>{currentAuthor?.authorHour !== undefined && currentAuthor?.authorHour !== null ? currentAuthor.authorHour : "-"}</div>;
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
+        return (
+          <div>
+            {currentAuthor?.authorHour !== undefined &&
+            currentAuthor?.authorHour !== null
+              ? currentAuthor.authorHour
+              : "-"}
+          </div>
+        );
       },
     },
     {
@@ -350,36 +400,46 @@ const StatisticsPage: React.FC = () => {
       width: 140,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
         const proofStatus = currentAuthor?.proofStatus;
-                
+
         if (proofStatus === undefined || proofStatus === null) {
-          return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              -
+            </div>
+          );
         }
-        
+
         if (proofStatus === ProofStatus.HopLe) {
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <CheckCircleIcon color="success" />
               Hợp lệ
             </div>
           );
         } else if (proofStatus === ProofStatus.KhongHopLe) {
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <CancelIcon color="error" />
               Không hợp lệ
             </div>
           );
         } else if (proofStatus === ProofStatus.ChuaXuLy) {
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <HistoryIcon color="action" />
               Chưa xử lý
             </div>
           );
         } else {
-          return <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>-</div>;
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              -
+            </div>
+          );
         }
       },
     },
@@ -391,7 +451,7 @@ const StatisticsPage: React.FC = () => {
       renderCell: (params: any) => {
         const author = params.row.authors && params.row.authors[0];
         const isRegistered = author?.authorRegistration != null;
-        
+
         return (
           <Chip
             label={isRegistered ? "Đã đăng ký" : "Chưa đăng ký"}
@@ -407,8 +467,18 @@ const StatisticsPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       {/* Filter Panel */}
       <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" display="flex" alignItems="center" color="primary">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
+          <Typography
+            variant="h6"
+            display="flex"
+            alignItems="center"
+            color="primary"
+          >
             <FilterListIcon sx={{ mr: 1 }} />
             Bộ lọc
           </Typography>
@@ -421,12 +491,14 @@ const StatisticsPage: React.FC = () => {
             >
               Đặt lại
             </Button>
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               onClick={fetchWorks}
               disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} /> : <FilterListIcon />}
+              startIcon={
+                loading ? <CircularProgress size={20} /> : <SearchIcon />
+              }
             >
               Tìm kiếm
             </Button>
@@ -434,14 +506,14 @@ const StatisticsPage: React.FC = () => {
         </Stack>
 
         <Divider sx={{ mb: 3 }} />
-        
+
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth size="small">
               <InputLabel>Năm học</InputLabel>
               <Select
                 name="academicYearId"
-                value={filter.academicYearId || ''}
+                value={filter.academicYearId || ""}
                 onChange={handleSelectChange}
                 label="Năm học"
               >
@@ -462,7 +534,7 @@ const StatisticsPage: React.FC = () => {
               <InputLabel>Phòng ban</InputLabel>
               <Select
                 name="departmentId"
-                value={filter.departmentId || ''}
+                value={filter.departmentId || ""}
                 onChange={handleSelectChange}
                 label="Phòng ban"
               >
@@ -483,7 +555,7 @@ const StatisticsPage: React.FC = () => {
               <InputLabel>Người dùng</InputLabel>
               <Select
                 name="userId"
-                value={filter.userId || ''}
+                value={filter.userId || ""}
                 onChange={handleSelectChange}
                 label="Người dùng"
                 disabled={!filter.departmentId}
@@ -505,7 +577,9 @@ const StatisticsPage: React.FC = () => {
               <InputLabel>Trạng thái xác minh</InputLabel>
               <Select
                 name="proofStatus"
-                value={filter.proofStatus !== undefined ? filter.proofStatus : ''}
+                value={
+                  filter.proofStatus !== undefined ? filter.proofStatus : ""
+                }
                 onChange={handleSelectChange}
                 label="Trạng thái xác minh"
               >
@@ -524,14 +598,16 @@ const StatisticsPage: React.FC = () => {
               <InputLabel>Nguồn</InputLabel>
               <Select
                 name="source"
-                value={filter.source !== undefined ? filter.source : ''}
+                value={filter.source !== undefined ? filter.source : ""}
                 onChange={handleSelectChange}
                 label="Nguồn"
               >
                 <MenuItem value="">
                   <em>Không chọn</em>
                 </MenuItem>
-                <MenuItem value={WorkSource.NguoiDungKeKhai}>Người dùng kê khai</MenuItem>
+                <MenuItem value={WorkSource.NguoiDungKeKhai}>
+                  Người dùng kê khai
+                </MenuItem>
                 <MenuItem value={WorkSource.QuanLyNhap}>Quản lý nhập</MenuItem>
               </Select>
             </FormControl>
@@ -551,25 +627,31 @@ const StatisticsPage: React.FC = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Results Panel */}
       <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
           <Typography variant="h6" display="flex" alignItems="center">
             <span>Kết quả ({works.length} công trình)</span>
             {loading && <CircularProgress size={24} sx={{ ml: 2 }} />}
           </Typography>
         </Stack>
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-        
+
         {works.length === 0 && !loading ? (
           <Alert severity="info">
-            Không có công trình nào được tìm thấy. Vui lòng thay đổi bộ lọc hoặc thử lại.
+            Không có công trình nào được tìm thấy. Vui lòng thay đổi bộ lọc hoặc
+            thử lại.
           </Alert>
         ) : (
           <GenericTable columns={columns} data={works} />
@@ -579,4 +661,4 @@ const StatisticsPage: React.FC = () => {
   );
 };
 
-export default StatisticsPage; 
+export default StatisticsPage;

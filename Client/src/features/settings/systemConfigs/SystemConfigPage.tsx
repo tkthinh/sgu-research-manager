@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Paper,
+  Stack,
   Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
@@ -127,7 +128,7 @@ export default function SystemConfigPage() {
   };
 
   const notifyMutation = useMutation({
-    mutationFn: () => notifySystemConfig(notifyTarget!, notifyTarget?.id! ),
+    mutationFn: () => notifySystemConfig(notifyTarget!, notifyTarget?.id!),
     onSuccess: () => {
       toast.success("Đã tạo thông báo thành công.");
       setNotifyDialogOpen(false);
@@ -210,7 +211,13 @@ export default function SystemConfigPage() {
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" mb={2}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
         <Typography variant="body1">
           Năm học hiện tại:{" "}
           <Typography
@@ -222,33 +229,43 @@ export default function SystemConfigPage() {
             {currentAcademicYear?.name}
           </Typography>
         </Typography>
+
         <Button variant="contained" onClick={() => handleOpen(null)}>
           Thêm cấu hình
         </Button>
-      </Box>
-      <Paper sx={{ width: 1010, marginX: "auto" }}>
+      </Stack>
+
+      {/* Bảng dữ liệu */}
+      <Paper
+        sx={{ width: { xs: "100%", sm: 1010 }, mx: "auto", overflow: "hidden" }}
+      >
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
+
+      {/* Trạng thái hệ thống */}
       {isAnySystemOpen !== undefined && (
-        <Box my={4}>
+        <Stack my={4}>
           <Typography fontSize={24} variant="body1">
             Trạng thái hệ thống:{" "}
             <Typography
-              fontSize={24}
               component="span"
+              fontSize={24}
               fontWeight={500}
-              color={isAnySystemOpen ? "primary" : "red"}
+              color={isAnySystemOpen ? "primary" : "error"}
             >
               {isAnySystemOpen ? "Đang mở" : "Đang đóng"}
             </Typography>
           </Typography>
-        </Box>
+        </Stack>
       )}
+
+      {/* Form thêm / sửa cấu hình */}
       <SystemConfigForm
         open={open}
         handleClose={handleClose}
         data={selectedData}
       />
+
       {/* Delete dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Xác nhận xóa</DialogTitle>
@@ -266,6 +283,7 @@ export default function SystemConfigPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
       {/* Notify dialog */}
       <Dialog open={notifyDialogOpen} onClose={handleNotifyCancel}>
         <DialogTitle>Xác nhận gửi thông báo</DialogTitle>
@@ -278,13 +296,13 @@ export default function SystemConfigPage() {
         <DialogActions>
           <Button onClick={handleNotifyCancel}>Hủy</Button>
           <Button
+            variant="contained"
+            color="secondary"
             onClick={() => {
               if (notifyTarget) {
                 notifyMutation.mutate();
               }
             }}
-            variant="contained"
-            color="secondary"
           >
             {notifyMutation.isPending ? "Đang gửi..." : "Thông báo"}
           </Button>

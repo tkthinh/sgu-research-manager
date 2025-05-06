@@ -6,12 +6,13 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
-  Typography,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
+  Paper,
+  Select,
+  Stack,
+  Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,17 +38,12 @@ export default function WorkLevelPage() {
   });
 
   // Fetch work levels with optional workTypeId filter
-  const {
-    data,
-    error,
-    isPending,
-    isSuccess,
-    dataUpdatedAt,
-  } = useQuery({
+  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
     queryKey: ["workLevels", selectedWorkTypeId],
-    queryFn: () => selectedWorkTypeId 
-      ? getWorkLevelsByWorkTypeId(selectedWorkTypeId)
-      : getWorkLevels(),
+    queryFn: () =>
+      selectedWorkTypeId
+        ? getWorkLevelsByWorkTypeId(selectedWorkTypeId)
+        : getWorkLevels(),
   });
 
   // Toast notifications
@@ -122,12 +118,24 @@ export default function WorkLevelPage() {
       headerName: "STT",
       width: 70,
       renderCell: (params) => {
-        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(id => id === params.row.id);
+        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(
+          (id) => id === params.row.id,
+        );
         return <div>{rowIndex + 1}</div>;
       },
     },
-    { field: "name", headerName: "Tên cấp công trình", type: "string", width: 300 },
-    { field: "workTypeName", headerName: "Loại công trình", type: "string", width: 300 },
+    {
+      field: "name",
+      headerName: "Tên cấp công trình",
+      type: "string",
+      width: 300,
+    },
+    {
+      field: "workTypeName",
+      headerName: "Loại công trình",
+      type: "string",
+      width: 300,
+    },
     {
       field: "actions",
       headerName: "Thao tác",
@@ -163,17 +171,23 @@ export default function WorkLevelPage() {
 
   return (
     <>
-      <Box
-        display="flex"
-        justifyContent="space-between"
+      {/* Filter + nút “Thêm cấp công trình” responsive */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="flex-end"
         alignItems="center"
-        sx={{ marginBottom: 2 }}
+        spacing={2}
+        sx={{ mb: 2, width: "100%" }}
       >
-        <Typography variant="h4">Quản lý cấp công trình</Typography>
-        
-        <Box display="flex" alignItems="center" gap={2}>
-          <FormControl sx={{ minWidth: 220 }}>
-            <InputLabel id="work-type-filter-label">Lọc theo loại công trình</InputLabel>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          width={{ xs: "100%", sm: "auto" }}
+        >
+          <FormControl fullWidth sx={{ minWidth: { sm: 220 } }}>
+            <InputLabel id="work-type-filter-label">
+              Lọc theo loại công trình
+            </InputLabel>
             <Select
               labelId="work-type-filter-label"
               id="work-type-filter"
@@ -182,24 +196,26 @@ export default function WorkLevelPage() {
               label="Lọc theo loại công trình"
             >
               <MenuItem value="">Tất cả</MenuItem>
-              {workTypesData?.data?.map((workType) => (
-                <MenuItem key={workType.id} value={workType.id}>
-                  {workType.name}
+              {workTypesData?.data?.map((wt) => (
+                <MenuItem key={wt.id} value={wt.id}>
+                  {wt.name}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-          
+
           <Button variant="contained" onClick={() => handleOpen(null)}>
             Thêm cấp công trình
           </Button>
-        </Box>
-      </Box>
-      
+        </Stack>
+      </Stack>
+
+      {/* Bảng dữ liệu */}
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
-      
+
+      {/* Form Thêm / Sửa cấp công trình */}
       <WorkLevelForm
         open={open}
         handleClose={handleClose}
@@ -221,9 +237,9 @@ export default function WorkLevelPage() {
           </Button>
           <Button
             onClick={handleDeleteConfirm}
-            disabled={deleteMutation.isPending}
             color="error"
             variant="contained"
+            disabled={deleteMutation.isPending}
           >
             {deleteMutation.isPending ? <CircularProgress size={24} /> : "Xóa"}
           </Button>

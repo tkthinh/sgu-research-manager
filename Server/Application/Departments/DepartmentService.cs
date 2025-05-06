@@ -8,6 +8,7 @@ namespace Application.Departments
 {
     public class DepartmentService : GenericCachedService<DepartmentDto, Department>, IDepartmentService
     {
+        protected override TimeSpan defaultCacheTime => TimeSpan.FromHours(24);
         public DepartmentService(
            IUnitOfWork unitOfWork,
            IGenericMapper<DepartmentDto, Department> mapper,

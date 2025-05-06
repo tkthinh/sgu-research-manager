@@ -14,6 +14,8 @@ namespace Application.SystemConfigs
     public class SystemConfigService : GenericCachedService<SystemConfigDto, SystemConfig>, ISystemConfigService
     {
         private readonly INotificationService notificationService;
+        protected override TimeSpan defaultCacheTime => TimeSpan.FromHours(1);
+
         public SystemConfigService(
             IUnitOfWork unitOfWork,
             IGenericMapper<SystemConfigDto, SystemConfig> mapper,
@@ -68,7 +70,7 @@ namespace Application.SystemConfigs
                 await SafeSetCacheAsync(
                     $"{cacheKeyPrefix}_all",
                     JsonSerializer.Serialize(dtos),
-                    TimeSpan.FromMinutes(30),
+                    defaultCacheTime,
                     cancellationToken);
             }
 

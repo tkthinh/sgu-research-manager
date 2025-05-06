@@ -131,9 +131,9 @@ export default function WorkScorePage() {
   return (
     <Container maxWidth="xl">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" gutterBottom>
+        {/* <Typography variant="h5" gutterBottom>
           Danh sách người dùng theo phòng ban
-        </Typography>
+        </Typography> */}
 
         <FormControl fullWidth sx={{ mt: 2 }}>
           <InputLabel id="department-select-label">Chọn phòng ban</InputLabel>

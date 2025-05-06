@@ -1,41 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import HistoryIcon from "@mui/icons-material/History";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import SearchIcon from "@mui/icons-material/Search";
 import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Grid,
-  Paper,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  CircularProgress,
   Alert,
-  SelectChangeEvent,
+  Box,
+  Button,
+  Checkbox,
   Chip,
-  Tooltip,
+  CircularProgress,
+  Container,
   Divider,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  SelectChangeEvent,
   Stack,
-} from '@mui/material';
-import { GridColDef } from '@mui/x-data-grid';
-import { Work } from '../../lib/types/models/Work';
-import { getAcademicYears } from '../../lib/api/academicYearApi';
-import { ProofStatus } from '../../lib/types/enums/ProofStatus';
-import { WorkSource } from '../../lib/types/enums/WorkSource';
-import { getWorksWithFilter } from '../../lib/api/worksApi';
-import { exportWorks } from '../../lib/api/excelApi';
-import { useAuth } from '../../app/shared/contexts/AuthContext';
-import { AcademicYear } from '../../lib/types/models/AcademicYear';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import HistoryIcon from '@mui/icons-material/History';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import GenericTable from '../../app/shared/components/tables/DataTable';
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { GridColDef } from "@mui/x-data-grid";
+import React, { useEffect, useState } from "react";
+import GenericTable from "../../app/shared/components/tables/DataTable";
+import { useAuth } from "../../app/shared/contexts/AuthContext";
+import { getAcademicYears } from "../../lib/api/academicYearApi";
+import { exportWorks } from "../../lib/api/excelApi";
+import { getWorksWithFilter } from "../../lib/api/worksApi";
+import { ProofStatus } from "../../lib/types/enums/ProofStatus";
+import { WorkSource } from "../../lib/types/enums/WorkSource";
+import { AcademicYear } from "../../lib/types/models/AcademicYear";
+import { Work } from "../../lib/types/models/Work";
 
 interface FilterParams {
   academicYearId?: string;
@@ -53,10 +54,10 @@ const ReportPage: React.FC = () => {
   const [works, setWorks] = useState<Work[]>([]);
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const { user } = useAuth();
-  
+
   // Filter state
   const [filter, setFilter] = useState<FilterParams>({
-    academicYearId: '',
+    academicYearId: "",
     proofStatus: undefined,
     source: undefined,
     onlyRegisteredWorks: false,
@@ -71,26 +72,29 @@ const ReportPage: React.FC = () => {
         const academicYearsResponse = await getAcademicYears();
         setAcademicYears(academicYearsResponse.data || []);
       } catch (error) {
-        setError('Lỗi khi tải dữ liệu ban đầu');
-        console.error('Error fetching initial data:', error);
+        setError("Lỗi khi tải dữ liệu ban đầu");
+        console.error("Error fetching initial data:", error);
       }
     };
-    
+
     fetchData();
   }, []);
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setFilter(prev => ({ ...prev, [name]: checked }));
+    setFilter((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleSelectChange = (e: SelectChangeEvent<string | number>) => {
     const { name, value } = e.target;
-    
-    if (name === 'proofStatus' || name === 'source') {
-      setFilter(prev => ({ ...prev, [name]: value === '' ? undefined : Number(value) }));
+
+    if (name === "proofStatus" || name === "source") {
+      setFilter((prev) => ({
+        ...prev,
+        [name]: value === "" ? undefined : Number(value),
+      }));
     } else {
-      setFilter(prev => ({ ...prev, [name as string]: value }));
+      setFilter((prev) => ({ ...prev, [name as string]: value }));
     }
   };
 
@@ -98,13 +102,13 @@ const ReportPage: React.FC = () => {
   const fetchWorks = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await getWorksWithFilter(filter);
       setWorks(response.data || []);
     } catch (error) {
-      console.error('Error fetching works:', error);
-      setError('Lỗi khi tải danh sách công trình');
+      console.error("Error fetching works:", error);
+      setError("Lỗi khi tải danh sách công trình");
     } finally {
       setLoading(false);
     }
@@ -113,7 +117,7 @@ const ReportPage: React.FC = () => {
   // Reset filter
   const handleResetFilter = () => {
     setFilter({
-      academicYearId: '',
+      academicYearId: "",
       proofStatus: undefined,
       source: undefined,
       onlyRegisteredWorks: false,
@@ -126,11 +130,11 @@ const ReportPage: React.FC = () => {
   const getSourceText = (source: number) => {
     switch (source) {
       case WorkSource.NguoiDungKeKhai:
-        return 'Người dùng kê khai';
+        return "Người dùng kê khai";
       case WorkSource.QuanLyNhap:
-        return 'Quản lý nhập';
+        return "Quản lý nhập";
       default:
-        return 'N/A';
+        return "N/A";
     }
   };
 
@@ -226,8 +230,12 @@ const ReportPage: React.FC = () => {
       width: 150,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
-        return currentAuthor ? getProofStatusChip(currentAuthor.proofStatus) : null;
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
+        return currentAuthor
+          ? getProofStatusChip(currentAuthor.proofStatus)
+          : null;
       },
     },
     {
@@ -237,9 +245,11 @@ const ReportPage: React.FC = () => {
       width: 150,
       renderCell: (params: any) => {
         const work = params.row;
-        const currentAuthor = work.authors?.find(author => author.userId === user?.id);
+        const currentAuthor = work.authors?.find(
+          (author) => author.userId === user?.id,
+        );
         const isRegistered = currentAuthor?.authorRegistration != null;
-        
+
         return (
           <Chip
             label={isRegistered ? "Đã đăng ký" : "Chưa đăng ký"}
@@ -254,29 +264,32 @@ const ReportPage: React.FC = () => {
   // Thêm hàm xử lý export
   const handleExport = async () => {
     try {
-        setLoading(true);
-        const blob = await exportWorks(filter);
-        
-        // Tạo URL cho file blob
-        const url = window.URL.createObjectURL(blob);
-        
-        // Tạo link tải file
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `KeKhaiCongTrinh_${new Date().toISOString().slice(0,10)}.xlsx`);
-        
-        // Thêm link vào DOM và click
-        document.body.appendChild(link);
-        link.click();
-        
-        // Dọn dẹp
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+      setLoading(true);
+      const blob = await exportWorks(filter);
+
+      // Tạo URL cho file blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Tạo link tải file
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `KeKhaiCongTrinh_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      );
+
+      // Thêm link vào DOM và click
+      document.body.appendChild(link);
+      link.click();
+
+      // Dọn dẹp
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-        console.error('Lỗi khi export:', error);
-        setError('Lỗi khi xuất file Excel');
+      console.error("Lỗi khi export:", error);
+      setError("Lỗi khi xuất file Excel");
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -284,8 +297,18 @@ const ReportPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       {/* Filter Panel */}
       <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6" display="flex" alignItems="center" color="primary">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
+          <Typography
+            variant="h6"
+            display="flex"
+            alignItems="center"
+            color="primary"
+          >
             <FilterListIcon sx={{ mr: 1 }} />
             Bộ lọc
           </Typography>
@@ -298,12 +321,14 @@ const ReportPage: React.FC = () => {
             >
               Đặt lại
             </Button>
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               onClick={fetchWorks}
               disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} /> : <FilterListIcon />}
+              startIcon={
+                loading ? <CircularProgress size={20} /> : <SearchIcon />
+              }
             >
               Tìm kiếm
             </Button>
@@ -311,14 +336,14 @@ const ReportPage: React.FC = () => {
         </Stack>
 
         <Divider sx={{ mb: 3 }} />
-        
+
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth size="small">
               <InputLabel>Năm học</InputLabel>
               <Select
                 name="academicYearId"
-                value={filter.academicYearId || ''}
+                value={filter.academicYearId || ""}
                 onChange={handleSelectChange}
                 label="Năm học"
               >
@@ -339,7 +364,9 @@ const ReportPage: React.FC = () => {
               <InputLabel>Trạng thái xác minh</InputLabel>
               <Select
                 name="proofStatus"
-                value={filter.proofStatus !== undefined ? filter.proofStatus : ''}
+                value={
+                  filter.proofStatus !== undefined ? filter.proofStatus : ""
+                }
                 onChange={handleSelectChange}
                 label="Trạng thái xác minh"
               >
@@ -358,14 +385,16 @@ const ReportPage: React.FC = () => {
               <InputLabel>Nguồn</InputLabel>
               <Select
                 name="source"
-                value={filter.source !== undefined ? filter.source : ''}
+                value={filter.source !== undefined ? filter.source : ""}
                 onChange={handleSelectChange}
                 label="Nguồn"
               >
                 <MenuItem value="">
                   <em>Không chọn</em>
                 </MenuItem>
-                <MenuItem value={WorkSource.NguoiDungKeKhai}>Người dùng kê khai</MenuItem>
+                <MenuItem value={WorkSource.NguoiDungKeKhai}>
+                  Người dùng kê khai
+                </MenuItem>
                 <MenuItem value={WorkSource.QuanLyNhap}>Quản lý nhập</MenuItem>
               </Select>
             </FormControl>
@@ -383,7 +412,7 @@ const ReportPage: React.FC = () => {
                 }
                 label="Công trình đã đăng ký"
               />
-              
+
               <FormControlLabel
                 control={
                   <Checkbox
@@ -398,10 +427,15 @@ const ReportPage: React.FC = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Results Panel */}
       <Paper sx={{ p: 3, borderRadius: 2, boxShadow: 3 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
           <Typography variant="h6" display="flex" alignItems="center">
             <span>Kết quả ({works.length} công trình)</span>
             {loading && <CircularProgress size={24} sx={{ ml: 2 }} />}
@@ -416,16 +450,17 @@ const ReportPage: React.FC = () => {
             Xuất Excel
           </Button>
         </Stack>
-        
+
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-        
+
         {works.length === 0 && !loading ? (
           <Alert severity="info">
-            Không có công trình nào được tìm thấy. Vui lòng thay đổi bộ lọc hoặc thử lại.
+            Không có công trình nào được tìm thấy. Vui lòng thay đổi bộ lọc hoặc
+            thử lại.
           </Alert>
         ) : (
           <GenericTable columns={columns} data={works} />
@@ -435,4 +470,4 @@ const ReportPage: React.FC = () => {
   );
 };
 
-export default ReportPage; 
+export default ReportPage;

@@ -10,6 +10,8 @@ namespace Application.Factors
 {
     public class FactorService : GenericCachedService<FactorDto, Factor>, IFactorService
     {
+        protected override TimeSpan defaultCacheTime => TimeSpan.FromHours(24);
+
         public FactorService(
             IUnitOfWork unitOfWork,
             IGenericMapper<FactorDto, Factor> mapper,
