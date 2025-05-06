@@ -15,3 +15,27 @@ export const exportWorks = async (filter: WorkFilter): Promise<Blob> => {
     });
     return response.data;
 };
+
+export const exportWorksByAdmin = async (userId: string, academicYearId?: string, proofStatus?: number): Promise<Blob> => {
+    const params = new URLSearchParams();
+    params.append('userId', userId);
+    if (academicYearId) params.append('academicYearId', academicYearId);
+    if (proofStatus !== undefined) params.append('proofStatus', proofStatus.toString());
+
+    const response = await apiClient.get(`/excel/export-by-admin?${params.toString()}`, {
+        responseType: 'blob'
+    });
+    return response.data;
+};
+
+export const exportAllWorks = async (academicYearId?: string, proofStatus?: number, source?: number): Promise<Blob> => {
+    const params = new URLSearchParams();
+    if (academicYearId) params.append('academicYearId', academicYearId);
+    if (proofStatus !== undefined) params.append('proofStatus', proofStatus.toString());
+    if (source !== undefined) params.append('source', source.toString());
+
+    const response = await apiClient.get(`/excel/export-all-works?${params.toString()}`, {
+        responseType: 'blob'
+    });
+    return response.data;
+};

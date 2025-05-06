@@ -16,6 +16,7 @@ import {
   import GenericTable from "../../app/shared/components/tables/DataTable";
   import { getUserById } from "../../lib/api/usersApi";
   import { getWorksWithFilter } from "../../lib/api/worksApi";
+  import { exportWorksByAdmin } from "../../lib/api/excelApi";
   import { ProofStatus } from "../../lib/types/enums/ProofStatus";
   import { User } from "../../lib/types/models/User";
   import EditIcon from "@mui/icons-material/Edit";
@@ -25,6 +26,7 @@ import {
   import CancelIcon from "@mui/icons-material/Cancel";
   import HistoryIcon from "@mui/icons-material/History";
   import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+  import FileDownloadIcon from "@mui/icons-material/FileDownload";
   import { useWorkFormData } from "../../hooks/useWorkData";
   import { useWorkDialogs } from "../../hooks/useWorkDialogs";
   import WorkStatusDialog from "../../app/shared/components/dialogs/WorkStatusDialog";
@@ -142,6 +144,50 @@ import {
   
     const handleGoBack = () => {
       navigate(-1);
+    };
+  
+    const handleExportExcel = async () => {
+      try {
+        console.log('Bắt đầu xuất Excel...');
+        console.log('UserId:', userId);
+        console.log('AcademicYearId:', currentAcademicYear?.data?.id);
+
+        const blob = await exportWorksByAdmin(
+          userId || "",
+          currentAcademicYear?.data?.id,
+          undefined
+        );
+        
+        if (!blob) {
+          console.error('Không nhận được dữ liệu từ server');
+          alert('Không nhận được dữ liệu từ server. Vui lòng thử lại sau.');
+          return;
+        }
+
+        console.log('Đã nhận được blob:', blob);
+        
+        // Tạo URL từ blob
+        const url = window.URL.createObjectURL(blob);
+        
+        // Tạo thẻ a để tải file
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `export_by_admin_${userId}_${format(new Date(), 'yyyyMMddHHmmss')}.xlsx`;
+        
+        // Thêm vào DOM và click
+        document.body.appendChild(link);
+        link.click();
+        
+        // Xóa thẻ a và URL
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        console.log('Xuất Excel thành công');
+      } catch (error: any) {
+        console.error('Lỗi khi xuất Excel:', error);
+        // Hiển thị thông báo lỗi chi tiết hơn
+        alert(error.message || 'Có lỗi xảy ra khi xuất Excel. Vui lòng thử lại sau.');
+      }
     };
   
     const columns: GridColDef[] = [
@@ -512,6 +558,15 @@ import {
             Quay lại
           </Button>
           <Typography variant="h4">Chấm điểm công trình - {user?.fullName}</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<FileDownloadIcon />}
+            onClick={handleExportExcel}
+            sx={{ ml: 'auto' }}
+          >
+            Xuất Excel
+          </Button>
         </Box>
   
         <Box sx={{ mb: 3 }}>
