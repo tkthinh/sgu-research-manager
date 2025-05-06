@@ -9,6 +9,8 @@ namespace Application.AcademicYears
 {
     public class AcademicYearService : GenericCachedService<AcademicYearDto, AcademicYear>, IAcademicYearService
     {
+        protected override TimeSpan defaultCacheTime => TimeSpan.FromHours(24);
+
         public AcademicYearService(
             IUnitOfWork unitOfWork,
             IGenericMapper<AcademicYearDto, AcademicYear> mapper,
@@ -62,7 +64,7 @@ namespace Application.AcademicYears
                 await SafeSetCacheAsync(
                     $"{cacheKeyPrefix}_current",
                     JsonSerializer.Serialize(dto),
-                    TimeSpan.FromMinutes(30),
+                    defaultCacheTime,
                     cancellationToken);
             }
 

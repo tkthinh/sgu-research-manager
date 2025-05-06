@@ -80,8 +80,7 @@ const stepOneSchema = z
   .object({
     username: z
         .string()
-        .min(8, "Mã số giảng viên là bắt buộc")
-        .max(9, "Mã số giảng viên không hợp lệ"),
+        .regex(/^.{8,9}$/, "Mã giảng viên phải có 8-9 ký tự"),
     password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
     confirmPassword: z.string().min(6, "Vui lòng xác nhận mật khẩu"),
   })

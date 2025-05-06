@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Paper,
+  Stack,
   Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
@@ -24,13 +25,7 @@ export default function ScimagoFieldPage() {
   const queryClient = useQueryClient();
 
   // Fetch SCImago fields
-  const {
-    data,
-    error,
-    isPending,
-    isSuccess,
-    dataUpdatedAt
-  } = useQuery({
+  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
     queryKey: ["scimagoFields"],
     queryFn: getScimagoFields,
   });
@@ -102,11 +97,18 @@ export default function ScimagoFieldPage() {
       headerName: "STT",
       width: 70,
       renderCell: (params) => {
-        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(id => id === params.row.id);
+        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(
+          (id) => id === params.row.id,
+        );
         return <div>{rowIndex + 1}</div>;
       },
     },
-    { field: "name", headerName: "Tên ngành SCImago", type: "string", width: 400 },
+    {
+      field: "name",
+      headerName: "Tên ngành SCImago",
+      type: "string",
+      width: 400,
+    },
     {
       field: "actions",
       headerName: "Thao tác",
@@ -142,25 +144,26 @@ export default function ScimagoFieldPage() {
 
   return (
     <>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ marginBottom: 2 }}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="flex-end"
+        sx={{ mb: 2, width: "100%" }}
       >
-        <Typography variant="h4">Quản lý ngành SCImago</Typography>
-        
-        <Box display="flex" alignItems="center" gap={2}>
-          <Button variant="contained" onClick={() => handleOpen(null)}>
-            Thêm ngành SCImago
-          </Button>
-        </Box>
-      </Box>
-      
+        <Button
+          variant="contained"
+          onClick={() => handleOpen(null)}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
+          Thêm ngành SCImago
+        </Button>
+      </Stack>
+
+      {/* Bảng dữ liệu */}
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
-      
+
+      {/* Form Thêm / Sửa ngành SCImago */}
       <ScimagoFieldForm
         open={open}
         handleClose={handleClose}
@@ -192,4 +195,4 @@ export default function ScimagoFieldPage() {
       </Dialog>
     </>
   );
-} 
+}

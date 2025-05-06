@@ -1,6 +1,7 @@
 ﻿using Application.Shared.Messages;
 using Domain.Enums;
 using Domain.Interfaces;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OfficeOpenXml;
 using Application.Users;
@@ -13,54 +14,32 @@ namespace Application.Works
         private readonly ILogger<WorkService> _logger;
         private readonly IWorkQueryService _workQueryService;
         private readonly IUserService _userService;
+        private readonly IHostEnvironment _hostEnvironment;
 
         public WorkExportService(
             ILogger<WorkService> logger,
             IUserRepository userRepository,
             IWorkQueryService workQueryService,
-            IUserService userService)
+            IUserService userService,
+            IHostEnvironment hostEnvironment)
         {
             _userRepository = userRepository;
             _logger = logger;
             _workQueryService = workQueryService;
             _userService = userService;
+            _hostEnvironment = hostEnvironment;
         }
 
         public async Task<byte[]> ExportWorksByUserAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
         {
-            // Thử tìm file template ở các vị trí khác nhau
-            string[] possiblePaths = new[]
-            {
-                // Đường dẫn từ thư mục bin của WebApi
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "ExportByUserTemplate.xlsx"),
-                
-                // Đường dẫn từ thư mục gốc của Server project
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "ExportByUserTemplate.xlsx")),
-                
-                // Đường dẫn từ thư mục gốc của solution
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "ExportByUserTemplate.xlsx"))
-            };
+            var templatePath = Path.Combine(
+                _hostEnvironment.ContentRootPath,
+                "Templates",
+                "ExportByUserTemplate.xlsx"
+            );
 
-            string? templatePath = null;
-            foreach (var path in possiblePaths)
-            {
-                var normalizedPath = Path.GetFullPath(path);
-                _logger.LogInformation("Đang thử tìm file template tại: {Path}", normalizedPath);
-
-                if (File.Exists(normalizedPath))
-                {
-                    templatePath = normalizedPath;
-                    _logger.LogInformation("Đã tìm thấy file template tại: {Path}", normalizedPath);
-                    break;
-                }
-            }
-
-            if (templatePath == null)
-            {
-                var errorMessage = $"Không tìm thấy file template Excel. Đã thử các đường dẫn sau:\n{string.Join("\n", possiblePaths.Select(p => Path.GetFullPath(p)))}";
-                _logger.LogError(errorMessage);
-                throw new FileNotFoundException(errorMessage);
-            }
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found at {templatePath}");
 
             using (var package = new ExcelPackage(new FileInfo(templatePath)))
             {
@@ -209,7 +188,8 @@ namespace Application.Works
 
                 // Tính số lượng công trình theo loại
                 var workTypeCounts = exportData
-                    .GroupBy(w => {
+                    .GroupBy(w =>
+                    {
                         // Nếu là một trong các loại sách, gộp chung vào "Sách"
                         if (bookWorkTypeNames.Contains(w.WorkTypeName))
                             return "Sách";

@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogTitle,
   Paper,
+  Stack,
   Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
@@ -52,7 +53,7 @@ export default function AcademicYearPage() {
   const handleClose = () => {
     setOpen(false);
     refetch();
-  }
+  };
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -133,12 +134,24 @@ export default function AcademicYearPage() {
 
   return (
     <>
-      <Box display="flex" justifyContent="flex-end" mb={2}>
-        <Button variant="contained" onClick={() => handleOpen(null)}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="flex-end"
+        sx={{ mb: 2, width: "100%" }}
+      >
+        <Button
+          variant="contained"
+          onClick={() => handleOpen(null)}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
           Thêm năm học
         </Button>
-      </Box>
-      <Paper sx={{ width: 1010, marginX: "auto" }}>
+      </Stack>
+
+      {/* Bảng dữ liệu */}
+      <Paper
+        sx={{ width: { xs: "100%", sm: 1010 }, mx: "auto", overflow: "hidden" }}
+      >
         <GenericTable
           columns={columns}
           data={(data?.data || [])
@@ -146,12 +159,15 @@ export default function AcademicYearPage() {
             .sort((a, b) => b.name.localeCompare(a.name))}
         />
       </Paper>
+
+      {/* Form Thêm / Sửa năm học */}
       <AcademicYearForm
         open={open}
         handleClose={handleClose}
         data={selectedData}
       />
 
+      {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>

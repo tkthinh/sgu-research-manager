@@ -30,10 +30,11 @@ namespace WebApi.Controllers
         public async Task<ActionResult<ApiResponse<IEnumerable<DepartmentDto>>>> GetDepartments()
         {
             var departments = await departmentService.GetAllAsync();
+
             return Ok(new ApiResponse<IEnumerable<DepartmentDto>>(
                true,
                "Lấy dữ liệu đơn vị công tác thành công",
-               departments
+               departments.OrderBy(d => d.Name)
             ));
         }
 

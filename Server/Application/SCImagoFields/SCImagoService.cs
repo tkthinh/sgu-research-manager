@@ -8,6 +8,8 @@ namespace Application.SCImagoFields
 {
     public class SCImagoFieldService : GenericCachedService<SCImagoFieldDto, SCImagoField>, ISCImagoFieldService
     {
+        protected override TimeSpan defaultCacheTime => TimeSpan.FromHours(24);
+
         public SCImagoFieldService(
             IUnitOfWork unitOfWork,
             IGenericMapper<SCImagoFieldDto, SCImagoField> mapper,

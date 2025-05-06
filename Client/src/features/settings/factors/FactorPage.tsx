@@ -11,6 +11,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  Stack,
   Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
@@ -198,16 +199,15 @@ export default function FactorPage() {
 
   return (
     <>
-      <Box
-        display="flex"
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
-        alignItems="center"
-        sx={{ marginBottom: 2 }}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={2}
+        sx={{ mb: 2 }}
       >
-        <Typography variant="h4">Quản lý hệ số quy đổi</Typography>
-
-        <Box display="flex" alignItems="center" gap={2}>
-          <FormControl sx={{ minWidth: 220 }}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} width={{ xs: "100%", sm: "auto" }}>
+          <FormControl fullWidth={true} sx={{ minWidth: { sm: 220 } }}>
             <InputLabel id="work-type-filter-label">
               Lọc theo loại công trình
             </InputLabel>
@@ -219,19 +219,22 @@ export default function FactorPage() {
               label="Lọc theo loại công trình"
             >
               <MenuItem value="">Tất cả</MenuItem>
-              {workTypesData?.data?.map((workType) => (
-                <MenuItem key={workType.id} value={workType.id}>
-                  {workType.name}
+              {workTypesData?.data?.map((wt) => (
+                <MenuItem key={wt.id} value={wt.id}>
+                  {wt.name}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-
-          <Button variant="contained" onClick={() => handleOpen(null)}>
+  
+          <Button
+            variant="contained"
+            onClick={() => handleOpen(null)}
+          >
             Thêm hệ số quy đổi
           </Button>
-        </Box>
-      </Box>
+        </Stack>
+      </Stack>
 
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <GenericTable columns={columns} data={data?.data || []} />

@@ -9,6 +9,8 @@ namespace Application.AuthorRoles
 {
     public class AuthorRoleService : GenericCachedService<AuthorRoleDto, AuthorRole>, IAuthorRoleService
     {
+        protected override TimeSpan defaultCacheTime => TimeSpan.FromHours(24);
+
         public AuthorRoleService(
             IUnitOfWork unitOfWork,
             IGenericMapper<AuthorRoleDto, AuthorRole> mapper,

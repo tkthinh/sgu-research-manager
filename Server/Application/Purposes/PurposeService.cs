@@ -9,7 +9,9 @@ namespace Application.Purposes
 {
    public class PurposeService : GenericCachedService<PurposeDto, Purpose>, IPurposeService
    {
-      public PurposeService(
+        protected override TimeSpan defaultCacheTime => TimeSpan.FromHours(24);
+
+        public PurposeService(
           IUnitOfWork unitOfWork,
           IGenericMapper<PurposeDto, Purpose> mapper,
           IDistributedCache cache,

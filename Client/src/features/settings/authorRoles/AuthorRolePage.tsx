@@ -1,18 +1,21 @@
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import {
   Box,
   Button,
+  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Paper,
-  Typography,
   FormControl,
   InputLabel,
-  Select,
   MenuItem,
-  Chip,
+  Paper,
+  Select,
+  Stack,
+  Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,8 +29,6 @@ import {
 } from "../../../lib/api/authorRolesApi";
 import { getWorkTypes } from "../../../lib/api/workTypesApi";
 import AuthorRoleForm from "./AuthorRoleForm";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
 
 export default function AuthorRolePage() {
   const queryClient = useQueryClient();
@@ -40,17 +41,12 @@ export default function AuthorRolePage() {
   });
 
   // Fetch author roles with optional workTypeId filter
-  const {
-    data,
-    error,
-    isPending,
-    isSuccess,
-    dataUpdatedAt,
-  } = useQuery({
+  const { data, error, isPending, isSuccess, dataUpdatedAt } = useQuery({
     queryKey: ["authorRoles", selectedWorkTypeId],
-    queryFn: () => selectedWorkTypeId 
-      ? getAuthorRolesByWorkTypeId(selectedWorkTypeId)
-      : getAuthorRoles(),
+    queryFn: () =>
+      selectedWorkTypeId
+        ? getAuthorRolesByWorkTypeId(selectedWorkTypeId)
+        : getAuthorRoles(),
   });
 
   // Toast notifications
@@ -125,19 +121,31 @@ export default function AuthorRolePage() {
       headerName: "STT",
       width: 70,
       renderCell: (params) => {
-        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(id => id === params.row.id);
+        const rowIndex = Array.from(params.api.getAllRowIds()).findIndex(
+          (id) => id === params.row.id,
+        );
         return <div>{rowIndex + 1}</div>;
       },
     },
-    { field: "name", headerName: "Tên vai trò tác giả", type: "string", width: 300 },
-    { field: "workTypeName", headerName: "Loại công trình", type: "string", width: 300 },
-    { 
-      field: "isMainAuthor", 
-      headerName: "Tác giả chính", 
+    {
+      field: "name",
+      headerName: "Tên vai trò tác giả",
+      type: "string",
+      width: 300,
+    },
+    {
+      field: "workTypeName",
+      headerName: "Loại công trình",
+      type: "string",
+      width: 300,
+    },
+    {
+      field: "isMainAuthor",
+      headerName: "Tác giả chính",
       width: 150,
       renderCell: (params) => {
         const isMainAuthor = params.row.isMainAuthor;
-        
+
         return isMainAuthor ? (
           <Chip
             icon={<CheckCircleIcon />}
@@ -153,7 +161,7 @@ export default function AuthorRolePage() {
             variant="outlined"
           />
         );
-      }
+      },
     },
     {
       field: "actions",
@@ -190,17 +198,22 @@ export default function AuthorRolePage() {
 
   return (
     <>
-      <Box
-        display="flex"
-        justifyContent="space-between"
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="flex-end"
         alignItems="center"
-        sx={{ marginBottom: 2 }}
+        spacing={2}
+        sx={{ mb: 2 }}
       >
-        <Typography variant="h4">Quản lý vai trò tác giả</Typography>
-        
-        <Box display="flex" alignItems="center" gap={2}>
-          <FormControl sx={{ minWidth: 220 }}>
-            <InputLabel id="work-type-filter-label">Lọc theo loại công trình</InputLabel>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          width={{ xs: "100%", sm: "auto" }}
+        >
+          <FormControl fullWidth sx={{ minWidth: { sm: 220 } }}>
+            <InputLabel id="work-type-filter-label">
+              Lọc theo loại công trình
+            </InputLabel>
             <Select
               labelId="work-type-filter-label"
               id="work-type-filter"
@@ -209,24 +222,26 @@ export default function AuthorRolePage() {
               label="Lọc theo loại công trình"
             >
               <MenuItem value="">Tất cả</MenuItem>
-              {workTypesData?.data?.map((workType) => (
-                <MenuItem key={workType.id} value={workType.id}>
-                  {workType.name}
+              {workTypesData?.data?.map((wt) => (
+                <MenuItem key={wt.id} value={wt.id}>
+                  {wt.name}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
-          
+
           <Button variant="contained" onClick={() => handleOpen(null)}>
             Thêm vai trò tác giả
           </Button>
-        </Box>
-      </Box>
-      
+        </Stack>
+      </Stack>
+
+      {/* Bảng dữ liệu */}
       <Paper sx={{ width: "100%", overflow: "hidden" }}>
         <GenericTable columns={columns} data={data?.data || []} />
       </Paper>
-      
+
+      {/* Form thêm / sửa vai trò tác giả */}
       <AuthorRoleForm
         open={open}
         handleClose={handleClose}
@@ -237,7 +252,9 @@ export default function AuthorRolePage() {
       <Dialog open={deleteDialogOpen} onClose={handleDeleteCancel}>
         <DialogTitle>Xác nhận xóa</DialogTitle>
         <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa vai trò tác giả này?</Typography>
+          <Typography>
+            Bạn có chắc chắn muốn xóa vai trò tác giả này?
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button
@@ -258,4 +275,4 @@ export default function AuthorRolePage() {
       </Dialog>
     </>
   );
-} 
+}
