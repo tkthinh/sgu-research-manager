@@ -4,10 +4,12 @@ using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace Application.Works
 {
-    public class WorkQueryService : IWorkQueryService
+    public class WorkQueryService : GenericCachedService<WorkDto, Work>, IWorkQueryService
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IGenericMapper<WorkDto, Work> _mapper;
@@ -22,7 +24,9 @@ namespace Application.Works
             IGenericMapper<AuthorDto, Author> authorMapper,
             IWorkRepository workRepository,
             ICurrentUserService currentUserService,
-            ILogger<WorkQueryService> logger)
+            ILogger<WorkQueryService> logger,
+            IDistributedCache cache)
+            : base(unitOfWork, mapper, cache, logger)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -34,14 +38,50 @@ namespace Application.Works
 
         public async Task<WorkDto?> GetWorkByIdWithAuthorsAsync(Guid id, CancellationToken cancellationToken = default)
         {
+            if (isCacheAvailable)
+            {
+                string cacheKey = $"{cacheKeyPrefix}_with_authors_{id}";
+                string? cachedData = null;
+
+                try
+                {
+                    cachedData = await cache.GetStringAsync(cacheKey, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    HandleCacheException(ex, $"Error reading cache for key {cacheKey}");
+                }
+
+                if (!string.IsNullOrEmpty(cachedData))
+                {
+                    try
+                    {
+                        return JsonSerializer.Deserialize<WorkDto>(cachedData);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Error deserializing cached data for key {CacheKey}", cacheKey);
+                    }
+                }
+            }
+
             var work = await _workRepository.GetWorkWithAuthorsByIdAsync(id);
             if (work is null)
             {
                 return null;
             }
 
-            var dto = _mapper.MapToDto(work);
+            var dto = mapper.MapToDto(work);
             await FillCoAuthorUserIdsAsync(dto, cancellationToken);
+
+            if (isCacheAvailable)
+            {
+                await SafeSetCacheAsync(
+                    $"{cacheKeyPrefix}_with_authors_{id}",
+                    JsonSerializer.Serialize(dto),
+                    defaultCacheTime,
+                    cancellationToken);
+            }
 
             return dto;
         }
@@ -251,11 +291,11 @@ namespace Application.Works
             
             try {
                 // Thực hiện truy vấn hiệu quả
-                var authorUserIds = await _unitOfWork.Repository<Author>()
+                var authorUserIds = await unitOfWork.Repository<Author>()
                     .FindAsync(a => a.WorkId == workDto.Id)
                     .ContinueWith(t => t.Result.Select(a => a.UserId).ToList(), cancellationToken);
 
-                var coAuthorUserIds = await _unitOfWork.Repository<WorkAuthor>()
+                var coAuthorUserIds = await unitOfWork.Repository<WorkAuthor>()
                     .FindAsync(wa => wa.WorkId == workDto.Id)
                     .ContinueWith(t => t.Result.Select(wa => wa.UserId).ToList(), cancellationToken);
 
