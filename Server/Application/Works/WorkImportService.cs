@@ -5,6 +5,8 @@ using Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 using System.Globalization;
+using Application.Shared.Services;
+using Application.AcademicYears;
 
 namespace Application.Works
 {
@@ -12,13 +14,16 @@ namespace Application.Works
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IWorkCalculateService _workCalculateService;
+        private readonly IAcademicYearService _academicYearService;
 
         public WorkImportService(
             IUnitOfWork unitOfWork,
-            IWorkCalculateService workCalculateService)
+            IWorkCalculateService workCalculateService,
+            IAcademicYearService academicYearService)
         {
             _unitOfWork = unitOfWork;
             _workCalculateService = workCalculateService;
+            _academicYearService = academicYearService;
         }
 
         public async Task ImportAsync(IFormFile file)
@@ -102,6 +107,13 @@ namespace Application.Works
             var workTypeRepo = _unitOfWork.Repository<WorkType>();
             var workLevelRepo = _unitOfWork.Repository<WorkLevel>();
 
+            // Lấy năm học hiện tại
+            var currentAcademicYear = await _academicYearService.GetCurrentAcademicYearAsync();
+            if (currentAcademicYear == null)
+            {
+                throw new Exception("Không tìm thấy năm học hiện tại");
+            }
+
             foreach (var dto in importRows)
             {
                 // 1) Tìm User
@@ -154,7 +166,8 @@ namespace Application.Works
                         Details = dto.Details,
                         WorkTypeId = workType.Id,
                         WorkLevelId = workLevel?.Id,
-                        Source = WorkSource.QuanLyNhap
+                        Source = WorkSource.QuanLyNhap,
+                        AcademicYearId = currentAcademicYear.Id
                     };
                     await workRepo.CreateAsync(work);
                 }

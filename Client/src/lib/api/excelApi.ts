@@ -39,3 +39,14 @@ export const exportAllWorks = async (academicYearId?: string, proofStatus?: numb
     });
     return response.data;
 };
+
+export const importExcel = async (file: File): Promise<void> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    await apiClient.post('/excel/import', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+};
