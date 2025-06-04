@@ -71,6 +71,11 @@ namespace Application.AcademicYears
             return dto;
         }
 
+        public async Task<AcademicYearDto?> GetCurrentAcademicYearAsync()
+        {
+            return await GetCurrentAcademicYear();
+        }
+
     }
 }
 
