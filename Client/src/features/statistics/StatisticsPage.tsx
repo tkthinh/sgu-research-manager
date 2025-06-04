@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -40,8 +40,9 @@ import { User } from '../../lib/types/models/User';
 import { useQuery } from '@tanstack/react-query';
 import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
 import { format } from "date-fns";
-import { exportAllWorks } from "../../lib/api/excelApi";
+import { exportAllWorks, importExcel } from "../../lib/api/excelApi";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 interface FilterParams {
   academicYearId?: string;
@@ -72,6 +73,8 @@ const StatisticsPage: React.FC = () => {
   });
 
   const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load initial data
   useEffect(() => {
@@ -454,20 +457,63 @@ const StatisticsPage: React.FC = () => {
     }
   };
 
+  const handleImportExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      await importExcel(file);
+      alert('Nhập Excel thành công');
+      // Refresh data after import
+      fetchWorks();
+    } catch (error: any) {
+      console.error('Lỗi khi nhập Excel:', error);
+      if (error.response?.status === 400) {
+        alert(error.response.data.message || 'File không hợp lệ');
+      } else {
+        alert('Có lỗi xảy ra khi nhập Excel. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
         <Typography variant="h4">Thống kê công trình</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<FileDownloadIcon />}
-          onClick={handleExportExcel}
-          disabled={isExporting}
-          sx={{ ml: 'auto' }}
-        >
-          {isExporting ? 'Đang xuất...' : 'Xuất Excel'}
-        </Button>
+        <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: 'none' }}
+            ref={fileInputRef}
+            onChange={handleImportExcel}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<UploadFileIcon />}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+          >
+            {isImporting ? 'Đang nhập...' : 'Nhập Excel'}
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<FileDownloadIcon />}
+            onClick={handleExportExcel}
+            disabled={isExporting}
+          >
+            {isExporting ? 'Đang xuất...' : 'Xuất Excel'}
+          </Button>
+        </Box>
       </Box>
 
       {/* Filter Panel */}
