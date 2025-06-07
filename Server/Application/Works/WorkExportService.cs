@@ -271,23 +271,14 @@ namespace Application.Works
         public async Task<byte[]> ExportWorksByAdminAsync(List<ExportExcelDto> exportData, Guid userId, CancellationToken cancellationToken = default)
         {
             // Thử tìm file template ở các vị trí khác nhau
-            string[] possiblePaths = new[]
-            {
-                // Đường dẫn từ thư mục bin của WebApi
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "ExportByAdminTemplate.xlsx"),
-                
-                // Đường dẫn từ thư mục gốc của Server project
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "ExportByAdminTemplate.xlsx")),
-                
-                // Đường dẫn từ thư mục gốc của solution
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "ExportByAdminTemplate.xlsx"))
-            };
+            var templatePath = Path.Combine(
+                _hostEnvironment.ContentRootPath,
+                "Templates",
+                "ExportByAdminTemplate.xlsx"
+            );
 
-            string templatePath = possiblePaths.FirstOrDefault(File.Exists);
-            if (templatePath == null)
-            {
-                throw new FileNotFoundException("Không tìm thấy file template ExportByAdminTemplate.xlsx");
-            }
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found at {templatePath}");
 
             using var package = new ExcelPackage(new FileInfo(templatePath));
             var worksheet = package.Workbook.Worksheets[0];
@@ -404,24 +395,14 @@ namespace Application.Works
 
         public async Task<byte[]> ExportAllWorksAsync(List<ExportExcelDto> exportData, CancellationToken cancellationToken = default)
         {
-            // Thử tìm file template ở các vị trí khác nhau
-            string[] possiblePaths = new[]
-            {
-                // Đường dẫn từ thư mục bin của WebApi
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "ExportAllWorksTemplate.xlsx"),
-                
-                // Đường dẫn từ thư mục gốc của Server project
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "ExportAllWorksTemplate.xlsx")),
-                
-                // Đường dẫn từ thư mục gốc của solution
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "ExportAllWorksTemplate.xlsx"))
-            };
+            var templatePath = Path.Combine(
+                _hostEnvironment.ContentRootPath,
+                "Templates",
+                "ExportAllWorksTemplate.xlsx"
+            );
 
-            string templatePath = possiblePaths.FirstOrDefault(File.Exists);
-            if (templatePath == null)
-            {
-                throw new FileNotFoundException("Không tìm thấy file template ExportAllWorksTemplate.xlsx");
-            }
+            if (!File.Exists(templatePath))
+                throw new FileNotFoundException($"Template not found at {templatePath}");
 
             using var package = new ExcelPackage(new FileInfo(templatePath));
             var worksheet = package.Workbook.Worksheets[0];
