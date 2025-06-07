@@ -274,13 +274,13 @@ namespace Application.Works
             string[] possiblePaths = new[]
             {
                 // Đường dẫn từ thư mục bin của WebApi
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Infrastructure", "Templates", "ExportByAdminTemplate.xlsx"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WebApi", "Templates", "ExportByAdminTemplate.xlsx"),
                 
                 // Đường dẫn từ thư mục gốc của Server project
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "Infrastructure", "Templates", "ExportByAdminTemplate.xlsx")),
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Server", "WebApi", "Templates", "ExportByAdminTemplate.xlsx")),
                 
                 // Đường dẫn từ thư mục gốc của solution
-                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Infrastructure", "Templates", "ExportByAdminTemplate.xlsx"))
+                Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "WebApi", "Templates", "ExportByAdminTemplate.xlsx"))
             };
 
             string templatePath = possiblePaths.FirstOrDefault(File.Exists);
