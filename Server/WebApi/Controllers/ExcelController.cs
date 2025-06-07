@@ -31,6 +31,7 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("import")]
+        [Authorize(Roles = "Admin, Manager")]
         public async Task<IActionResult> ImportExcel([FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)
