@@ -35,6 +35,8 @@ builder.Services.AddResponseCompression(opts =>
     opts.Providers.Add<GzipCompressionProvider>();
 });
 
+builder.Services.AddResponseCaching();
+
 builder.Services.AddHealthChecks();
 
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -78,6 +80,9 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseHttpsRedirection();
 
+app.UseResponseCompression();
+app.UseResponseCaching();
+
 app.UseRouting();
 app.UseCors("CorsPolicy");
 
@@ -86,8 +91,6 @@ app.UseAuthorization();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-
-app.UseResponseCompression();
 
 app.MapHealthChecks("/health");
 
