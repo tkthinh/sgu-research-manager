@@ -1,12 +1,14 @@
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import HistoryIcon from "@mui/icons-material/History";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SearchIcon from "@mui/icons-material/Search";
-import React, { useState, useEffect, useRef } from 'react';
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import {
   Alert,
+  Box,
   Button,
   Checkbox,
   Chip,
@@ -22,44 +24,23 @@ import {
   Select,
   SelectChangeEvent,
   Stack,
-  Box,
-} from '@mui/material';
-import { GridColDef } from '@mui/x-data-grid';
-import { Work } from '../../lib/types/models/Work';
-import { getAcademicYears, getCurrentAcademicYear } from '../../lib/api/academicYearApi';
-import { ProofStatus } from '../../lib/types/enums/ProofStatus';
-import { WorkSource } from '../../lib/types/enums/WorkSource';
-import { getWorksWithFilter } from '../../lib/api/worksApi';
-import { useAuth } from '../../app/shared/contexts/AuthContext';
-import { AcademicYear } from '../../lib/types/models/AcademicYear';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import HistoryIcon from '@mui/icons-material/History';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import GenericTable from '../../app/shared/components/tables/DataTable';
-import { getDepartments, getDepartmentsByManagerId } from '../../lib/api/departmentsApi';
-import { Department } from '../../lib/types/models/Department';
-import { getUsersByDepartmentId } from '../../lib/api/usersApi';
-import { User } from '../../lib/types/models/User';
-import { useQuery } from '@tanstack/react-query';
-import { getScoreLevelText } from '../../lib/utils/scoreLevelUtils';
-import { format } from "date-fns";
-import { exportAllWorks, importExcel } from "../../lib/api/excelApi";
-import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
   Typography,
 } from "@mui/material";
 import { GridColDef } from "@mui/x-data-grid";
 import { useQuery } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import { format } from "date-fns";
+import React, { useEffect, useRef, useState } from "react";
 import GenericTable from "../../app/shared/components/tables/DataTable";
 import { useAuth } from "../../app/shared/contexts/AuthContext";
-import { getAcademicYears } from "../../lib/api/academicYearApi";
+import {
+  getAcademicYears,
+  getCurrentAcademicYear,
+} from "../../lib/api/academicYearApi";
 import {
   getDepartments,
   getDepartmentsByManagerId,
 } from "../../lib/api/departmentsApi";
+import { exportAllWorks, importExcel } from "../../lib/api/excelApi";
 import { getUsersByDepartmentId } from "../../lib/api/usersApi";
 import { getWorksWithFilter } from "../../lib/api/worksApi";
 import { ProofStatus } from "../../lib/types/enums/ProofStatus";
@@ -506,61 +487,63 @@ const StatisticsPage: React.FC = () => {
       const blob = await exportAllWorks(
         currentAcademicYear?.data?.id,
         undefined,
-        undefined
+        undefined,
       );
-      
+
       // Tạo URL từ blob
       const url = window.URL.createObjectURL(blob);
-      
+
       // Tạo thẻ a để tải file
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.download = `export_all_works_${format(new Date(), 'yyyyMMddHHmmss')}.xlsx`;
-      
+      link.download = `export_all_works_${format(new Date(), "yyyyMMddHHmmss")}.xlsx`;
+
       // Thêm vào DOM và click
       document.body.appendChild(link);
       link.click();
-      
+
       // Xóa thẻ a và URL
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
-      console.error('Lỗi khi xuất Excel:', error);
+      console.error("Lỗi khi xuất Excel:", error);
       // Hiển thị thông báo lỗi cho người dùng
       if (error.response?.status === 400) {
-        alert(error.response.data.message || 'Không có dữ liệu để xuất Excel');
+        alert(error.response.data.message || "Không có dữ liệu để xuất Excel");
       } else if (error.response?.status === 401) {
-        alert('Bạn không có quyền xuất Excel. Vui lòng liên hệ quản trị viên.');
+        alert("Bạn không có quyền xuất Excel. Vui lòng liên hệ quản trị viên.");
       } else {
-        alert('Có lỗi xảy ra khi xuất Excel. Vui lòng thử lại sau.');
+        alert("Có lỗi xảy ra khi xuất Excel. Vui lòng thử lại sau.");
       }
     } finally {
       setIsExporting(false);
     }
   };
 
-  const handleImportExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportExcel = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       setIsImporting(true);
       await importExcel(file);
-      alert('Nhập Excel thành công');
+      alert("Nhập Excel thành công");
       // Refresh data after import
       fetchWorks();
     } catch (error: any) {
-      console.error('Lỗi khi nhập Excel:', error);
+      console.error("Lỗi khi nhập Excel:", error);
       if (error.response?.status === 400) {
-        alert(error.response.data.message || 'File không hợp lệ');
+        alert(error.response.data.message || "File không hợp lệ");
       } else {
-        alert('Có lỗi xảy ra khi nhập Excel. Vui lòng thử lại sau.');
+        alert("Có lỗi xảy ra khi nhập Excel. Vui lòng thử lại sau.");
       }
     } finally {
       setIsImporting(false);
       // Reset file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -569,11 +552,11 @@ const StatisticsPage: React.FC = () => {
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
         <Typography variant="h4">Thống kê công trình</Typography>
-        <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
+        <Box sx={{ ml: "auto", display: "flex", gap: 2 }}>
           <input
             type="file"
             accept=".xlsx,.xls"
-            style={{ display: 'none' }}
+            style={{ display: "none" }}
             ref={fileInputRef}
             onChange={handleImportExcel}
           />
@@ -584,7 +567,7 @@ const StatisticsPage: React.FC = () => {
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
           >
-            {isImporting ? 'Đang nhập...' : 'Nhập Excel'}
+            {isImporting ? "Đang nhập..." : "Nhập Excel"}
           </Button>
           <Button
             variant="contained"
@@ -593,7 +576,7 @@ const StatisticsPage: React.FC = () => {
             onClick={handleExportExcel}
             disabled={isExporting}
           >
-            {isExporting ? 'Đang xuất...' : 'Xuất Excel'}
+            {isExporting ? "Đang xuất..." : "Xuất Excel"}
           </Button>
         </Box>
       </Box>

@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@toolpad/core/DashboardLayout";
 import { PageContainer } from "@toolpad/core/PageContainer";
-import { Outlet } from "react-router";
+import { Outlet } from "react-router-dom";
 import CustomAccount from "../shared/components/header/CustomAccount";
 
 export default function Layout() {
